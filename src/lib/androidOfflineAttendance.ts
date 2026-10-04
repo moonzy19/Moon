@@ -52,10 +52,12 @@ function toBase64(bytes: ArrayBuffer | Uint8Array): string {
   return btoa(binary);
 }
 
-function fromBase64(value: string): Uint8Array {
+function fromBase64(value: string): Uint8Array<ArrayBuffer> {
   const binary = atob(value);
-  const bytes = new Uint8Array(binary.length);
-  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+  const bytes = new Uint8Array(new ArrayBuffer(binary.length));
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
   return bytes;
 }
 
@@ -128,7 +130,7 @@ async function encryptJson(db: IDBDatabase, value: unknown): Promise<SecureRecor
 async function decryptJson<T>(db: IDBDatabase, record: SecureRecord): Promise<T> {
   const key = await getCryptoKey(db);
   const decrypted = await crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv: fromBase64(record.iv) },
+    { name: 'AES-GCM', iv: fromBase64(record.iv) as unknown as BufferSource },
     key,
     fromBase64(record.ciphertext),
   );
@@ -166,20 +168,6 @@ async function secureGet<T>(id: string): Promise<T | null> {
   }
 }
 
-async function secureGetAll(prefix: string): Promise<SecureRecord[]> {
-  const db = await openDb();
-  try {
-    const records = await new Promise<SecureRecord[]>((resolve, reject) => {
-      const tx = db.transaction(SECURE_STORE, 'readonly');
-      const req = tx.objectStore(SECURE_STORE).getAll();
-      req.onsuccess = () => resolve((req.result || []).filter((item: SecureRecord) => item.id.startsWith(prefix)));
-      req.onerror = () => reject(req.error || new Error('Data offline gagal dibaca.'));
-    });
-    return records;
-  } finally {
-    db.close();
-  }
-}
 
 async function secureDelete(id: string) {
   const db = await openDb();

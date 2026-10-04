@@ -577,7 +577,11 @@ export default function DashboardAdmin() {
 
     if (email && Date.now() - notificationGenerationAtRef.current >= 60000) {
       notificationGenerationAtRef.current = Date.now();
-      await supabase.rpc('hris_generate_admin_notifications').catch(() => undefined);
+      try {
+        await supabase.rpc('hris_generate_admin_notifications');
+      } catch {
+        // Notification generation is best-effort and must not block the dashboard.
+      }
     }
 
     const [
@@ -1083,9 +1087,6 @@ export default function DashboardAdmin() {
       ],
     },
   ], [t, pendingEmployees.length, inactiveEmployees.length]);
-
-  const canSeeSidebarItem = (item: [MenuKey, string, string]) =>
-    menuPermissionForRole(item[0], userRole, dbPerms);
 
   const flatSidebarKeys = useMemo(() =>
     sidebarSections.flatMap((section) => section.items.map((item) => item[0])),
