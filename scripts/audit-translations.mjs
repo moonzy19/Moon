@@ -30,6 +30,7 @@ function walk(dir) {
     else if (/\.(ts|tsx)$/.test(entry.name) && entry.name !== 'translations.ts') {
       const text = fs.readFileSync(full, 'utf8');
       for (const m of text.matchAll(/\bt\(\s*['"]([^'"]+)['"]/g)) used.add(m[1]);
+      for (const m of text.matchAll(/\bwt\(\s*[^,]+,\s*['"]([^'"]+)['"]/g)) used.add(m[1]);
     }
   }
 }

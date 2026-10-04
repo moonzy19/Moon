@@ -1,39 +1,56 @@
 import { StrictMode } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import { LanguageProvider } from './locales/LanguageContext';
 import { registerPwa } from './pwa';
-import { initializeCosmicTheme } from './theme/professionalTheme';
 import { installLoadingStyles } from './loading-real-final-v57.15';
-import { installCosmicSurfaceFinal } from './theme/cosmicSurfaceFinal';
-import { installDesktopCosmicBackgroundFinal } from './theme/desktopCosmicBackgroundFinal';
-import { Capacitor } from '@capacitor/core';
-import { installDesktopCardFix } from './theme/desktopCardFix';
-import { installDesktopSidebarFix } from './theme/desktopSidebarFix';
-import { installDesktopCosmicCardsFinal } from './theme/desktopCosmicCardsFinal';
-import { installDesktopSharpBackground } from './theme/desktopSharpBackground';
-import { installDesktopCosmicPolish } from './theme/desktopCosmicPolish';
-import { installDesktopNoWhiteSurface } from './theme/desktopNoWhiteSurface';
 
-registerPwa();
-initializeCosmicTheme();
-installLoadingStyles();
-installCosmicSurfaceFinal();
-installDesktopCosmicBackgroundFinal();
+const platform = Capacitor.getPlatform();
 
-if (Capacitor.getPlatform() !== 'android') {
-  installDesktopCardFix();
-  installDesktopSidebarFix();
-  installDesktopCosmicCardsFinal();
-  installDesktopSharpBackground();
-  installDesktopCosmicPolish();
-  installDesktopNoWhiteSurface();
+document.documentElement.dataset.platform = platform;
+
+if (platform === 'web' && !document.documentElement.dataset.cosmicTheme) {
+  document.documentElement.dataset.cosmicTheme = 'sun';
 }
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <LanguageProvider>
-      <App />
-    </LanguageProvider>
-  </StrictMode>
-);
+async function bootstrap() {
+  registerPwa();
+
+  if (platform !== 'web') {
+    await Promise.all([
+      import('./styles/android-cosmic-background.css'),
+      import('./styles/android-login-profile-polish.css'),
+      import('./styles/login-safe-background.css'),
+    ]);
+  }
+
+  if (platform === 'android') {
+    const [
+      {
+        installProjectByTirtaTheme,
+        initializeCosmicTheme,
+      },
+      { installProjectTirtaAndroidPolish },
+    ] = await Promise.all([
+      import('./theme/professionalTheme'),
+      import('./theme/projectTirtaAndroidPolish'),
+    ]);
+
+    installProjectByTirtaTheme();
+    initializeCosmicTheme();
+    installProjectTirtaAndroidPolish();
+  }
+
+  installLoadingStyles();
+
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <LanguageProvider>
+        <App />
+      </LanguageProvider>
+    </StrictMode>
+  );
+}
+
+void bootstrap();

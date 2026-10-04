@@ -2,7 +2,8 @@
 
 ## Baseline
 
-- Release: **57.1.0**
+- Application version: **57.1.3**
+- Active Android baseline: **V59**
 - Frontend: React + TypeScript + Vite
 - Backend: Supabase
 - Mobile delivery: PWA + Capacitor-ready

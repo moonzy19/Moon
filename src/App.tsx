@@ -1,13 +1,19 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { isSupabaseConfigured, supabase } from './lib/supabase/client';
 import { signIn } from './lib/auth';
 import { checkForAppUpdate } from './lib/app-update';
 import { useTranslation } from './locales/LanguageContext';
-import { loadUserThemePreference, getEmployeePortalTheme, loadAdminThemePreference } from './lib/userPreferences';
+import {
+  loadUserThemePreference,
+  getPublicAppTheme,
+  getEmployeePortalTheme,
+  applyProjectTheme,
+  type PublicAppTheme
+} from './lib/userPreferences';
 
 import moonLogo from './assets/moon-logo.svg';
-import { applyCosmicTheme, applyAdminTheme, initializeCosmicTheme } from './theme/professionalTheme';
-import { installLoadingStyles } from './loading-real-final-v57.15';
+import AndroidCosmicBackground from './components/karyawan/dashboard/AndroidCosmicBackground';
 
 import AdminDashboard from './pages/AdminDashboard/AdminDashboard';
 import EmployeeRegister from './pages/EmployeeRegister/EmployeeRegister';
@@ -16,6 +22,13 @@ import Home from './pages/Home/Home';
 import VerifyIdCard from './pages/VerifyIdCard/VerifyIdCard';
 
 import ErrorBoundary from './components/common/ErrorBoundary';
+
+const IS_ANDROID_APP = Capacitor.getPlatform() === 'android';
+
+const applyPublicAppTheme = (theme: PublicAppTheme) => {
+  applyProjectTheme(theme, false);
+};
+
 
 type View = 'home' | 'login' | 'admin' | 'employee' | 'register' | 'reset-password' | 'verify';
 
@@ -74,11 +87,17 @@ async function resolveAccount(): Promise<{
      1. CEK AKUN HR / ADMIN
      ======================================================= */
 
-  const { data: profile } = await supabase
+  const { data: authProfile } = await supabase
     .from('hris_users')
     .select('role,status')
-    .ilike('email', email)
+    .eq('auth_user_id', user.id)
     .maybeSingle();
+
+  const profile = authProfile || (await supabase
+    .from('hris_users')
+    .select('role,status')
+    .eq('email', email)
+    .maybeSingle()).data;
 
   if (
     profile?.status === 'Aktif' &&
@@ -95,37 +114,19 @@ async function resolveAccount(): Promise<{
      2. CEK AKUN KARYAWAN
      ======================================================= */
 
+  // Employee linking is performed in a SECURITY DEFINER RPC so the browser
+  // never receives permission to rewrite identity fields directly.
+  await supabase.rpc('hris_claim_employee_account');
+
   const { data: employee } = await supabase
     .from('karyawan')
     .select(
       'id,id_karyawan,nama,email,auth_user_id,status_aktif,status_karyawan'
     )
-    .or(
-      `auth_user_id.eq.${user.id},email.ilike.${email}`
-    )
-    .limit(1)
+    .eq('auth_user_id', user.id)
     .maybeSingle();
 
   if (employee) {
-    /*
-     * Jika email akun sama dengan email master karyawan,
-     * otomatis hubungkan auth_user_id.
-     */
-
-    if (
-      !employee.auth_user_id &&
-      employee.email &&
-      employee.email.trim().toLowerCase() === email
-    ) {
-      await supabase
-        .from('karyawan')
-        .update({
-          auth_user_id: user.id,
-            foto_url: user.user_metadata?.foto_url || null,
-          })
-        .eq('id', employee.id);
-    }
-
     return {
       view: 'employee',
       role: 'Karyawan',
@@ -150,20 +151,79 @@ async function resolveAccount(): Promise<{
    ========================================================= */
 
 export default function App() {
-  const { t } = useTranslation();
+const { t } = useTranslation();
 
   useEffect(() => {
-    initializeCosmicTheme();
-    installLoadingStyles();
+    if (IS_ANDROID_APP) return;
+
+    const saved =
+      localStorage.getItem('project-tirta-web-theme-v1') ||
+      'matahari';
+
+    const allowed = [
+      'matahari',
+      'bulan',
+      'galaksi',
+      'blackhole',
+      'nebula',
+    ];
+
+    const theme = allowed.includes(saved)
+      ? saved
+      : 'matahari';
+
+    document.documentElement.dataset.webCosmicTheme = theme;
   }, []);
 
   const [view, setView] = useState<View>('home');
+
+  // =======================================================
+  // ANDROID PUBLIC THEME
+  // Hanya aktif pada halaman publik/login/register.
+  // Tidak boleh berjalan di dashboard Admin/Karyawan.
+  // =======================================================
+
+  useEffect(() => {
+    if (
+      !IS_ANDROID_APP ||
+      !['home', 'login', 'register'].includes(view)
+    ) {
+      return;
+    }
+
+    let active = true;
+
+    const refreshPublicTheme = async () => {
+      const next = await getPublicAppTheme();
+
+      if (!active) return;
+
+      applyPublicAppTheme(next);
+    };
+
+    void refreshPublicTheme();
+
+    const timer = window.setInterval(() => {
+      void refreshPublicTheme();
+    }, 15000);
+
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [view]);
   const [loginOpen, setLoginOpen] = useState(false);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const [checking, setChecking] = useState(true);
+  useEffect(() => {
+    if (!checking) {
+      document.getElementById('pt-startup-screen')?.remove();
+    }
+  }, [checking]);
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -188,7 +248,9 @@ export default function App() {
      ======================================================= */
 
   useEffect(() => {
-    void checkForAppUpdate();
+    void checkForAppUpdate().catch((error) => {
+      console.warn('App update check failed:', error);
+    });
 
     let active = true;
     let bootExpired = false;
@@ -258,11 +320,17 @@ export default function App() {
       }
 
       if (!data.session) {
-        setView('home');
-        window.location.hash = '/';
+        if (IS_ANDROID_APP) {
+          setView('login');
+          setLoginOpen(true);
+          window.location.hash = '/login';
+        } else {
+          setView('home');
+          window.location.hash = '/';
+        }
+
         window.clearTimeout(bootTimeout);
         setChecking(false);
-
         return;
       }
 
@@ -277,12 +345,12 @@ export default function App() {
       setView(account.view);
 
       if (data.session.user.id) {
-        if (account.view === 'employee') {
-          applyCosmicTheme(await getEmployeePortalTheme(), false);
-        } else if (account.view === 'admin') {
-          const adminTheme = await loadAdminThemePreference(data.session.user.id);
-          if (adminTheme) applyAdminTheme(adminTheme, false);
-          else applyCosmicTheme(await loadUserThemePreference(data.session.user.id), false);
+        if (IS_ANDROID_APP) {
+          if (account.view === 'employee') {
+            applyProjectTheme(await getEmployeePortalTheme(), false);
+          } else if (account.view === 'admin') {
+            applyProjectTheme(await loadUserThemePreference(data.session.user.id), false);
+          }
         }
       }
 
@@ -292,7 +360,20 @@ export default function App() {
       setChecking(false);
     };
 
-    void boot();
+    void boot().catch((error) => {
+      console.error('APP_BOOT_ERROR:', error);
+
+      if (!active || bootExpired) return;
+
+      window.clearTimeout(bootTimeout);
+
+      setView(IS_ANDROID_APP ? 'login' : 'home');
+      setLoginOpen(IS_ANDROID_APP);
+      setChecking(false);
+      setError('Sesi awal tidak dapat diperiksa. Silakan coba lagi.');
+
+      window.location.hash = IS_ANDROID_APP ? '/login' : '/';
+    });
 
     /* =====================================================
        AUTH STATE LISTENER
@@ -319,15 +400,24 @@ export default function App() {
              ----------------------------------------------- */
 
           if (event === 'SIGNED_OUT' || !session) {
-            setView('home');
-            setLoginOpen(false);
+            if (IS_ANDROID_APP) {
+              setView('login');
+              setLoginOpen(true);
+            } else {
+              setView('home');
+              setLoginOpen(false);
+            }
+
             setEmail('');
             setPassword('');
             setError('');
             setChecking(false);
 
-            window.location.hash = '/login';
+            if (IS_ANDROID_APP) {
+              void getPublicAppTheme().then(applyPublicAppTheme);
+            }
 
+            window.location.hash = IS_ANDROID_APP ? '/login' : '/';
             return;
           }
 
@@ -342,13 +432,11 @@ export default function App() {
 
             setView(account.view);
 
-            if (session.user.id) {
+            if (session.user.id && IS_ANDROID_APP) {
               if (account.view === 'employee') {
-                applyCosmicTheme(await getEmployeePortalTheme(), false);
+                applyProjectTheme(await getEmployeePortalTheme(), false);
               } else if (account.view === 'admin') {
-                const adminTheme = await loadAdminThemePreference(session.user.id);
-                if (adminTheme) applyAdminTheme(adminTheme, false);
-                else applyCosmicTheme(await loadUserThemePreference(session.user.id), false);
+                applyProjectTheme(await loadUserThemePreference(session.user.id), false);
               }
             }
 
@@ -415,13 +503,11 @@ export default function App() {
 
     setView(account.view);
 
-    if (data.user.id) {
+    if (data.user.id && IS_ANDROID_APP) {
       if (account.view === 'employee') {
-        applyCosmicTheme(await getEmployeePortalTheme(), false);
+        applyProjectTheme(await getEmployeePortalTheme(), false);
       } else if (account.view === 'admin') {
-        const adminTheme = await loadAdminThemePreference(data.user.id);
-        if (adminTheme) applyAdminTheme(adminTheme, false);
-        else applyCosmicTheme(await loadUserThemePreference(data.user.id), false);
+        applyProjectTheme(await loadUserThemePreference(data.user.id), false);
       }
     }
 
@@ -437,7 +523,12 @@ export default function App() {
      ======================================================= */
 
   if (checking) {
-    return <AppLoadingScreen message={t('checking_security_session')} />;
+    return (
+      <AppLoadingScreen
+        message={t('checking_security_session')}
+        android={IS_ANDROID_APP}
+      />
+    );
   }
 
   /* =======================================================
@@ -447,7 +538,9 @@ export default function App() {
   return (
     <ErrorBoundary>
 
-      <div className="app-root">
+      <div
+        className="app-root"
+      >
 
         {/* Employee Portal follows the Super Admin portal theme and has no personal theme selector. */}
 
@@ -457,7 +550,13 @@ export default function App() {
 
         {view === 'home' && (
           <Home
-            onMasuk={() => { setError(''); setLoginOpen(true); }}
+            onMasuk={() => {
+              setError('');
+              if (IS_ANDROID_APP) {
+                void getPublicAppTheme().then(applyPublicAppTheme);
+              }
+              setLoginOpen(true);
+            }}
             onRegister={() => go('register')}
           />
         )}
@@ -469,7 +568,7 @@ export default function App() {
           />
         )}
 
-        {loginOpen && view === 'home' && (
+        {loginOpen && (view === 'home' || view === 'login') && (
           <LoginScreen
             email={email}
             password={password}
@@ -477,7 +576,16 @@ export default function App() {
             setPassword={setPassword}
             onSubmit={login}
             onRegister={() => { setLoginOpen(false); go('register'); }}
-            onClose={() => { setLoginOpen(false); setError(''); }}
+            onClose={() => {
+              if (IS_ANDROID_APP) {
+                setView('login');
+                setLoginOpen(true);
+                window.location.hash = '/login';
+                return;
+              }
+              setLoginOpen(false);
+              setError('');
+            }}
             loading={loading}
             error={error}
           />
@@ -485,7 +593,12 @@ export default function App() {
 
         {view === 'reset-password' && (
           <ResetPasswordScreen
-            onDone={() => { setView('home'); setLoginOpen(true); window.history.replaceState({}, '', '/'); window.location.hash = '/'; }}
+            onDone={() => {
+            setView(IS_ANDROID_APP ? 'login' : 'home');
+            setLoginOpen(true);
+            window.history.replaceState({}, '', IS_ANDROID_APP ? '/login' : '/');
+            window.location.hash = IS_ANDROID_APP ? '/login' : '/';
+          }}
           />
         )}
 
@@ -497,7 +610,11 @@ export default function App() {
           <div className="public-page">
 
             <EmployeeRegister
-              onBack={() => { setView('home'); setLoginOpen(true); window.location.hash = '/'; }}
+              onBack={() => {
+                setView(IS_ANDROID_APP ? 'login' : 'home');
+                setLoginOpen(true);
+                window.location.hash = IS_ANDROID_APP ? '/login' : '/';
+              }}
             />
 
           </div>
@@ -526,21 +643,24 @@ export default function App() {
 }
 
 
-function AppLoadingScreen({ message }: { message: string }) {
+function AppLoadingScreen({
+  message,
+  android = false,
+}: {
+  message: string;
+  android?: boolean;
+}) {
   return (
     <main
-      className="app-loading-screen"
+      className={`app-loading-screen${android ? ' pt-cosmic-auth' : ''}`}
       aria-label={message || 'Loading'}
       role="status"
-      aria-live="polite"
     >
-      <section className="app-loading-card">
-        <img
-          className="app-loading-logo"
-          src={moonLogo}
-          alt="Project by Tirta"
-        />
-      </section>
+      <div className="pt-loading-brand">
+        <img src={moonLogo} alt="Project by Tirta" />
+        <strong>Project by Tirta</strong>
+        <span>Human Resources Information System</span>
+      </div>
     </main>
   );
 }
@@ -646,8 +766,13 @@ function LoginScreen({
   };
 
   return (
-    <main className="unified-login-page modal-overlay" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <section className="unified-login-card login-modal-card">
+    <main
+      className={`unified-login-page${IS_ANDROID_APP ? ' pt-cosmic-auth' : ' pt-web-cosmic-auth modal-overlay'}`}
+      onMouseDown={e =>
+{ if (e.target === e.currentTarget) onClose(); }}
+    >
+      {<AndroidCosmicBackground />}
+      <section className={`unified-login-card login-modal-card${IS_ANDROID_APP ? ' pt-auth-card' : ''}`}>
         <button type="button" className="login-modal-close" onClick={onClose} aria-label={t('close')}>×</button>
 
         {/* =================================================
@@ -674,8 +799,7 @@ function LoginScreen({
             </strong>
 
             <small>
-              Human Resources Information System
-            </small>
+              {t('human_resources_information_system')}</small>
 
           </div>
 
@@ -690,7 +814,7 @@ function LoginScreen({
           <span>{t('secure_access')}</span>
 
           <h1>
-             Project by Tirta
+             {t('legacy_masuk_ke_akun_anda')}
           </h1>
 
           <p>{t('login_description')}</p>

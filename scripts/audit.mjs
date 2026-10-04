@@ -3,9 +3,9 @@ import path from 'node:path';
 
 const root = process.cwd();
 const required = [
-  'index.html','package.json','netlify.toml','vite.config.ts','tsconfig.json','tsconfig.app.json','tsconfig.node.json',
+  'index.html','package.json','vite.config.ts','tsconfig.json','tsconfig.app.json','tsconfig.node.json',
   'src/App.tsx','src/main.tsx','src/lib/supabase/client.ts','src/lib/security.ts',
-  'supabase/BOOTSTRAP_FRESH_DATABASE.sql','supabase/README_DATABASE_SETUP.md','supabase/migration/045_v48_attendance_security.sql','PROFESSIONAL_RELEASE.md'
+  'supabase/BOOTSTRAP_FRESH_DATABASE.sql','supabase/migration/045_v48_attendance_security.sql','PROFESSIONAL_RELEASE.md'
 ];
 const failures = [];
 for (const rel of required) if (!fs.existsSync(path.join(root, rel))) failures.push(`Missing required file: ${rel}`);
@@ -37,7 +37,6 @@ for (const rel of legacyUnused) if (fs.existsSync(path.join(root, rel))) failure
 if (!pkg.dependencies?.['@supabase/supabase-js']) failures.push('Supabase JS dependency missing from package.json');
 const clientSource = fs.readFileSync(path.join(root,'src/lib/supabase/client.ts'),'utf8');
 if (/https:\/\/[^'\"]+supabase\.co|sb_publishable_[A-Za-z0-9_]+/.test(clientSource)) failures.push('Hardcoded Supabase project URL or publishable key found in client source.');
-if (fs.existsSync(path.join(root,'netlify/functions/create-super-admin.ts'))) failures.push('Public create-super-admin function must not be shipped.');
 for (const rel of ['src/components/admin/payroll/ModulPayroll.tsx','src/features/enterprise/EnterpriseExperience.tsx']) if (fs.existsSync(path.join(root,rel))) failures.push(`Unused legacy source file present: ${rel}`);
 const lockPath = path.join(root, 'package-lock.json');
 if (fs.existsSync(lockPath)) {

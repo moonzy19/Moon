@@ -10,13 +10,11 @@ android/capacitor-cordova-android-plugins/build/
 *.apk
 *.aab
 
-# Local Netlify folder
-.netlify
 
 # Local backup files
 *.bak-*
 *.backup-*
 
-# Local backup files
-*.bak-*
-*.backup-*
+.env
+.env.*
+!.env.example

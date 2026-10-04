@@ -1,0 +1,724 @@
+/* PROJECT BY TIRTA — ANDROID COSMIC MULTI-LAYER BACKGROUND
+   Only the fixed background layers animate. #root/UI never transforms. */
+
+body.pt-android-cosmic-mode {
+  overflow-x: hidden ;
+  background: #02050a ;
+}
+
+body.pt-android-cosmic-mode #root {
+  position: relative ;
+  z-index: 10 ;
+  min-height: 100dvh ;
+  background: transparent ;
+}
+
+body.pt-android-cosmic-mode .employee-portal.pt-cosmic-shell.pt-android-cosmic-active {
+  position: relative ;
+  z-index: 11 ;
+  background: transparent ;
+  background-color: transparent ;
+  background-image: none ;
+  filter: none ;
+  backdrop-filter: none ;
+  -webkit-backdrop-filter: none ;
+}
+
+body.pt-android-cosmic-mode .employee-portal.pt-cosmic-shell.pt-android-cosmic-active::before,
+body.pt-android-cosmic-mode .employee-portal.pt-cosmic-shell.pt-android-cosmic-active::after {
+  content: none ;
+  display: none ;
+}
+
+.pt-android-cosmic-bg {
+  position: fixed ;
+  inset: 0 ;
+  width: 100vw ;
+  height: 100dvh ;
+  z-index: 0 ;
+  pointer-events: none ;
+  overflow: hidden ;
+  isolation: isolate ;
+  background: #02050a ;
+}
+
+/* Layer 1: sharp artwork. Only this layer gets slow camera movement. */
+.pt-android-cosmic-art {
+  position: absolute;
+  inset: -3%;
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+  transform: scale(1.035) translate3d(0,0,0);
+  animation: pt-cosmic-art-drift 30s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+/* Layer 2: deterministic CSS star field, independent of the artwork. */
+.pt-android-cosmic-stars {
+  position: absolute;
+  inset: -20%;
+  pointer-events: none;
+  opacity: .68;
+  background-repeat: repeat;
+  background-size: 170px 170px;
+  will-change: transform;
+}
+
+.pt-stars-a {
+  background-image:
+    radial-gradient(circle at 18px 26px, rgba(255,255,255,.92) 0 1.2px, transparent 1.8px),
+    radial-gradient(circle at 91px 67px, rgba(180,220,255,.80) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 144px 118px, rgba(255,255,255,.72) 0 1.3px, transparent 1.9px),
+    radial-gradient(circle at 53px 145px, rgba(255,220,170,.68) 0 1px, transparent 1.6px);
+  animation: pt-cosmic-stars-a 46s linear infinite;
+}
+
+.pt-stars-b {
+  inset: -35%;
+  opacity: .34;
+  background-size: 260px 260px;
+  background-image:
+    radial-gradient(circle at 42px 75px, rgba(255,255,255,.9) 0 1.4px, transparent 2px),
+    radial-gradient(circle at 186px 39px, rgba(120,205,255,.9) 0 1.2px, transparent 2px),
+    radial-gradient(circle at 223px 211px, rgba(255,150,225,.8) 0 1.4px, transparent 2px);
+  animation: pt-cosmic-stars-b 68s linear infinite reverse;
+}
+
+/* Layer 3: slow dust sweep. No blur/filter, so the artwork stays crisp. */
+.pt-android-cosmic-dust {
+  position: absolute;
+  inset: -15%;
+  opacity: .24;
+  background:
+    radial-gradient(ellipse at 18% 30%, rgba(255,255,255,.10), transparent 22%),
+    radial-gradient(ellipse at 78% 65%, rgba(120,210,255,.10), transparent 25%),
+    radial-gradient(ellipse at 50% 90%, rgba(255,170,220,.08), transparent 24%);
+  mix-blend-mode: screen;
+  animation: pt-cosmic-dust 24s ease-in-out infinite alternate;
+  will-change: transform, opacity;
+}
+
+/* Layer 4: theme-specific energy field. */
+.pt-android-cosmic-energy {
+  position: absolute;
+  inset: -18%;
+  opacity: .24;
+  background: radial-gradient(circle at 72% 32%, var(--pt-cosmic-energy, rgba(120,200,255,.24)) 0 4%, transparent 23%);
+  animation: pt-cosmic-energy-pulse 9s ease-in-out infinite alternate;
+  will-change: transform, opacity;
+}
+
+/* Layer 5: readable foreground vignette. */
+.pt-android-cosmic-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,.06) 0%, rgba(0,0,0,.02) 38%, rgba(0,0,0,.38) 100%),
+    radial-gradient(circle at 50% 35%, transparent 0 42%, rgba(0,0,0,.24) 100%);
+}
+
+.pt-theme-sun { --pt-cosmic-energy: rgba(255,190,75,.32); }
+.pt-theme-moon { --pt-cosmic-energy: rgba(115,195,255,.28); }
+.pt-theme-galaxy { --pt-cosmic-energy: rgba(205,110,255,.32); }
+.pt-theme-blackhole { --pt-cosmic-energy: rgba(35,220,255,.34); }
+.pt-theme-nebula { --pt-cosmic-energy: rgba(255,95,210,.34); }
+
+/* Extra theme motion: each remains behind the UI. */
+.pt-theme-sun .pt-android-cosmic-energy {
+  background:
+    radial-gradient(circle at 76% 30%, rgba(255,195,75,.34) 0 5%, transparent 24%),
+    radial-gradient(circle at 22% 72%, rgba(255,120,45,.16), transparent 24%);
+  animation-duration: 8s;
+}
+
+.pt-theme-moon .pt-android-cosmic-energy {
+  background:
+    radial-gradient(circle at 78% 27%, rgba(130,205,255,.30) 0 6%, transparent 25%),
+    radial-gradient(circle at 30% 62%, rgba(90,150,255,.12), transparent 22%);
+  animation-duration: 11s;
+}
+
+.pt-theme-galaxy .pt-android-cosmic-energy {
+  background:
+    conic-gradient(from 20deg at 73% 30%, transparent, rgba(210,100,255,.18), transparent 24%, rgba(70,130,255,.16), transparent 48%);
+  animation: pt-cosmic-galaxy-spin 55s linear infinite;
+}
+
+.pt-theme-blackhole .pt-android-cosmic-energy {
+  inset: -5%;
+  background:
+    radial-gradient(circle at 72% 31%, transparent 0 8%, rgba(35,220,255,.12) 9%, transparent 13%),
+    conic-gradient(from 0deg at 72% 31%, transparent 0 8%, rgba(255,190,70,.24) 11%, rgba(30,210,255,.26) 15%, transparent 20% 100%);
+  animation: pt-cosmic-blackhole-spin 32s linear infinite;
+}
+
+.pt-theme-nebula .pt-android-cosmic-energy {
+  background:
+    radial-gradient(ellipse at 68% 28%, rgba(255,100,215,.26), transparent 27%),
+    radial-gradient(ellipse at 30% 70%, rgba(90,150,255,.18), transparent 28%);
+  animation-duration: 10s;
+}
+
+
+@keyframes pt-cosmic-stars-a {
+  from { transform: translate3d(0,0,0); }
+  to   { transform: translate3d(-4%,2%,0); }
+}
+
+@keyframes pt-cosmic-stars-b {
+  from { transform: translate3d(0,0,0) scale(1); }
+  to   { transform: translate3d(5%,-3%,0) scale(1.02); }
+}
+
+@keyframes pt-cosmic-dust {
+  0% { transform: translate3d(-1%,1%,0) scale(1); opacity: .16; }
+  100% { transform: translate3d(2%,-1%,0) scale(1.035); opacity: .30; }
+}
+
+@keyframes pt-cosmic-energy-pulse {
+  0% { transform: scale(.96); opacity: .16; }
+  100% { transform: scale(1.06); opacity: .34; }
+}
+
+@keyframes pt-cosmic-galaxy-spin {
+  from { transform: rotate(0deg) scale(1); opacity: .18; }
+  to   { transform: rotate(360deg) scale(1.03); opacity: .30; }
+}
+
+@keyframes pt-cosmic-blackhole-spin {
+  from { transform: rotate(0deg) scale(1); }
+  to   { transform: rotate(360deg) scale(1.02); }
+}
+
+/* Android performance: preserve 60fps by animating only compositor-friendly layers. */
+.pt-android-cosmic-art,
+.pt-android-cosmic-stars,
+.pt-android-cosmic-dust,
+.pt-android-cosmic-energy {
+  pointer-events: none ;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pt-android-cosmic-art,
+  .pt-android-cosmic-stars,
+  .pt-android-cosmic-dust,
+  .pt-android-cosmic-energy {
+    animation: none ;
+  }
+}
+
+/* =========================================================
+   PROJECT BY TIRTA
+   ANDROID COSMIC BACKGROUND — FINAL AUTHORITY
+   Background bergerak, UI tetap diam
+   ========================================================= */
+
+.pt-android-cosmic-bg {
+  position: fixed ;
+  inset: 0 ;
+  width: 100vw ;
+  height: 100vh ;
+  overflow: hidden ;
+  pointer-events: none ;
+  z-index: 0 ;
+
+  background:
+    #020611 ;
+}
+
+/* ARTWORK UTAMA */
+.pt-android-cosmic-bg-art {
+  position: absolute ;
+  inset: -6% ;
+
+  background-image: var(--pt-cosmic-art) ;
+  background-repeat: no-repeat ;
+  background-position: center ;
+  background-size: cover ;
+
+  transform: translate3d(0,0,0) scale(1.04) ;
+  transform-origin: center ;
+
+  opacity: .98 ;
+
+  animation:
+    pt-cosmic-art-drift
+    22s
+    ease-in-out
+    infinite
+    alternate ;
+
+  will-change: transform ;
+}
+
+/* GLOW TERPISAH — hanya background */
+.pt-android-cosmic-bg-glow {
+  position: absolute ;
+  inset: -20% ;
+
+  background:
+    radial-gradient(
+      circle at 72% 18%,
+      rgba(88,190,255,.20),
+      transparent 24%
+    ),
+    radial-gradient(
+      circle at 20% 76%,
+      rgba(116,80,255,.12),
+      transparent 28%
+    ) ;
+
+  mix-blend-mode: screen ;
+  opacity: .72 ;
+
+  animation:
+    pt-cosmic-glow-drift
+    18s
+    ease-in-out
+    infinite
+    alternate ;
+
+  will-change: transform, opacity ;
+}
+
+/* BINTANG */
+.pt-android-cosmic-bg-stars {
+  position: absolute ;
+  inset: 0 ;
+
+  background-image:
+    radial-gradient(
+      circle at 12% 20%,
+      rgba(255,255,255,.82) 0 1px,
+      transparent 1.6px
+    ),
+    radial-gradient(
+      circle at 32% 38%,
+      rgba(210,240,255,.65) 0 1px,
+      transparent 1.7px
+    ),
+    radial-gradient(
+      circle at 58% 18%,
+      rgba(255,255,255,.72) 0 1px,
+      transparent 1.6px
+    ),
+    radial-gradient(
+      circle at 81% 31%,
+      rgba(190,225,255,.76) 0 1px,
+      transparent 1.7px
+    ),
+    radial-gradient(
+      circle at 67% 71%,
+      rgba(255,255,255,.58) 0 1px,
+      transparent 1.6px
+    ),
+    radial-gradient(
+      circle at 23% 82%,
+      rgba(194,225,255,.60) 0 1px,
+      transparent 1.7px
+    );
+
+  opacity: .68 ;
+
+  animation:
+    pt-cosmic-stars
+    11s
+    ease-in-out
+    infinite
+    alternate ;
+}
+
+/* ORBIT / ENERGY FLOW */
+.pt-android-cosmic-bg-orbit {
+  position: absolute ;
+  width: 160vw ;
+  height: 55vw ;
+
+  left: -30vw ;
+  bottom: -15vw ;
+
+  border-radius: 50% ;
+
+  border:
+    1px solid
+    rgba(110,220,255,.20) ;
+
+  box-shadow:
+    0 0 35px rgba(85,210,255,.10),
+    inset 0 0 35px rgba(214,174,88,.05) ;
+
+  transform: rotate(-8deg) ;
+
+  animation:
+    pt-cosmic-orbit
+    28s
+    linear
+    infinite ;
+
+  will-change: transform ;
+}
+
+/* VIGNETTE */
+.pt-android-cosmic-bg-vignette {
+  position: absolute ;
+  inset: 0 ;
+
+  background:
+    radial-gradient(
+      ellipse at center,
+      transparent 42%,
+      rgba(0,0,0,.28) 100%
+    ) ;
+
+  pointer-events: none ;
+}
+
+/* =========================================================
+   5 IDENTITAS TEMA
+   ========================================================= */
+
+html[data-cosmic-theme="sun"] .pt-android-cosmic-bg-glow {
+  background:
+    radial-gradient(
+      circle at 78% 16%,
+      rgba(255,192,82,.34),
+      transparent 23%
+    ),
+    radial-gradient(
+      circle at 18% 80%,
+      rgba(255,122,45,.12),
+      transparent 26%
+    ) ;
+}
+
+html[data-cosmic-theme="moon"] .pt-android-cosmic-bg-glow {
+  background:
+    radial-gradient(
+      circle at 76% 14%,
+      rgba(180,220,255,.28),
+      transparent 23%
+    ),
+    radial-gradient(
+      circle at 16% 74%,
+      rgba(71,143,255,.14),
+      transparent 28%
+    ) ;
+}
+
+html[data-cosmic-theme="galaxy"] .pt-android-cosmic-bg-glow {
+  background:
+    radial-gradient(
+      circle at 72% 18%,
+      rgba(190,115,255,.34),
+      transparent 24%
+    ),
+    radial-gradient(
+      circle at 24% 72%,
+      rgba(80,120,255,.20),
+      transparent 28%
+    ) ;
+}
+
+html[data-cosmic-theme="blackhole"] .pt-android-cosmic-bg-glow {
+  background:
+    radial-gradient(
+      circle at 75% 16%,
+      rgba(90,210,255,.20),
+      transparent 19%
+    ),
+    radial-gradient(
+      circle at 76% 16%,
+      rgba(255,174,70,.12),
+      transparent 30%
+    ) ;
+}
+
+html[data-cosmic-theme="nebula"] .pt-android-cosmic-bg-glow {
+  background:
+    radial-gradient(
+      circle at 72% 18%,
+      rgba(255,111,202,.32),
+      transparent 24%
+    ),
+    radial-gradient(
+      circle at 25% 70%,
+      rgba(86,151,255,.20),
+      transparent 29%
+    ) ;
+}
+
+/* =========================================================
+   ANIMASI BACKGROUND SAJA
+   UI TIDAK IKUT BERGERAK
+   ========================================================= */
+
+@keyframes pt-cosmic-art-drift {
+  0% {
+    transform: translate3d(-1%,0,0) scale(1.04);
+  }
+
+  50% {
+    transform: translate3d(.8%,-.5%,0) scale(1.06);
+  }
+
+  100% {
+    transform: translate3d(1.2%,.7%,0) scale(1.08);
+  }
+}
+
+@keyframes pt-cosmic-glow-drift {
+  0% {
+    transform: translate3d(-2%,-1%,0) scale(1);
+    opacity: .55;
+  }
+
+  50% {
+    transform: translate3d(1%,1%,0) scale(1.06);
+    opacity: .75;
+  }
+
+  100% {
+    transform: translate3d(2%,-1%,0) scale(1.10);
+    opacity: .62;
+  }
+}
+
+@keyframes pt-cosmic-stars {
+  from {
+    opacity: .42;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: .78;
+    transform: scale(1.015);
+  }
+}
+
+@keyframes pt-cosmic-orbit {
+  from {
+    transform: rotate(-8deg) translate3d(-1%,0,0);
+  }
+
+  to {
+    transform: rotate(-4deg) translate3d(2%,-2%,0);
+  }
+}
+
+/* =========================================================
+   ANDROID PORTAL — BACKGROUND HARUS TRANSPARAN
+   ========================================================= */
+
+.pt-android-cosmic-active,
+.pt-android-cosmic-active.employee-portal,
+.pt-android-cosmic-active .employee-page,
+.pt-android-cosmic-active .employee-topbar {
+  background: transparent ;
+  background-color: transparent ;
+  background-image: none ;
+}
+
+/* =========================================================
+   SEMUA PORTAL CARD ANDROID → FLAT
+   CONTENT / LOGIC TETAP ADA
+   ========================================================= */
+
+.pt-android-cosmic-active .portal-card,
+.pt-android-cosmic-active .pt-page-card,
+.pt-android-cosmic-active .info-card,
+.pt-android-cosmic-active .table-card,
+.pt-android-cosmic-active .payslip-card,
+.pt-android-cosmic-active .attendance-card {
+  background: transparent ;
+  border: 0 ;
+  box-shadow: none ;
+  border-radius: 0 ;
+}
+
+/* Jangan hilangkan struktur internal */
+.pt-android-cosmic-active .portal-card > *,
+.pt-android-cosmic-active .pt-page-card > * {
+  position: relative;
+}
+
+/* =========================================================
+   PROFILE — INFO DITENGAH
+   ========================================================= */
+
+.pt-android-cosmic-active .portal-profile {
+  justify-content: center ;
+  text-align: center ;
+}
+
+.pt-android-cosmic-active .portal-profile > div:last-child {
+  text-align: center ;
+}
+
+.pt-android-cosmic-active .portal-profile h3,
+.pt-android-cosmic-active .portal-profile p {
+  text-align: center ;
+}
+
+.pt-android-cosmic-active .info-list {
+  width: min(520px,100%) ;
+  margin-left: auto ;
+  margin-right: auto ;
+}
+
+.pt-android-cosmic-active .info-list > div {
+  display: flex ;
+  flex-direction: column ;
+  align-items: center ;
+  justify-content: center ;
+  gap: 4px ;
+  text-align: center ;
+  border: 0 ;
+  background: transparent ;
+  box-shadow: none ;
+}
+
+.pt-android-cosmic-active .info-list > div small,
+.pt-android-cosmic-active .info-list > div b {
+  text-align: center ;
+  width: 100% ;
+}
+
+/* =========================================================
+   LOGIN — SAMA DENGAN BERANDA
+   ========================================================= */
+
+.pt-cosmic-auth {
+  position: relative ;
+  isolation: isolate ;
+  min-height: 100dvh ;
+
+  background: transparent ;
+  background-image: none ;
+
+  overflow: hidden ;
+}
+
+/* Hanya form login yang menjadi panel */
+.pt-cosmic-auth .login-modal-card {
+  position: relative ;
+  z-index: 5 ;
+
+  width: min(360px, calc(100vw - 32px)) ;
+  max-width: 360px ;
+
+  margin: auto ;
+  padding: 20px 18px 18px ;
+
+  background:
+    rgba(5,15,30,.72) ;
+
+  border:
+    1px solid
+    rgba(214,174,88,.48) ;
+
+  border-radius: 16px ;
+
+  box-shadow:
+    0 18px 50px rgba(0,0,0,.34) ;
+
+  backdrop-filter: none ;
+  -webkit-backdrop-filter: none ;
+}
+
+/* Logo TIDAK memakai card */
+.pt-cosmic-auth .unified-logo {
+  width: 54px ;
+  height: 54px ;
+
+  margin: 0 auto 10px ;
+
+  background: transparent ;
+  border: 0 ;
+  border-radius: 0 ;
+  box-shadow: none ;
+}
+
+.pt-cosmic-auth .unified-brand {
+  justify-content: center ;
+  text-align: center ;
+}
+
+.pt-cosmic-auth .unified-brand > div:last-child {
+  text-align: center ;
+}
+
+.pt-cosmic-auth .unified-login-heading {
+  text-align: center ;
+}
+
+/* =========================================================
+   LOGIN — HANYA SATU PANEL, TANPA CARD TAMBAHAN
+   ========================================================= */
+
+.pt-cosmic-auth .unified-brand,
+.pt-cosmic-auth .unified-login-heading,
+.pt-cosmic-auth .unified-login-form,
+.pt-cosmic-auth .unified-login-error {
+  background: transparent ;
+  border: 0 ;
+  box-shadow: none ;
+}
+
+/* tombol / input tetap berfungsi */
+.pt-cosmic-auth .unified-login-form input {
+  background: rgba(8,24,44,.82) ;
+}
+
+/* Mobile login lebih compact */
+@media (max-width: 700px) {
+  .pt-cosmic-auth .login-modal-card {
+    width: min(340px, calc(100vw - 28px)) ;
+    padding: 17px 15px 16px ;
+    border-radius: 14px ;
+  }
+
+  .pt-cosmic-auth .unified-logo {
+    width: 48px ;
+    height: 48px ;
+  }
+}
+
+/* Reduced motion hanya menghentikan animasi, bukan layout */
+@media (prefers-reduced-motion: reduce) {
+  .pt-android-cosmic-bg-art,
+  .pt-android-cosmic-bg-glow,
+  .pt-android-cosmic-bg-stars,
+  .pt-android-cosmic-bg-orbit {
+    animation: none ;
+  }
+}
+
+
+/* FINAL MOTION OVERRIDE */
+.pt-android-cosmic-bg-art {
+  animation: pt-cosmic-art-drift 30s ease-in-out infinite alternate ;
+}
+
+.pt-android-cosmic-bg-glow {
+  animation: pt-cosmic-glow-stable 26s ease-in-out infinite alternate ;
+}
+
+.pt-android-cosmic-bg-stars {
+  animation: pt-cosmic-stars-stable 28s linear infinite alternate ;
+}
+
+.pt-android-cosmic-bg-orbit {
+  animation: pt-cosmic-orbit 28s linear infinite alternate ;
+}
+
+/* FINAL JS MOTION AUTHORITY */
+.pt-android-cosmic-bg-art,
+.pt-android-cosmic-bg-glow,
+.pt-android-cosmic-bg-stars,
+.pt-android-cosmic-bg-orbit {
+  animation: none ;
+}
+
+.pt-android-cosmic-bg-glow { opacity: .62 ; }
+.pt-android-cosmic-bg-stars { opacity: .58 ; }

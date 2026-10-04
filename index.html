@@ -18,6 +18,24 @@
     <title>Project by Tirta | People Platform</title>
   </head>
   <body>
+    <div id="pt-startup-screen">
+  <img src="/src/assets/moon-logo.png" alt="Project by Tirta">
+  <strong>Project by Tirta</strong>
+  <span>Human Resources Information System</span>
+</div>
+<style>
+#pt-startup-screen{
+  position:fixed;inset:0;z-index:999999;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:8px;background:#02050a;color:white;
+  font-family:Arial,sans-serif
+}
+#pt-startup-screen img{width:82px;height:82px;object-fit:contain}
+#pt-startup-screen strong{font-size:22px}
+#pt-startup-screen span{font-size:13px;color:#aeb7c5}
+</style>
+
 <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

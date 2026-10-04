@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import AndroidCosmicBackground from '../dashboard/AndroidCosmicBackground';
 import moonLogo from '../../../assets/moon-logo.png';
-import cosmicBackground from '../../../assets/cosmic-background.svg';
 import { supabase } from '../../../lib/supabase/client';
 import { useTranslation } from '../../../locales/LanguageContext';
 
@@ -59,7 +58,7 @@ export default function RegistrasiKaryawan({ onBack }: RegistrasiKaryawanProps) 
 
     const file = e.target.files[0];
 
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    if (!file.type.startsWith('image/')) {
       setError('file_photo_error');
       return;
     }
@@ -202,30 +201,14 @@ export default function RegistrasiKaryawan({ onBack }: RegistrasiKaryawanProps) 
       // Ini penting karena signUp() dapat berhasil tanpa session
       // ketika email confirmation aktif.
       if (photoFile) {
-        const fileExt = photoFile.type === 'image/png'
-          ? 'png'
-          : photoFile.type === 'image/webp'
-            ? 'webp'
-            : 'jpg';
-
-        const makeUuidFallback = () => {
-          const bytes = new Uint8Array(16);
-          if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
-            crypto.getRandomValues(bytes);
-          } else {
-            for (let i = 0; i < bytes.length; i += 1) bytes[i] = Math.floor(Math.random() * 256);
-          }
-          bytes[6] = (bytes[6] & 0x0f) | 0x40;
-          bytes[8] = (bytes[8] & 0x3f) | 0x80;
-          const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
-          return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-        };
+        const fileExt =
+          photoFile.name.split('.').pop()?.toLowerCase() || 'jpg';
 
         const safeUuid =
           typeof crypto !== 'undefined' &&
           typeof crypto.randomUUID === 'function'
             ? crypto.randomUUID()
-            : makeUuidFallback();
+            : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
         const photoPath = `registration/${safeUuid}.${fileExt}`;
 
@@ -311,7 +294,6 @@ export default function RegistrasiKaryawan({ onBack }: RegistrasiKaryawanProps) 
     return (
       <div
       className={`registration-page${IS_ANDROID_APP ? ' pt-cosmic-register' : ''}`}
-      style={IS_ANDROID_APP ? { backgroundImage: `url(${cosmicBackground})` } : undefined}
     >
         <AndroidCosmicBackground />
         <div className="registration-success">
@@ -341,7 +323,7 @@ export default function RegistrasiKaryawan({ onBack }: RegistrasiKaryawanProps) 
   }
 
   return (
-    <div className="registration-page pt-cosmic-register">
+    <div className={`registration-page${IS_ANDROID_APP ? ' pt-cosmic-register' : ''}`}>
         <AndroidCosmicBackground />
       <div className="registration-shell">
 

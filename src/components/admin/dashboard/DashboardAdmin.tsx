@@ -1,5 +1,5 @@
 import PayrollIndonesiaV23 from '../payroll/PayrollIndonesiaV23';
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState, useRef, type FormEvent, type ReactNode, type CSSProperties } from 'react';
 import { isSupabaseConfigured, supabase } from '../../../lib/supabase/client';
 import { signIn, signOut } from '../../../lib/auth';
 import { rupiah as money } from '../../../lib/hris';
@@ -19,15 +19,24 @@ import EnterpriseRoadmapV26V35 from '../enterprise/EnterpriseRoadmapV26V35';
 import ProfessionalSuite from '../enterprise/ProfessionalSuite';
 import moonLogo from '../../../assets/moon-logo.png';
 import IDCardModule from '../employee/IDCardModule';
-import AICenter from './AICenter';
+import SiDebarFloatingNavigator from '../../common/SiDebarFloatingNavigator';
 
-import { useTranslation } from '../../../locales/LanguageContext';
+import { SUPPORTED_LANGUAGES, useTranslation } from '../../../locales/LanguageContext';
 import { appAlert, appConfirm, appPrompt } from '../../../lib/app-dialog';
 import AdminAnnouncementManager from '../../../features/announcements/AdminAnnouncementManager';
 import type { Announcement } from '../../../features/announcements/types';
 import AttendanceUnified from './AttendanceUnified';
-import { applyCosmicTheme, applyAdminTheme, getCosmicTheme, getAdminTheme, COSMIC_THEMES, ADMIN_THEMES, type CosmicThemeId, type AdminThemeId } from '../../../theme/professionalTheme';
-import { loadUserThemePreference, saveUserThemePreference, setEmployeePortalTheme, saveCustomThemeCache, loadAdminThemePreference, saveAdminThemePreference, clearAdminThemePreference } from '../../../lib/userPreferences';
+import { getCosmicTheme, COSMIC_THEMES, type CosmicThemeId } from '../../../theme/professionalTheme';
+import AICenter from './AICenter';
+import {
+  loadUserThemePreference,
+  saveUserThemePreference,
+  getPublicAppTheme,
+  applyProjectTheme,
+  setEmployeePortalTheme,
+  setPublicAppTheme,
+  saveCustomThemeCache
+} from '../../../lib/userPreferences';
 
 type Karyawan = {
   id: string;
@@ -54,10 +63,11 @@ type Karyawan = {
   auth_user_id?: string | null;
   email_terverifikasi?: boolean;
   foto_url?: string | null;
+  bpjs_kesehatan?: string | null;
+  bpjs_ketenagakerjaan?: string | null;
+  bpjs_kesehatan_card_path?: string | null;
+  bpjs_ketenagakerjaan_card_path?: string | null;
   created_at?: string;
-  tanggal_keluar?: string | null;
-  alasan_keluar?: string | null;
-  alasan_keluar_kode?: string | null;
 };
 
 interface Absensi {
@@ -86,17 +96,25 @@ interface Absensi {
   keterangan?: string | null;
 }
 
+type SidebarSection = {
+  key: string;
+  title: string;
+  items: Array<[MenuKey, string, string]>;
+};
+
 type MenuKey =
-  | 'overview' | 'ai-center' | 'employees' | 'employee-new' | 'employee-inactive' | 'employee-360' | 'employee-add' | 'id-card' | 'organization' | 'hr-operations'
+  | 'overview' | 'employees' | 'employee-new' | 'employee-inactive' | 'employee-360' | 'employee-add' | 'id-card' | 'organization' | 'hr-operations'
   | 'attendance' | 'attendance-today' | 'late' | 'leave' | 'overtime' | 'selfie' | 'gps'
   | 'schedule' | 'shift' | 'holiday' | 'leave-request' | 'leave-balance' | 'approvals'
   | 'payroll' | 'production-hr' | 'payroll-engine' | 'payroll-production-v22' | 'payroll-components' | 'payroll-overtime' | 'payslip'
   | 'performance' | 'kpi' | 'recruitment-v25' | 'recruitment' | 'candidates'
   | 'reports' | 'settings' | 'roles' | 'audit' | 'notifications' | 'feedback' | 'announcements' | 'system-health'
-  | 'professional-suite' | 'enterprise-v20' | 'security-v21' | 'payroll-indonesia-v23'
+  | 'professional-suite' | 'ai-center' | 'enterprise-v20' | 'security-v21' | 'payroll-indonesia-v23'
   | `enterprise-v${26 | 27 | 28 | 29 | 30 | 31 | 32 | 33 | 34 | 35}`;
 
 const isoToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
+
+const REPORT_SUBPAGE_KEYS: MenuKey[] = ['attendance','schedule','shift','holiday','payroll','payroll-components','payroll-overtime','payslip','performance','kpi','recruitment-v25','recruitment','candidates'];
 
 const rolePermissions: Record<string, string[]> = {
   'Super Admin': ['*'],
@@ -107,23 +125,24 @@ const rolePermissions: Record<string, string[]> = {
   'Karyawan': []
 };
 
-const menuGroup = (key: MenuKey) => 
-  ['ai-center', 'professional-suite'].includes(key) ? 'system' : 
-  ['employees', 'employee-new', 'employee-inactive', 'id-card', 'employee-360', 'employee-add', 'organization'].includes(key) ? 'people' :
-  ['attendance', 'attendance-today', 'late', 'leave', 'overtime', 'selfie'].includes(key) ? 'attendance' : 
-  ['schedule', 'shift', 'holiday'].includes(key) ? 'schedule' : 
-  ['leave-request', 'leave-balance', 'approvals'].includes(key) ? 'leave' : 
-  ['payroll', 'payroll-components', 'payroll-overtime', 'payslip', 'production-hr', 'payroll-engine', 'payroll-production-v22'].includes(key) ? 'payroll' : 
-  ['performance', 'kpi'].includes(key) ? 'talent' : 
-  ['recruitment', 'candidates', 'recruitment-v25'].includes(key) ? 'recruitment' : 
-  ['enterprise-v26', 'enterprise-v27', 'enterprise-v28', 'enterprise-v29', 'enterprise-v30', 'enterprise-v31', 'enterprise-v32', 'enterprise-v33', 'enterprise-v34', 'enterprise-v35'].includes(key) ? 'system' : 
-  key === 'reports' ? 'reports' : 
-  key === 'settings' ? 'settings' : 
-  key === 'roles' ? 'roles' : 
-  key === 'audit' ? 'audit' : 
-  key === 'notifications' ? 'notifications' : 
-  key === 'system-health' ? 'system' : 
-  (key === 'enterprise-v26' || key === 'payroll-indonesia-v23' || key === 'security-v21') ? 'system' : 'overview';
+const menuGroup = (key: MenuKey) =>
+  ['professional-suite', 'ai-center', 'enterprise-v35'].includes(key) ? 'system' :
+  ['employees', 'employee-new', 'employee-inactive', 'id-card', 'employee-360', 'employee-add', 'organization', 'enterprise-v26', 'enterprise-v30', 'enterprise-v33'].includes(key) ? 'people' :
+  ['attendance', 'attendance-today', 'late', 'leave', 'overtime', 'selfie'].includes(key) ? 'attendance' :
+  ['schedule', 'shift', 'holiday'].includes(key) ? 'schedule' :
+  ['leave-request', 'leave-balance', 'approvals', 'enterprise-v20', 'enterprise-v32'].includes(key) ? 'leave' :
+  ['payroll', 'payroll-components', 'payroll-overtime', 'payslip', 'production-hr', 'payroll-engine', 'payroll-production-v22', 'payroll-indonesia-v23'].includes(key) ? 'payroll' :
+  ['performance', 'kpi', 'enterprise-v27'].includes(key) ? 'talent' :
+  ['recruitment', 'candidates', 'recruitment-v25'].includes(key) ? 'recruitment' :
+  ['enterprise-v28'].includes(key) ? 'reports' :
+  ['enterprise-v29'].includes(key) ? 'notifications' :
+  ['enterprise-v31', 'enterprise-v34', 'security-v21'].includes(key) ? 'system' :
+  key === 'reports' ? 'reports' :
+  key === 'settings' ? 'settings' :
+  key === 'roles' ? 'roles' :
+  key === 'audit' ? 'audit' :
+  key === 'notifications' ? 'notifications' :
+  key === 'system-health' ? 'system' : 'overview';
 
 const requiredPermission = (key: MenuKey) => {
   if (key === 'ai-center') return 'ai_hr_center';
@@ -139,9 +158,17 @@ const requiredPermission = (key: MenuKey) => {
   if (key === 'approvals') return 'approval.read'; 
   if (key === 'notifications') return 'notifications.read'; 
   if (key === 'system-health') return 'system.health';
-  if ((key === 'enterprise-v26' || key === 'payroll-indonesia-v23')) return 'system.health'; 
+  if (key === 'enterprise-v20') return 'people.read';
+  if (key === 'enterprise-v26') return 'people.read';
+  if (key === 'enterprise-v27') return 'talent.read';
+  if (key === 'enterprise-v28') return 'reports.read';
+  if (key === 'enterprise-v29') return 'notifications.read';
+  if (key === 'enterprise-v30') return 'people.read';
+  if (key === 'enterprise-v32') return 'system.health';
+  if (key === 'enterprise-v33') return 'people.read';
+  if (key === 'enterprise-v31' || key === 'enterprise-v34' || key === 'enterprise-v35') return 'system.health';
+  if (key === 'payroll-indonesia-v23') return 'payroll.read';
   if (key === 'security-v21') return 'security.read'; 
-  if (key.startsWith('enterprise-v')) return 'system.health'; 
   if (key === 'overtime') return 'overtime.read'; 
   if (key === 'reports') return 'reports.read'; 
   if (g === 'recruitment') return 'recruitment.read'; 
@@ -170,8 +197,7 @@ const menuPermissionForRole = (key: MenuKey, role: string, dbPerms: string[] = [
 
 function Icon({ name }: { name: string }) {
   const paths: Record<string, string> = {
-    ai: 'M12 3a9 9 0 1 0 9 9M12 3v5m0 0a4 4 0 1 0 4 4m-4-4H8m8 9-4 4-4-4',
-    chevronDown: 'M6 9l6 6 6-6', chevronRight: 'M9 6l6 6-6 6', logout: 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4m7 14 5-5-5-5m5 5H9', menu: 'M4 6h16M4 12h16M4 18h16', refresh: 'M20 11a8 8 0 1 0 1 4m-1-4v-5m0 5h-5', search: 'M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16m10 2-4.3-4.3', home: 'M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z', users: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8m6-3a4 4 0 0 1 4 4m-1-8a3 3 0 0 1 0 6', plus: 'M12 5v14M5 12h14', org: 'M4 4h16v16H4zM8 8h3v3H8zm5 0h3v3h-3zM8 13h3v3H8zm5 0h3v3h-3z', clock: 'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0', check: 'm5 12 4 4L19 6', alert: 'M12 9v4m0 4h.01M10.3 3.9 2.7 17a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0', leave: 'M7 3h10v18H7zM10 12h7m0 0-3-3m3 3-3 3', arrow: 'M5 12h14m-6-6 6 6-6 6', camera: 'M4 7h3l2-2h6l2 2h3v12H4zM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8', calendar: 'M4 5h16v16H4zM8 3v4m8-4v4M4 10h16', shift: 'M6 4h12v16H6zM9 8h6M9 12h6M9 16h4', holiday: 'M12 2l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6-5.8-3.5-5.8 3.5 1.6-6.6-5.2-4.4 6.8-.5z', request: 'M6 3h12v18H6zM9 8h6M9 12h6M9 16h4', balance: 'M5 4h14v16H5zM9 8h6M9 12h3', payroll: 'M5 4h14v16H5zM8 8h8M8 12h8M8 16h5', components: 'M5 5h14M5 12h14M5 19h14', kpi: 'M5 20V10m7 10V4m7 16v-7', recruitment: 'M4 6h16v12H4zM8 10h8M8 14h5', report: 'M5 4h14v16H5zM8 9h8M8 13h8M8 17h5', settings: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8m0-6v3m0 14v3m10-10h-3M5 12H2m17.1-7.1-2.1 2.1M7 17l-2.1 2.1m12.2 0L15 17M7 7 4.9 4.9', bell: 'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8 13h6', health: 'M20 12h-4l-2 7-4-14-2 7H4', card: 'M5 4h14v16H5zM8 8h8M8 12h5M8 16h8', dashboard: 'M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h6v6h-6z'
+    chevronDown: 'M6 9l6 6 6-6', chevronRight: 'M9 6l6 6-6 6', logout: 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4m7 14 5-5-5-5m5 5H9', menu: 'M4 6h16M4 12h16M4 18h16', refresh: 'M20 11a8 8 0 1 0 1 4m-1-4v-5m0 5h-5', search: 'M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16m10 2-4.3-4.3', home: 'M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z', users: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8m6-3a4 4 0 0 1 4 4m-1-8a3 3 0 0 1 0 6', person: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8m-7 9a7 7 0 0 1 14 0', message: 'M4 5h16v12H9l-5 4V5z', plus: 'M12 5v14M5 12h14', org: 'M4 4h16v16H4zM8 8h3v3H8zm5 0h3v3h-3zM8 13h3v3H8zm5 0h3v3h-3z', clock: 'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0', check: 'm5 12 4 4L19 6', alert: 'M12 9v4m0 4h.01M10.3 3.9 2.7 17a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0', leave: 'M7 3h10v18H7zM10 12h7m0 0-3-3m3 3-3 3', arrow: 'M5 12h14m-6-6 6 6-6 6', camera: 'M4 7h3l2-2h6l2 2h3v12H4zM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8', calendar: 'M4 5h16v16H4zM8 3v4m8-4v4M4 10h16', shift: 'M6 4h12v16H6zM9 8h6M9 12h6M9 16h4', holiday: 'M12 2l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6-5.8-3.5-5.8 3.5 1.6-6.6-5.2-4.4 6.8-.5z', request: 'M6 3h12v18H6zM9 8h6M9 12h6M9 16h4', balance: 'M5 4h14v16H5zM9 8h6M9 12h3', payroll: 'M5 4h14v16H5zM8 8h8M8 12h8M8 16h5', components: 'M5 5h14M5 12h14M5 19h14', kpi: 'M5 20V10m7 10V4m7 16v-7', recruitment: 'M4 6h16v12H4zM8 10h8M8 14h5', report: 'M5 4h14v16H5zM8 9h8M8 13h8M8 17h5', settings: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8m0-6v3m0 14v3m10-10h-3M5 12H2m17.1-7.1-2.1 2.1M7 17l-2.1 2.1m12.2 0L15 17M7 7 4.9 4.9', bell: 'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8 13h6', health: 'M20 12h-4l-2 7-4-14-2 7H4', card: 'M5 4h14v16H5zM8 8h8M8 12h5M8 16h8', dashboard: 'M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h6v6h-6z'
   };
   const d = paths[name] || paths.home; 
   return <svg className="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d}/></svg>;
@@ -285,7 +311,7 @@ function FeedbackAdmin({ employees }: { employees: Karyawan[] }) {
 
   return (
     <div className="feedback-module">
-      <div className="card feedback-list-card">
+      <section className="feedback-list-surface">
         <div className="card-title feedback-card-title">
           <div>
             <span className="card-kicker">{t("feedback_inbox")}</span>
@@ -301,14 +327,7 @@ function FeedbackAdmin({ employees }: { employees: Karyawan[] }) {
           </button>
         </div>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(180px, 1fr) 150px 150px',
-            gap: 10,
-            marginBottom: 16
-          }}
-        >
+        <div className="feedback-filter-bar">
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
@@ -377,10 +396,10 @@ function FeedbackAdmin({ employees }: { employees: Karyawan[] }) {
             </table>
           </div>
         )}
-      </div>
+      </section>
 
       {selected && (
-        <div className="card feedback-detail-card">
+        <section className="card feedback-detail-card">
           <div className="card-title feedback-card-title">
             <div>
               <span className="card-kicker">{selected.kategori.toUpperCase()}</span>
@@ -470,7 +489,7 @@ function FeedbackAdmin({ employees }: { employees: Karyawan[] }) {
               </button>
             </div>
           </div>
-        </div>
+        </section>
       )}
     </div>
   );
@@ -513,6 +532,7 @@ function watchSupabaseAuth(load: () => void | Promise<void>) {
 
 export default function DashboardAdmin() {
   const { t, lang, setLang } = useTranslation();
+  const isWebReferenceSidebar = typeof document !== 'undefined' && document.documentElement.dataset.platform === 'web';
 
   // 1. Deklarasi State diletakkan paling atas di dalam komponen
   const [logged, setLogged] = useState(false);
@@ -522,16 +542,21 @@ export default function DashboardAdmin() {
   const [sidebar, setSidebar] = useState(() => window.innerWidth >= 900);
   const [employees, setEmployees] = useState<Karyawan[]>([]);
   const [pendingRegistrationIds, setPendingRegistrationIds] = useState<Set<string>>(new Set());
-  const [deactivationTarget, setDeactivationTarget] = useState<Karyawan | null>(null);
 
   // Karyawan Baru = hanya registrasi yang benar-benar masih menunggu approval.
   // Karyawan Tidak Aktif = sudah pernah menjadi karyawan, lalu dinonaktifkan.
   const pendingEmployees = useMemo(() => employees.filter(k => {
     const id = String(k.id_karyawan || '').trim();
+    const status = String(k.status_karyawan || '').trim().toLowerCase();
+    const isPendingStatus =
+      status === 'menunggu verifikasi' ||
+      status === 'menunggu' ||
+      status === 'pending';
+
     return k.status_aktif === false
       && String(k.role || 'karyawan').toLowerCase() === 'karyawan'
-      && String(k.status_karyawan || '').toLowerCase() !== 'ditolak'
-      && pendingRegistrationIds.has(id);
+      && status !== 'ditolak'
+      && (isPendingStatus || pendingRegistrationIds.has(id));
   }), [employees, pendingRegistrationIds]);
 
   const inactiveEmployees = useMemo(() => employees.filter(k => {
@@ -544,43 +569,43 @@ export default function DashboardAdmin() {
   // FLOATING_NOTIFICATION_GROUP_START
   const [notificationUnread, setNotificationUnread] = useState(0);
   const [feedbackUnread, setFeedbackUnread] = useState(0);
+  const notificationGroupRef = useRef<HTMLDivElement | null>(null);
+  const notificationGenerationAtRef = useRef(0);
+
+  const loadNotificationCounts = async () => {
+    if (!logged || !isSupabaseConfigured) return;
+
+    if (email && Date.now() - notificationGenerationAtRef.current >= 60000) {
+      notificationGenerationAtRef.current = Date.now();
+      await supabase.rpc('hris_generate_admin_notifications').catch(() => undefined);
+    }
+
+    const [
+      { count: notificationCount },
+      { count: feedbackCount }
+    ] = await Promise.all([
+      supabase
+        .from('hris_notifications')
+        .select('*', { count: 'exact', head: true })
+        .ilike('recipient_email', email)
+        .eq('is_read', false)
+        .neq('type', 'employee').neq('type', 'feedback'),
+
+      supabase
+        .from('hris_employee_feedback')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'Baru')
+    ]);
+
+    setNotificationUnread(notificationCount || 0);
+    setFeedbackUnread(feedbackCount || 0);
+  };
 
   useEffect(() => {
     if (!logged || !isSupabaseConfigured) return;
-
-    let cancelled = false;
-
-    const loadNotificationCounts = async () => {
-      const [
-        { count: notificationCount },
-        { count: feedbackCount }
-      ] = await Promise.all([
-        supabase
-          .from('hris_notifications')
-          .select('*', { count: 'exact', head: true })
-          .eq('recipient_email', email)
-          .eq('is_read', false),
-
-        supabase
-          .from('hris_employee_feedback')
-          .select('*', { count: 'exact', head: true })
-          .eq('status', 'Baru')
-      ]);
-
-      if (cancelled) return;
-
-      setNotificationUnread(notificationCount || 0);
-      setFeedbackUnread(feedbackCount || 0);
-    };
-
     void loadNotificationCounts();
-
     const timer = window.setInterval(loadNotificationCounts, 15000);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(timer);
-    };
+    return () => window.clearInterval(timer);
   }, [logged, email]);
   // FLOATING_NOTIFICATION_GROUP_END
 
@@ -592,6 +617,25 @@ export default function DashboardAdmin() {
   const [feedbackPreview, setFeedbackPreview] = useState<any[]>([]);
   const [notificationPreview, setNotificationPreview] = useState<any[]>([]);
 
+  useEffect(() => {
+    if (!notificationPanel) return;
+    const onPointerDown = (event: MouseEvent) => {
+      const target = event.target as Node | null;
+      if (target && notificationGroupRef.current && !notificationGroupRef.current.contains(target)) {
+        setNotificationPanel(null);
+      }
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setNotificationPanel(null);
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [notificationPanel]);
+
   const openNotificationPanel = async (panel: Exclude<AdminNotificationPanel, null>) => {
     setNotificationPanel(prev => prev === panel ? null : panel);
 
@@ -599,6 +643,7 @@ export default function DashboardAdmin() {
       const { data } = await supabase
         .from('hris_employee_feedback')
         .select('*')
+        .eq('status', 'Baru')
         .order('created_at', { ascending: false })
         .limit(6);
 
@@ -609,7 +654,8 @@ export default function DashboardAdmin() {
       const { data } = await supabase
         .from('hris_notifications')
         .select('*')
-        .eq('recipient_email', email)
+        .ilike('recipient_email', email)
+        .neq('type', 'employee').neq('type', 'feedback')
         .order('created_at', { ascending: false })
         .limit(6);
 
@@ -617,16 +663,74 @@ export default function DashboardAdmin() {
     }
   };
 
+  const interpolateNotification = (template: string, metadata: Record<string, unknown> = {}) => {
+    return template.replace(/\{\{(\w+)\}\}/g, (_, key: string) => {
+      const value = metadata[key];
+      return value === null || value === undefined || value === '' ? '—' : String(value);
+    });
+  };
+
+  const getNotificationPresentation = (row: any) => {
+    const metadata = (row?.metadata && typeof row.metadata === 'object') ? row.metadata as Record<string, unknown> : {};
+    const byCode: Record<string, { title: string; message: string; type: string; icon: string }> = {
+      EMPLOYEE_REGISTRATION_NEW: { title: t('notification_employee_title'), message: t('notification_employee_message'), type: t('notification_type_employee'), icon: 'person' },
+      FEEDBACK_NEW: { title: t('notification_feedback_title'), message: t('notification_feedback_message'), type: t('notification_type_feedback'), icon: 'message' },
+      LEAVE_REQUEST_NEW: { title: t('notification_leave_title'), message: t('notification_leave_message'), type: t('notification_type_leave'), icon: 'leave' },
+      PROFILE_CHANGE_REQUEST_NEW: { title: t('notification_profile_title'), message: t('notification_profile_message'), type: t('notification_type_profile'), icon: 'person' },
+      ATTENDANCE_REQUEST_NEW: { title: t('notification_attendance_title'), message: t('notification_attendance_message'), type: t('notification_type_attendance'), icon: 'clock' },
+      OVERTIME_REQUEST_NEW: { title: t('notification_overtime_title'), message: t('notification_overtime_message'), type: t('notification_type_overtime'), icon: 'clock' },
+      CONTRACT_EXPIRING_SOON: { title: t('notification_contract_title'), message: t('notification_contract_message'), type: t('notification_type_contract'), icon: 'calendar' },
+      RECRUITMENT_APPLICATION_NEW: { title: t('notification_recruitment_title'), message: t('notification_recruitment_message'), type: t('notification_type_recruitment'), icon: 'recruitment' },
+    };
+
+    const config = row?.event_code ? byCode[String(row.event_code)] : undefined;
+    return {
+      title: config ? config.title : (row?.title || t('notification_generic_title')),
+      message: config ? interpolateNotification(config.message, metadata) : (row?.message || ''),
+      type: config ? config.type : (row?.type || t('notification_type_system')),
+      icon: config ? config.icon : (row?.type === 'contract' ? 'calendar' : row?.type === 'recruitment' ? 'recruitment' : row?.type === 'profile' ? 'person' : row?.type === 'attendance' ? 'clock' : row?.type === 'leave' ? 'leave' : 'bell'),
+    };
+  };
+
+  const markAllNotificationsRead = async () => {
+    if (!email) return;
+    const { error: markError } = await supabase
+      .from('hris_notifications')
+      .update({ is_read: true })
+      .eq('recipient_email', email)
+      .eq('is_read', false)
+      .neq('type', 'employee')
+      .neq('type', 'feedback');
+    if (!markError) setNotificationUnread(0);
+  };
+
   const openAdminNotification = async (row: any) => {
     if (row?.id) {
-      await supabase
+      const { error: markError } = await supabase
         .from('hris_notifications')
         .update({ is_read: true })
         .eq('id', row.id)
         .eq('recipient_email', email);
+      if (!markError) setNotificationUnread(prev => Math.max(0, prev - (row?.is_read ? 0 : 1)));
     }
 
     setNotificationPanel(null);
+
+    const eventCode = String(row?.event_code || '');
+    const exactRoutes: Record<string, MenuKey> = {
+      EMPLOYEE_REGISTRATION_NEW: 'employee-new',
+      FEEDBACK_NEW: 'feedback',
+      LEAVE_REQUEST_NEW: 'approvals',
+      PROFILE_CHANGE_REQUEST_NEW: 'approvals',
+      ATTENDANCE_REQUEST_NEW: 'approvals',
+      OVERTIME_REQUEST_NEW: 'approvals',
+      CONTRACT_EXPIRING_SOON: 'enterprise-v26',
+      RECRUITMENT_APPLICATION_NEW: 'recruitment-v25',
+    };
+    if (exactRoutes[eventCode]) {
+      setMenu(exactRoutes[eventCode]);
+      return;
+    }
 
     const text = `${row?.type || ''} ${row?.title || ''} ${row?.message || ''} ${row?.link || ''}`.toLowerCase();
 
@@ -635,33 +739,28 @@ export default function DashboardAdmin() {
       return;
     }
 
-    if (
-      text.includes('karyawan') ||
-      text.includes('employee') ||
-      text.includes('menunggu verifikasi')
-    ) {
+    if (text.includes('karyawan') || text.includes('employee') || text.includes('menunggu verifikasi')) {
       setMenu('employee-new');
       return;
     }
 
-    if (
-      text.includes('cuti') ||
-      text.includes('sakit') ||
-      text.includes('leave')
-    ) {
-      setMenu('attendance');
+    if (text.includes('cuti') || text.includes('sakit') || text.includes('leave') || text.includes('permintaan perubahan data')) {
+      setMenu('approvals');
       return;
     }
 
-    if (
-      text.includes('lembur') ||
-      text.includes('overtime') ||
-      text.includes('absensi') ||
-      text.includes('terlambat') ||
-      text.includes('attendance') ||
-      text.includes('absen')
-    ) {
-      setMenu('attendance');
+    if (text.includes('lembur') || text.includes('overtime') || text.includes('absensi') || text.includes('terlambat') || text.includes('attendance') || text.includes('absen')) {
+      setMenu('approvals');
+      return;
+    }
+
+    if (text.includes('kontrak') || text.includes('contract')) {
+      setMenu('enterprise-v26');
+      return;
+    }
+
+    if (text.includes('kandidat') || text.includes('candidate') || text.includes('lamaran') || text.includes('recruitment')) {
+      setMenu('recruitment-v25');
       return;
     }
 
@@ -669,6 +768,56 @@ export default function DashboardAdmin() {
   };
   // NOTIFICATION_DROPDOWN_STATE_END
 
+  // Live notification refresh: Supabase Realtime updates badges without waiting
+  // for the 15-second fallback polling interval.
+  useEffect(() => {
+    if (!logged || !email || !isSupabaseConfigured) return;
+
+    const safeEmail = email.replace(/[^a-zA-Z0-9_.@+-]/g, '_');
+    const notificationsChannel = supabase
+      .channel(`admin-notifications-${safeEmail}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'hris_notifications',
+        filter: `recipient_email=eq.${email}`,
+      }, () => {
+        void loadNotificationCounts();
+      })
+      .subscribe();
+
+    const employeeChannel = supabase
+      .channel(`admin-employee-feed-${safeEmail}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'karyawan',
+      }, () => {
+        void refresh();
+        void loadNotificationCounts();
+      })
+      .subscribe();
+
+    const feedbackChannel = supabase
+      .channel(`admin-feedback-feed-${safeEmail}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'hris_employee_feedback',
+      }, () => {
+        void loadNotificationCounts();
+        if (notificationPanel === 'feedback') {
+          void openNotificationPanel('feedback');
+        }
+      })
+      .subscribe();
+
+    return () => {
+      void notificationsChannel.unsubscribe();
+      void employeeChannel.unsubscribe();
+      void feedbackChannel.unsubscribe();
+    };
+  }, [logged, email, isSupabaseConfigured]);
 
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
@@ -692,7 +841,7 @@ export default function DashboardAdmin() {
       const userId = session.session?.user?.id;
       if (!userId) return;
       const next = await loadUserThemePreference(userId);
-      if (active) applyCosmicTheme(next, false);
+      if (active) applyProjectTheme(next, false);
     };
     void loadTheme();
     return () => {
@@ -701,7 +850,16 @@ export default function DashboardAdmin() {
   }, []);
 
   const [roleOpen, setRoleOpen] = useState(false);
-  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({
+    group_main: false,
+    group_people: false,
+    group_hr: false,
+    group_payroll: false,
+    group_talent: false,
+    group_comm: false,
+    group_reports: false,
+    group_admin: false,
+  });
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [, setAnnouncementsLoading] = useState(false);
 
@@ -746,13 +904,14 @@ export default function DashboardAdmin() {
     void loadAnnouncements();
   }, []);
 
-  // 2. Deklarasi menuGroups
+  // Legacy navigation tree is retained for Android so the Android UI and
+  // interaction model remain unchanged. The new eight-item navigation is web-only.
   const menuGroups = useMemo(() => [
     {
       title: t('main'),
       items: [
         ['overview', t('home'), 'home'] as [MenuKey, string, string],
-        ['ai-center', t('ai_hr_center'), 'ai'] as [MenuKey, string, string],
+        ['ai-center', t('ai_hr_center'), 'kpi'] as [MenuKey, string, string],
         ['professional-suite', t('professional_operations'), 'kpi'] as [MenuKey, string, string],
         ['attendance', t('attendance'), 'clock'] as [MenuKey, string, string],
         ['reports', t('reports'), 'report'] as [MenuKey, string, string],
@@ -784,7 +943,7 @@ export default function DashboardAdmin() {
       ],
     },
     {
-      title: t('talent'),
+      title: t('group_talent'),
       items: [
         ['performance', t('performance'), 'arrow'] as [MenuKey, string, string],
         ['kpi', t('kpi_target'), 'kpi'] as [MenuKey, string, string],
@@ -803,7 +962,7 @@ export default function DashboardAdmin() {
         ['audit', t('audit_log'), 'request'] as [MenuKey, string, string],
       ],
     },
-  ], [t]);
+  ], [t, pendingEmployees.length, inactiveEmployees.length]);
 
   const visibleMenuGroups = useMemo(() =>
     menuGroups
@@ -815,6 +974,122 @@ export default function DashboardAdmin() {
       }))
       .filter((group) => group.items.length > 0),
     [menuGroups, userRole, dbPerms]
+  );
+
+  // Web/admin sidebar groups modules by business function.
+  // Internal enterprise-vXX route keys remain stable for compatibility,
+  // while user-facing labels describe the actual HR capability.
+  // The web/admin sidebar is grouped by business function rather than internal
+  // roadmap version names. Internal enterprise-vXX keys are retained only for
+  // routing/permission compatibility; users see meaningful HR labels.
+  const sidebarSections = useMemo<SidebarSection[]>(() => [
+    {
+      key: 'group_main',
+      title: t('group_main'),
+      items: [
+        ['overview', t('dashboard'), 'home'],
+      ],
+    },
+    {
+      key: 'group_people',
+      title: t('group_people'),
+      items: [
+        ['employees', t('all_employees'), 'users'],
+        ['employee-new', `${t('admin_new_employee')}${pendingEmployees.length ? ` (${pendingEmployees.length})` : ''}`, 'users'],
+        ['employee-inactive', `${t('inactive_employees')}${inactiveEmployees.length ? ` (${inactiveEmployees.length})` : ''}`, 'users'],
+        ['employee-add', t('add_employee'), 'plus'],
+        ['id-card', t('id_card'), 'card'],
+        ['employee-360', t('employee_360'), 'users'],
+        ['organization', t('organization'), 'org'],
+        ['enterprise-v26', t('documents_compliance'), 'card'],
+        ['enterprise-v30', t('ess_enterprise'), 'users'],
+        ['enterprise-v33', t('multi_company'), 'org'],
+      ],
+    },
+    {
+      key: 'group_hr',
+      title: t('group_hr'),
+      items: [
+        ['hr-operations', t('hr_operations'), 'settings'],
+        ['enterprise-v20', t('hr_control_center'), 'kpi'],
+        ['attendance', t('attendance'), 'clock'],
+        ['schedule', t('schedule'), 'calendar'],
+        ['shift', t('shift'), 'shift'],
+        ['holiday', t('holiday'), 'holiday'],
+        ['approvals', t('approval_center'), 'check'],
+        ['leave-request', `${t('leave')} / ${t('permission')}`, 'leave'],
+        ['leave-balance', t('leave_balance'), 'balance'],
+        ['production-hr', t('hr_transaction_center'), 'settings'],
+        ['enterprise-v32', t('production_optimization'), 'settings'],
+        ['professional-suite', t('professional_operations'), 'kpi'],
+        ['ai-center', t('ai_hr_center'), 'kpi'],
+      ],
+    },
+    {
+      key: 'group_payroll',
+      title: t('group_payroll'),
+      items: [
+        ['payroll', t('monthly_payroll'), 'payroll'],
+        ['payroll-engine', t('payroll_engine'), 'payroll'],
+        ['payroll-production-v22', t('payroll_control'), 'payroll'],
+        ['payroll-indonesia-v23', t('payroll_indonesia_compliance'), 'payroll'],
+        ['payroll-components', t('salary_components'), 'components'],
+        ['payroll-overtime', t('overtime_payroll'), 'arrow'],
+        ['payslip', t('payslip'), 'calendar'],
+      ],
+    },
+    {
+      key: 'group_talent',
+      title: t('group_talent'),
+      items: [
+        ['performance', t('performance'), 'arrow'],
+        ['kpi', t('kpi_target'), 'kpi'],
+        ['enterprise-v27', t('performance_review'), 'kpi'],
+        ['recruitment-v25', t('recruitment_ats'), 'recruitment'],
+        ['recruitment', t('recruitment'), 'recruitment'],
+        ['candidates', t('candidates'), 'users'],
+      ],
+    },
+    {
+      key: 'group_comm',
+      title: t('group_comm'),
+      items: [
+        ['announcements', t('announcements'), 'bell'],
+        ['feedback', t('feedback_inbox'), 'request'],
+        ['notifications', t('notifications'), 'bell'],
+        ['enterprise-v29', t('hr_inbox'), 'bell'],
+      ],
+    },
+    {
+      key: 'group_reports',
+      title: t('group_reports'),
+      items: [
+        ['reports', t('reports'), 'report'],
+        ['enterprise-v28', t('hr_analytics'), 'report'],
+      ],
+    },
+    {
+      key: 'group_admin',
+      title: t('group_admin'),
+      items: [
+        ['settings', t('settings'), 'settings'],
+        ['roles', t('roles_permissions'), 'users'],
+        ['audit', t('audit_log'), 'request'],
+        ['system-health', t('system_health'), 'health'],
+        ['security-v21', t('security_center'), 'health'],
+        ['enterprise-v31', t('qa_testing'), 'health'],
+        ['enterprise-v34', t('api_integrations'), 'arrow'],
+        ['enterprise-v35', t('ai_hr_automation'), 'kpi'],
+      ],
+    },
+  ], [t, pendingEmployees.length, inactiveEmployees.length]);
+
+  const canSeeSidebarItem = (item: [MenuKey, string, string]) =>
+    menuPermissionForRole(item[0], userRole, dbPerms);
+
+  const flatSidebarKeys = useMemo(() =>
+    sidebarSections.flatMap((section) => section.items.map((item) => item[0])),
+    [sidebarSections]
   );
 
   useEffect(() => {
@@ -871,9 +1146,13 @@ export default function DashboardAdmin() {
 
       setEmployee360Id(employeeId);
 
+      const validKeys = isWebReferenceSidebar
+        ? flatSidebarKeys
+        : menuGroups.flatMap((group) => group.items.map((item) => item[0]));
+
       if (
         candidate &&
-        menuGroups.flatMap(g => g.items).some(x => x[0] === candidate) &&
+        validKeys.includes(candidate) &&
         menuPermissionForRole(candidate, userRole, dbPerms)
       ) {
         setMenu(candidate);
@@ -884,7 +1163,7 @@ export default function DashboardAdmin() {
     window.addEventListener('hashchange', read);
 
     return () => window.removeEventListener('hashchange', read);
-  }, [userRole, dbPerms, menuGroups]);
+  }, [userRole, dbPerms, flatSidebarKeys, menuGroups, isWebReferenceSidebar]);
   
   const navigate = (next: MenuKey) => { setMenu(next); location.hash = `/${next}`; if (window.innerWidth < 900) setSidebar(false) };
 
@@ -1015,6 +1294,15 @@ export default function DashboardAdmin() {
       if (payload[key] === '') payload[key] = null;
     }
 
+    if (
+      payload.role !== undefined &&
+      String(payload.role || '') !== String(editing.role || '') &&
+      userRole !== 'Super Admin'
+    ) {
+      setError('Perubahan Role hanya dapat dilakukan oleh Super Admin.');
+      return false;
+    }
+
     const { error: e } = await supabase
       .from('karyawan')
       .update(payload)
@@ -1025,35 +1313,27 @@ export default function DashboardAdmin() {
       return false;
     }
 
+    if (
+      payload.role !== undefined &&
+      String(payload.role || '') !== String(editing.role || '') &&
+      editing.auth_user_id &&
+      userRole === 'Super Admin'
+    ) {
+      const { error: roleError } = await supabase
+        .from('hris_users')
+        .update({ role: String(payload.role) })
+        .eq('id', editing.auth_user_id);
+
+      if (roleError) {
+        setError(`Data karyawan tersimpan, tetapi Role login gagal diperbarui: ${roleError.message}`);
+        return false;
+      }
+    }
+
     setEditing(null);
     setToast(t("employee_saved"));
     refresh();
     return true;
-  }
-
-  async function deactivateEmployee(k: Karyawan, payload: { reasonCode: string; effectiveDate: string; note: string }) {
-    if (!canWrite(dbPerms, 'people', userRole)) {
-      setError('Anda tidak memiliki permission people.write.');
-      return;
-    }
-
-    const { error: e } = await supabase
-      .from('karyawan')
-      .update({
-        status_aktif: false,
-        tanggal_keluar: payload.effectiveDate,
-        alasan_keluar_kode: payload.reasonCode,
-        alasan_keluar: payload.note.trim() || null,
-      })
-      .eq('id', k.id);
-
-    if (e) {
-      setError(e.message);
-      return;
-    }
-
-    setToast(`${k.nama} ${t('employee_deactivated')}`);
-    await refresh();
   }
 
   async function activateEmployee(k: Karyawan) {
@@ -1066,10 +1346,7 @@ export default function DashboardAdmin() {
       .from('karyawan')
       .update({
         status_aktif: true,
-        status_karyawan: String(k.status_karyawan || '').toLowerCase() === 'ditolak' ? 'Tetap' : (k.status_karyawan || 'Tetap'),
-        tanggal_keluar: null,
-        alasan_keluar_kode: null,
-        alasan_keluar: null,
+        status_karyawan: String(k.status_karyawan || '').toLowerCase() === 'ditolak' ? 'Tetap' : (k.status_karyawan || 'Tetap')
       })
       .eq('id', k.id);
     if (e) setError(e.message);
@@ -1077,7 +1354,9 @@ export default function DashboardAdmin() {
   }
 
   const payroll = employees.reduce((s, k) => s + Number(k.gaji_pokok || 0), 0);
-  const activeLabel = menuGroups.flatMap(g => g.items).find((x) => x[0] === menu)?.[1] || 'Overview';
+  const activeLabel = isWebReferenceSidebar
+    ? sidebarSections.flatMap((section) => section.items).find((item) => item[0] === menu)?.[1] || t('dashboard')
+    : menuGroups.flatMap((group) => group.items).find((item) => item[0] === menu)?.[1] || t('overview');
   
   const exportCsv = (rows: Record<string, unknown>[], filename: string, columns?: string[]) => {
     if (!rows.length) { setToast(t("no_data_export")); return; }
@@ -1118,57 +1397,92 @@ export default function DashboardAdmin() {
         </div>
       </div>
 
-      <nav className="sidebar-nav" aria-label="Menu utama">
-  {visibleMenuGroups.map((group) => {
-    const visibleItems = group.items.filter((item) =>
-      menuPermissionForRole(item[0], userRole, dbPerms)
-    );
+      {isWebReferenceSidebar ? (
+        <nav className="sidebar-nav sidebar-nav-reference" aria-label={t('group_main')}>
+          {sidebarSections.map((section) => {
+            const visibleItems = section.items.filter((item) => menuPermissionForRole(item[0], userRole, dbPerms));
+            if (!visibleItems.length) return null;
+            const isOpen = !collapsedGroups[section.key];
+            const sectionActive = visibleItems.some(([key]) => menu === key);
 
-    if (!visibleItems.length) return null;
-return (
-            <div className="nav-group" key={group.title}>
-              {sidebar && (
-                <button
-                  type="button"
-                  className="nav-title"
-                  onClick={() =>
-                    setCollapsedGroups((prev) => ({
-                      ...prev,
-                      [group.title]: !prev[group.title],
-                    }))
-                  }
-                  aria-expanded={!collapsedGroups[group.title]}
-                >
-                  <span>{group.title}</span>
-                  <Icon
-                    name={collapsedGroups[group.title] ? 'chevronRight' : 'chevronDown'}
-                  />
-                </button>
-              )}
+            return (
+              <section className={`nav-group sidebar-nav-section ${sectionActive ? 'has-active-child' : ''}`} key={section.key}>
+                {sidebar && (
+                  <button
+                    type="button"
+                    className="nav-title sidebar-section-title"
+                    onClick={() => setCollapsedGroups((prev) => ({ ...prev, [section.key]: !prev[section.key] }))}
+                    aria-expanded={isOpen}
+                  >
+                    <span>{section.title}</span>
+                    <Icon name={isOpen ? 'chevronDown' : 'chevronRight'} />
+                  </button>
+                )}
+                {(!sidebar || isOpen) && (
+                  <div className="nav-group-items nav-section-items">
+                    {visibleItems.map(([key, label, icon]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        className={`nav-item ${menu === key ? 'active' : ''}`}
+                        onClick={() => navigate(key)}
+                        title={!sidebar ? label : undefined}
+                      >
+                        <Icon name={icon} />
+                        {sidebar && <span>{label}</span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </section>
+            );
+          })}
+        </nav>
+      ) : (
+        <nav className="sidebar-nav" aria-label="Menu utama">
+          {visibleMenuGroups.map((group) => {
+            const visibleItems = group.items;
+            if (!visibleItems.length) return null;
+            return (
+              <div className="nav-group" key={group.title}>
+                {sidebar && (
+                  <button
+                    type="button"
+                    className="nav-title"
+                    onClick={() =>
+                      setCollapsedGroups((prev) => ({
+                        ...prev,
+                        [group.title]: !prev[group.title],
+                      }))
+                    }
+                    aria-expanded={!collapsedGroups[group.title]}
+                  >
+                    <span>{group.title}</span>
+                    <Icon name={collapsedGroups[group.title] ? 'chevronRight' : 'chevronDown'} />
+                  </button>
+                )}
 
-              {!collapsedGroups[group.title] && (
-                <div className="nav-group-items">
-                  {visibleItems.map(([key, label, icon]) => (
-                    <button
-                      key={key}
-                      className={`nav-item ${menu === key ? 'active' : ''}`}
-                      onClick={() => navigate(key)}
-                      title={!sidebar ? label : undefined}
-                      type="button"
-                    >
-                      <Icon name={icon} />
-                      {sidebar && <span>{label}</span>}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </nav>
-
-
-
+                {!collapsedGroups[group.title] && (
+                  <div className="nav-group-items">
+                    {visibleItems.map(([key, label, icon]) => (
+                      <button
+                        key={key}
+                        className={`nav-item ${menu === key ? 'active' : ''}`}
+                        onClick={() => navigate(key)}
+                        title={!sidebar ? label : undefined}
+                        type="button"
+                      >
+                        <Icon name={icon} />
+                        {sidebar && <span>{label}</span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </nav>
+      )}
       {/* ===== BAGIAN BAWAH SIDEBAR ===== */}
       <div className="sidebar-bottom">
         <button className="logout" onClick={async () => {
@@ -1184,14 +1498,15 @@ return (
       </div>
       {/* ======================================================== */}
     </aside>
+    <SiDebarFloatingNavigator />
    <main className="talenta-main"><header className="topbar">
 <div className="topbar-left"><button className="icon-btn" aria-label="Buka menu" onClick={()=>setSidebar(v=>!v)}><Icon name="menu"/></button>
-<div className="crumb"><span>Project by Tirta</span><b>/</b>{activeLabel}</div>
+<div className="crumb"><img src={moonLogo} alt="" aria-hidden="true" style={{width:26,height:26,objectFit:'contain',display:'block'}} /><span>Project by Tirta</span><b>/</b>{activeLabel}</div>
 </div>
   {roleOpen && <div className="role-menu"><small>ROLE AKTIF</small>{['Super Admin','Admin','HRD','Payroll','Supervisor','Karyawan'].map(r=><button type="button" key={r} className={r===userRole?'selected':''} onClick={()=>{setRoleOpen(false); if(r!==userRole)setToast(`Role ${r} hanya dapat diubah melalui Peran & Hak Akses.`)}}>{r===userRole?'✓':' '} {r}</button>)}</div>}
 <div className="search-global"><span><Icon name="search"/></span><input value={search} onChange={e=>setSearch(e.target.value)} placeholder={t('search_data')}/></div><div className="top-actions">
     {/* FLOATING_NOTIFICATION_GROUP_START */}
-    <div className="admin-floating-notification-group" aria-label="Pusat notifikasi">
+    <div ref={notificationGroupRef} className="admin-floating-notification-group" aria-label={t('notification_center')}>
       <button
         type="button"
         className={`admin-floating-action ${notificationPanel === 'employee' ? 'active' : ''}`}
@@ -1199,7 +1514,7 @@ return (
         aria-label={t('admin_new_employee')}
         title={t('admin_new_employee')}
       >
-        <span className="admin-floating-action-icon">👤</span>
+        <span className="admin-floating-action-icon"><Icon name="person" /></span>
         {pendingEmployees.length > 0 && (
           <span className="admin-floating-action-badge">
             {pendingEmployees.length > 99 ? '99+' : pendingEmployees.length}
@@ -1214,7 +1529,7 @@ return (
         aria-label={t('feedback_inbox')}
         title={t('feedback_inbox')}
       >
-        <span className="admin-floating-action-icon">💌</span>
+        <span className="admin-floating-action-icon"><Icon name="message" /></span>
         {feedbackUnread > 0 && (
           <span className="admin-floating-action-badge">
             {feedbackUnread > 99 ? '99+' : feedbackUnread}
@@ -1229,7 +1544,7 @@ return (
         aria-label={t('all_notifications')}
         title={t('all_notifications')}
       >
-        <span className="admin-floating-action-icon">🔔</span>
+        <span className="admin-floating-action-icon"><Icon name="bell" /></span>
         {notificationUnread > 0 && (
           <span className="admin-floating-action-badge">
             {notificationUnread > 99 ? '99+' : notificationUnread}
@@ -1255,7 +1570,7 @@ return (
                   setMenu('employee-new');
                 }}
               >
-                <span className="admin-notification-dropdown-avatar">👤</span>
+                <span className="admin-notification-dropdown-avatar"><Icon name="person" /></span>
                 <span className="admin-notification-dropdown-copy">
                   <strong>{row.nama || row.email || row.id_karyawan}</strong>
                   <small>{row.id_karyawan || t('admin_new_employee')} · {t('pending_verification')}</small>
@@ -1299,9 +1614,9 @@ return (
                   setMenu('feedback');
                 }}
               >
-                <span className="admin-notification-dropdown-avatar">💌</span>
+                <span className="admin-notification-dropdown-avatar"><Icon name="message" /></span>
                 <span className="admin-notification-dropdown-copy">
-                  <strong>{row.judul || 'Saran baru'}</strong>
+                  <strong>{row.judul || t('notification_feedback_short')}</strong>
                   <small>{row.kategori || t('feedback')} · {row.status || t('new')}</small>
                   <span>{row.isi || ''}</span>
                 </span>
@@ -1328,9 +1643,9 @@ return (
 
       {notificationPanel === 'notifications' && (
         <div className="admin-notification-dropdown admin-notification-dropdown-notifications">
-          <div className="admin-notification-dropdown-head">
-            <strong>Notifikasi</strong>
-            <span>{notificationUnread} belum dibaca</span>
+          <div className="admin-notification-dropdown-head admin-notification-dropdown-head-actions">
+            <div><strong>{t('notifications')}</strong><span>{notificationUnread} {t('unread').toLowerCase()}</span></div>
+            {notificationUnread > 0 && <button type="button" className="admin-notification-mark-read" onClick={markAllNotificationsRead}>{t('notification_mark_all_read')}</button>}
           </div>
 
           <div className="admin-notification-dropdown-list">
@@ -1342,23 +1657,16 @@ return (
                 onClick={() => openAdminNotification(row)}
               >
                 <span className="admin-notification-dropdown-avatar">
-                  {row.type === 'feedback' ? '💌'
-                    : row.type === 'employee' ? '👤'
-                    : row.type === 'attendance' ? '⏰'
-                    : row.type === 'leave' ? '🏖️'
-                    : row.type === 'overtime' ? '⏱️'
-                    : '🔔'}
+                  <Icon name={getNotificationPresentation(row).icon} />
                 </span>
                 <span className="admin-notification-dropdown-copy">
-                  <strong>{row.title || 'Notifikasi'}</strong>
-                  <small>{row.type || 'system'}</small>
-                  <span>{row.message || ''}</span>
+                  {(() => { const view = getNotificationPresentation(row); return <><strong>{view.title}</strong><small>{view.type}</small><span>{view.message}</span></>; })()}
                 </span>
               </button>
             ))}
 
             {notificationPreview.length === 0 && (
-              <div className="admin-notification-empty">Tidak ada notifikasi.</div>
+              <div className="admin-notification-empty">{t('admin_no_notifications')}</div>
             )}
           </div>
 
@@ -1370,18 +1678,18 @@ return (
               setMenu('notifications');
             }}
           >
-            Lihat semua notifikasi
+            {t('admin_view_all_notifications')}
           </button>
         </div>
       )}
     </div>
     {/* FLOATING_NOTIFICATION_GROUP_END */}
-<ThemeControl userRole={userRole} /><button className="icon-btn" aria-label="Muat ulang" onClick={()=>refresh()}><Icon name="refresh"/></button><div className="profile-trigger-wrap"><button type="button" className="avatar avatar-button" aria-label={t('open_profile')} aria-expanded={profileOpen} onClick={()=>setProfileOpen(v=>!v)}>{profilePhotoUrl ? <img src={profilePhotoUrl} alt={t('profile')} /> : (profileName || "HR").split(" ").map(x=>x[0]).join("").slice(0,2).toUpperCase()}</button>{profileOpen && <div className="profile-menu"><div className="profile-menu-header"><div className="profile-avatar-large">{(profileName || "HR").split(" ").map(x=>x[0]).join("").slice(0,2).toUpperCase()}</div><div><strong>{profileName || email || "Pengguna"}</strong><small>{userRole || "Pengguna"}</small></div></div><div className="profile-menu-divider"/><button type="button" onClick={()=>{setProfileOpen(false);setProfilePanelOpen(true)}}><span>👤</span>{t('profile')}</button><button type="button" onClick={()=>{setProfileOpen(false);navigate("roles")}}><span>🛡️</span>{t('role')}</button><div className="profile-language">
+<ThemeControl userRole={userRole} /><button className="icon-btn" aria-label="Muat ulang" onClick={()=>refresh()}><Icon name="refresh"/></button><div className="profile-trigger-wrap"><button type="button" className="avatar avatar-button" aria-label={t('open_profile')} aria-expanded={profileOpen} onClick={()=>setProfileOpen(v=>!v)}>{profilePhotoUrl ? <img src={profilePhotoUrl} alt={t('profile')} /> : (profileName || "HR").split(" ").map(x=>x[0]).join("").slice(0,2).toUpperCase()}</button>{profileOpen && <div className="profile-menu"><div className="profile-menu-header"><div className="profile-avatar-large">{profilePhotoUrl ? <img src={profilePhotoUrl} alt={t('profile')} /> : (profileName || "HR").split(" ").map(x=>x[0]).join("").slice(0,2).toUpperCase()}</div><div><strong>{profileName || email || "Pengguna"}</strong><small>{userRole || "Pengguna"}</small></div></div><div className="profile-menu-divider"/><button type="button" onClick={()=>{setProfileOpen(false);setProfilePanelOpen(true)}}><span>👤</span>{t('profile')}</button><button type="button" onClick={()=>{setProfileOpen(false);navigate("settings")}}><span>🎨</span>Tema & Tampilan</button><button type="button" onClick={()=>{setProfileOpen(false);navigate("roles")}}><span>🛡️</span>{t('role')}</button><div className="profile-language">
   <button type="button" onClick={()=>setLanguageOpen(v=>!v)}><span>🌐</span>{t('language')} <small>{lang.toUpperCase()} ▾</small></button>
   {languageOpen && <div className="profile-language-options">
-    {([['id','Indonesia'],['en','English'],['ja','日本語'],['ko','한국어'],['zh','中文']] as const).map(([code,name])=>
-      <button type="button" key={code} className={lang===code?'selected':''} onClick={async()=>{await setLang(code);setProfileOpen(false)}}>
-        {lang===code?'✓':' '} {name}
+    {SUPPORTED_LANGUAGES.map(({ code, nativeName })=>
+      <button type="button" key={code} className={lang===code?'selected':''} onClick={()=>{void setLang(code);setLanguageOpen(false);setProfileOpen(false)}}>
+        {lang===code?'✓':' '} {nativeName}
       </button>
     )}
   </div>}
@@ -1420,13 +1728,12 @@ return (
                 </div>
               </div>}
 
-    <section className="page admin-page-frame">{loading&&<div className="loading">Memuat data…</div>}{error&&<div className="alert">{error}</div>}
+    <section className={`page admin-page-frame${menu === 'reports' ? ' reports-page' : REPORT_SUBPAGE_KEYS.includes(menu) ? ' reports-subpage' : ''}${menu === 'employee-360' ? ' employee360-page' : ''}${menu === 'feedback' ? ' feedback-page' : ''}${menu === 'announcements' ? ' announcements-page' : ''}${menu === 'id-card' ? ' id-card-page' : ''}`}>{loading&&<div className="loading">Memuat data…</div>}{error&&<div className="alert">{error}</div>}
+    {menu==='overview'&&<Overview employees={employees} attendance={attendance} payroll={payroll} onNavigate={navigate} profileName={profileName} announcements={announcements}/>}
     {menu==='ai-center'&&<AICenter dbPerms={dbPerms} userRole={userRole}/>}
-    {menu==='overview'&&<Overview employees={employees} attendance={attendance} payroll={payroll} onNavigate={navigate} profileName={profileName}/>}
     {menu==='professional-suite'&&<ProfessionalSuite employees={employees} attendance={attendance} onNavigate={navigate}/>}
     {menu==='id-card'&&<IDCardModule employees={employees} companyName="Project by Tirta" logoUrl={moonLogo}/> }
-    {menu==='employees'&&<Employees data={employees.filter(k => k.status_aktif !== false)} onDelete={removeEmployee} onEdit={setEditing} onDeactivate={setDeactivationTarget} canManageStatus={canWrite(dbPerms, 'people', userRole)} onExport={(columns, format)=>format==='excel' ? exportExcel(employees.filter(k => k.status_aktif !== false) as any,'database-karyawan.xls',columns) : exportCsv(employees.filter(k => k.status_aktif !== false) as any,'database-karyawan.csv',columns)} onAdd={()=>navigate('employee-add')} />}
-    {deactivationTarget&&<DeactivateEmployeeModal employee={deactivationTarget} onClose={()=>setDeactivationTarget(null)} onConfirm={async(payload)=>{ const target=deactivationTarget; if (!target) return; setDeactivationTarget(null); await deactivateEmployee(target,payload); }} />}
+    {menu==='employees'&&<Employees data={employees.filter(k => k.status_aktif !== false)} onDelete={removeEmployee} onEdit={setEditing} onExport={(columns, format)=>format==='excel' ? exportExcel(employees.filter(k => k.status_aktif !== false) as any,'database-karyawan.xls',columns) : exportCsv(employees.filter(k => k.status_aktif !== false) as any,'database-karyawan.csv',columns)} onAdd={()=>navigate('employee-add')} />}
     {menu==='employee-new'&&<NewEmployees data={pendingEmployees} onRefresh={refresh} />}
     {menu==='employee-inactive'&&<InactiveEmployees data={inactiveEmployees} onEdit={setEditing} onActivate={activateEmployee} />}
     {menu==='employee-360'&&<Employee360 employees={employees} initialEmployeeId={employee360Id}/>}
@@ -1556,7 +1863,7 @@ return (
     {menu==='system-health'&&<SystemHealth/>}
     {menu==='enterprise-v20'&&<EnterpriseV20 employees={employees}/>}
     {menu==='security-v21'&&<SecurityCenterV21/>}  
-    {editing&&<EmployeeEditor employee={editing} onClose={()=>setEditing(null)} onSave={saveEdit}/>}
+    {editing&&<EmployeeEditor employee={editing} userRole={userRole} onClose={()=>setEditing(null)} onSave={saveEdit}/>}
     {toast&&<button className="toast" onClick={()=>setToast('')}>{toast} ×</button>}
       </section>
     </main>
@@ -1596,81 +1903,267 @@ function Heading({
   );
 }
 
-function Overview({employees,attendance,payroll,onNavigate,profileName}:{employees:Karyawan[];attendance:Absensi[];payroll:number;onNavigate:(m:MenuKey)=>void;profileName:string}){
-  const { t } = useTranslation();
- 
- const active = employees.filter(k => k.status_aktif !== false).length;
- const inactive = Math.max(0, employees.length - active);
+function Overview({
+  employees,
+  attendance,
+  payroll,
+  onNavigate,
+  profileName,
+  announcements,
+}: {
+  employees: Karyawan[];
+  attendance: Absensi[];
+  payroll: number;
+  onNavigate: (m: MenuKey) => void;
+  profileName: string;
+  announcements: Announcement[];
+}) {
+  const { t, lang } = useTranslation();
+  const locale = lang === 'id' ? 'id-ID' : lang === 'ja' ? 'ja-JP' : lang === 'ko' ? 'ko-KR' : lang === 'zh' ? 'zh-CN' : 'en-US';
+  const active = employees.filter((k) => k.status_aktif !== false).length;
+  const pending = employees.filter(
+    (k) =>
+      k.status_aktif === false &&
+      String(k.role || 'karyawan').toLowerCase() === 'karyawan' &&
+      String(k.status_karyawan || '').toLowerCase() !== 'ditolak',
+  ).length;
 
- // Attendance hari ini: satu karyawan dihitung satu kali.
- const todayAttendance = attendance.filter(a => a.tanggal === isoToday());
- const attendanceByEmployee = new Map<string, Absensi>();
+  const publishedAnnouncements = announcements.filter((a) => a.status === 'published');
+  const publishedCount = publishedAnnouncements.length;
 
- todayAttendance.forEach(a => {
-   const key = a.id_karyawan || a.nama || String(a.id || Math.random());
-   if (!attendanceByEmployee.has(key)) {
-     attendanceByEmployee.set(key, a);
-   }
- });
+  const today = isoToday();
+  const todayRows = attendance.filter((a) => a.tanggal === today);
+  const uniqueToday = new Map<string, Absensi>();
+  todayRows.forEach((row) => {
+    const key = String(row.id_karyawan || row.nama || row.id || '');
+    if (!uniqueToday.has(key)) uniqueToday.set(key, row);
+  });
 
- const todayRows = Array.from(attendanceByEmployee.values());
+  const presentCount = [...uniqueToday.values()].filter((row) => {
+    const status = String(row.status || '').toLowerCase();
+    return status.includes('hadir') || status.includes('tepat');
+  }).length;
+  const lateCount = [...uniqueToday.values()].filter((row) => {
+    const status = String(row.status || '').toLowerCase();
+    return status.includes('terlambat') || Number(row.keterlambatan_menit || 0) > 0;
+  }).length;
+  const attendanceRate = active
+    ? Math.min(100, Math.round(((presentCount + lateCount) / active) * 100))
+    : 0;
+  const absentCount = Math.max(0, active - presentCount - lateCount);
 
- const lateToday = todayRows.filter(a =>
-   (a.status || '').toLowerCase().includes('terlambat') ||
-   Number(a.keterlambatan_menit || 0) > 0
- );
+  const sixMonths = Array.from({ length: 6 }, (_, index) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - (5 - index), 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const label = new Intl.DateTimeFormat(locale, { month: 'short' }).format(d);
+    const value = attendance.filter((a) => String(a.tanggal || '').startsWith(key)).length;
+    return { key, label, value };
+  });
+  const maxMonth = Math.max(1, ...sixMonths.map((item) => item.value));
 
- const presentToday = todayRows.filter(a =>
-   !lateToday.includes(a) &&
-   ['Hadir', 'Tepat Waktu'].includes(a.status || '')
- );
+  const chartWidth = 620;
+  const chartHeight = 180;
+  const chartPoints = sixMonths
+    .map((item, index) => {
+      const x = 24 + (index * (chartWidth - 48)) / Math.max(1, sixMonths.length - 1);
+      const y = 138 - (item.value / maxMonth) * 100;
+      return `${x},${y}`;
+    })
+    .join(' ');
+  const areaPoints = `24,138 ${chartPoints} ${chartWidth - 24},138`;
 
- const presentCount = presentToday.length;
- const lateCount = lateToday.length;
- const absentCount = Math.max(0, active - presentCount - lateCount);
+  const statCards = [
+    {
+      title: t('total_employees'),
+      value: String(employees.length),
+      note: `${active} ${t('active').toLowerCase()}`,
+      icon: 'users',
+      tone: 'gold',
+    },
+    {
+      title: t('active_employees'),
+      value: String(active),
+      note: `${employees.length ? Math.round((active / employees.length) * 100) : 0}% ${t('from_active_employee_master').toLowerCase()}`,
+      icon: 'check',
+      tone: 'green',
+    },
+    {
+      title: t('pending_approval'),
+      value: String(pending),
+      note: pending ? t('attendance_review_needed') : t('no_exceptions_today'),
+      icon: 'alert',
+      tone: 'red',
+    },
+    {
+      title: t('latest_announcements'),
+      value: String(publishedCount),
+      note: t('view_all'),
+      icon: 'bell',
+      tone: 'blue',
+    },
+  ];
 
- const attendanceRate = active
-   ? Math.min(100, Math.round(((presentCount + lateCount) / active) * 100))
-   : 0;
+  return (
+    <div className="reference-dashboard">
+      <section className="reference-welcome">
+        <div>
+          <span className="eyebrow">{t('hr_control_center')}</span>
+          <h1>
+            {t('welcome')}, {profileName || 'Admin'} <span aria-hidden="true">👋</span>
+          </h1>
+          <p>{t('dashboard_energy_desc')}</p>
+        </div>
+        <div className="reference-clock">
+          <span>{new Intl.DateTimeFormat(locale, { dateStyle: 'full' }).format(new Date())}</span>
+          <strong>{new Intl.DateTimeFormat(locale, { timeStyle: 'short' }).format(new Date())}</strong>
+        </div>
+      </section>
 
- const recent = attendance.slice(0,6);
- const dept=employees.reduce<Record<string,number>>((a,k)=>{const d=k.departemen||'Belum diatur';a[d]=(a[d]||0)+1;return a},{});
- const deptRows=Object.entries(dept).sort((a,b)=>b[1]-a[1]).slice(0,5);
- const maxDept=Math.max(1,...deptRows.map(x=>x[1]));
- return <div className="executive-dashboard">
-  <Heading title={profileName || t("hr_control_center")} desc={t("hr_control_desc")} action={t("add_employee")} onAction={()=>onNavigate('employee-add')}/>
-  <div className="command-strip">
-   <div><span className="eyebrow">{t("operational_status")}</span><strong>{t("system_status")}</strong><small>{t("database_connected")}</small></div>
-   <div className="strip-meta"><span className="status green">Operational</span><span>{t("auto_update_on_load")}</span></div>
-  </div>
-  <div className="stat-grid executive-stats">
-   <Stat title={t("total_employees")} value={String(employees.length)} hint={`${active} ${t("active")} · ${inactive} ${t("inactive")}`} icon="users"/>
-   <Stat title={t("attendance_today")} value={`${attendanceRate}%`} hint={`${presentCount} ${t("present")} · ${lateCount} ${t("late")}`} icon="check"/>
-   <Stat title={t("total_basic_salary")} value={money(payroll)} hint={t("from_active_employee_master")} icon="payroll"/>
-   <Stat title={t("attendance_data")} value={String(attendance.length)} hint={t("data_saved")} icon="clock"/>
-  </div>
-  <div className="dashboard-grid-top">
-   <div className="panel executive-chart">
-    <div className="panel-head"><div><span className="eyebrow">{t("workforce")}</span><h2>{t("workforce_composition")}</h2><p>{t("employee_distribution_by_department")}</p></div><button className="link-btn" onClick={()=>onNavigate("employees")}>{t("open_master")}</button></div>
-    <div className="department-bars">{deptRows.length?deptRows.map(([name,count])=><div className="dept-row" key={name}><div className="dept-label"><span>{name}</span><b>{count}</b></div><div className="progress"><span style={{width:`${Math.round(count/maxDept*100)}%`}}/></div></div>):<div className="empty-module"><h3>{t("no_workforce_data")}</h3><p>{t("add_employee_to_view")}</p></div>}</div>
-   </div>
-   <div className="panel attendance-health">
-    <div className="panel-head"><div><span className="eyebrow">{t("today")}</span><h2>{t("attendance_status")}</h2><p>{t("attendance_status_today")}</p></div></div>
-    <div className="health-ring" style={{'--rate':`${attendanceRate*3.6}deg`} as CSSProperties}><div><strong>{attendanceRate}%</strong><small>{t("present")}</small></div></div>
-    <div className="health-legend"><div><i className="dot present"/><span>{t("present")}</span><b>{presentCount}</b></div><div><i className="dot late"/><span>{t("late")}</span><b>{lateCount}</b></div><div><i className="dot absent"/><span>{t("not_recorded")}</span><b>{absentCount}</b></div></div>
-   </div>
-  </div>
-  <div className="dashboard-grid-bottom">
-   <div className="panel"><div className="panel-head"><div><span className="eyebrow">{t("recent_activity")}</span><h2>{t("recent_attendance_activity")}</h2><p>{t("recent_attendance_data")}</p></div><button className="link-btn" onClick={()=>onNavigate("attendance")}>{t("view_all")}</button></div><AttendanceMini rows={recent}/></div>
-   <div className="panel quick executive-quick"><div className="panel-head"><div><span className="eyebrow">{t("quick_access")}</span><h2>{t("quick_access")}</h2><p>{t("quick_access_desc")}</p></div></div><Quick label={t("add_employee")} icon="users" onClick={()=>onNavigate('employee-add')}/><Quick label={t("work_schedule")} icon="calendar" onClick={()=>onNavigate('schedule')}/><Quick label={t("payroll")} icon="payroll" onClick={()=>onNavigate('payroll')}/><Quick label={t("leave_request")} icon="request" onClick={()=>onNavigate('leave-request')}/></div>
-  </div>
- </div>
+      <section className="reference-stats">
+        {statCards.map((card) => (
+          <article className={`reference-stat ${card.tone}`} key={card.title}>
+            <div className="reference-stat-icon"><Icon name={card.icon} /></div>
+            <div>
+              <span>{card.title}</span>
+              <strong>{card.value}</strong>
+              <small>{card.note}</small>
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <section className="reference-main-grid">
+        <article className="reference-card reference-chart-card">
+          <div className="reference-card-head">
+            <div>
+              <span className="eyebrow">{t('last_six_months')}</span>
+              <h2>{t('employee_analytics')}</h2>
+            </div>
+            <button type="button" className="reference-chip">{t('last_six_months')} ×</button>
+          </div>
+          <svg className="reference-chart" viewBox={`0 0 ${chartWidth} ${chartHeight}`} role="img" aria-label={t('last_six_months')}>
+            <defs>
+              <linearGradient id="referenceChartFill" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stopColor="var(--web-accent-2)" stopOpacity=".38" />
+                <stop offset="100%" stopColor="var(--web-accent-2)" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            {[0, 1, 2, 3].map((line) => {
+              const y = 38 + line * 33;
+              return <line key={line} x1="24" x2={chartWidth - 24} y1={y} y2={y} stroke="rgba(165,198,238,.10)" />;
+            })}
+            <polygon points={areaPoints} fill="url(#referenceChartFill)" />
+            <polyline points={chartPoints} fill="none" stroke="var(--web-accent-2)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+            {sixMonths.map((item, index) => {
+              const x = 24 + (index * (chartWidth - 48)) / Math.max(1, sixMonths.length - 1);
+              const y = 138 - (item.value / maxMonth) * 100;
+              return (
+                <g key={item.key}>
+                  <circle cx={x} cy={y} r="4" fill="var(--web-accent-2)" stroke="#fff" strokeWidth="1.5" />
+                  <text x={x} y="166" textAnchor="middle" fill="#91a6bf" fontSize="9">{item.label}</text>
+                </g>
+              );
+            })}
+          </svg>
+          <div className="reference-chart-legend">
+            <span><i className="dot present" />{t('active')}</span>
+            <span><i className="dot absent" />{t('inactive')}</span>
+            <button type="button" className="link-btn" onClick={() => onNavigate('employees')}>{t('open_master')} →</button>
+          </div>
+        </article>
+
+        <article className="reference-card reference-announcement-card">
+          <div className="reference-card-head">
+            <div>
+              <span className="eyebrow">{t('recent_activity')}</span>
+              <h2>{t('latest_announcements')}</h2>
+            </div>
+            <button type="button" className="link-btn" onClick={() => onNavigate('announcements')}>{t('view_all')} →</button>
+          </div>
+          <div className="reference-announcement-list">
+            {publishedAnnouncements.slice(0, 4).map((item, index) => (
+              <button key={item.id} type="button" onClick={() => onNavigate('announcements')}>
+                <span className={`reference-news-icon news-${index % 4}`}>{['⌂', '◷', '▣', '✦'][index]}</span>
+                <span className="reference-news-copy">
+                  <strong>{item.title}</strong>
+                  <small>{item.publishedAt ? new Date(item.publishedAt).toLocaleDateString(locale) : t('new')}</small>
+                </span>
+                <em>{item.priority === 'urgent' ? 'Penting' : item.priority === 'important' ? 'Tinggi' : 'Normal'}</em>
+              </button>
+            ))}
+            {!publishedAnnouncements.length && (
+              <div className="reference-empty">{t('announcement_none')}</div>
+            )}
+          </div>
+        </article>
+
+        <article className="reference-card reference-attendance-card">
+          <div className="reference-card-head">
+            <div>
+              <span className="eyebrow">{t('today')}</span>
+              <h2>{t('attendance_rate')}</h2>
+            </div>
+          </div>
+          <div className="reference-attendance-ring" style={{ '--rate': `${attendanceRate * 3.6}deg` } as CSSProperties}>
+            <div><strong>{attendanceRate}%</strong><small>{t('present')}</small></div>
+          </div>
+          <div className="reference-attendance-list">
+            <div><span><i className="dot present" />{t('present')}</span><b>{presentCount}</b></div>
+            <div><span><i className="dot late" />{t('permission')} / {t('late_data')}</span><b>{lateCount}</b></div>
+            <div><span><i className="dot absent" />{t('not_recorded')}</span><b>{absentCount}</b></div>
+          </div>
+        </article>
+      </section>
+
+      <section className="reference-banner">
+        <div>
+          <span>PROJECT BY TIRTA</span>
+          <strong>{t('build_better_work_environment')}</strong>
+        </div>
+        <button type="button" onClick={() => onNavigate('professional-suite')}>{t('view_guide')} →</button>
+      </section>
+
+      <section className="reference-bottom-grid">
+        <article className="reference-card">
+          <div className="reference-card-head">
+            <div><span className="eyebrow">{t('recent_activity')}</span><h2>{t('attendance_activity')}</h2></div>
+            <button type="button" className="link-btn" onClick={() => onNavigate('attendance')}>{t('view_all')} →</button>
+          </div>
+          <AttendanceMini rows={attendance.slice(0, 4)} />
+        </article>
+        <article className="reference-card reference-quick-card">
+          <div className="reference-card-head">
+            <div><span className="eyebrow">{t('quick_access')}</span><h2>{t('favorite_menu')}</h2></div>
+          </div>
+          <div className="reference-quick-grid">
+            <Quick label={t('add_employee')} icon="users" onClick={() => onNavigate('employee-add')} />
+            <Quick label={t('work_schedule')} icon="calendar" onClick={() => onNavigate('schedule')} />
+            <Quick label={t('payroll')} icon="payroll" onClick={() => onNavigate('payroll')} />
+            <Quick label={t('leave_request')} icon="request" onClick={() => onNavigate('leave-request')} />
+          </div>
+          <div className="reference-footnote">{t('payroll')} · {t('master_employees')}: {money(payroll)}</div>
+        </article>
+      </section>
+
+      <section className="reference-themes">
+        {(['sun', 'moon', 'galaxy', 'blackhole', 'nebula'] as const).map((theme) => (
+          <button key={theme} type="button" onClick={() => {
+            document.documentElement.dataset.cosmicTheme = theme;
+            window.dispatchEvent(new CustomEvent('project-tirta-theme-change', { detail: theme }));
+          }}>
+            <img src={`/cosmic-web/${theme}.webp`} alt="" />
+            <span>{theme === 'sun' ? 'Matahari' : theme === 'moon' ? 'Bulan' : theme === 'galaxy' ? 'Galaksi' : theme === 'blackhole' ? 'Blackhole' : 'Nebula'}</span>
+          </button>
+        ))}
+      </section>
+    </div>
+  );
 }
-function Stat({title,value,hint,icon}:{title:string;value:string;hint:string;icon:string}){return <div className="stat-card"><div className="stat-icon"><Icon name={icon}/></div><div><span>{title}</span><strong>{value}</strong><small>{hint}</small></div></div>}
 function Quick({label,icon,onClick}:{label:string;icon:string;onClick:()=>void}){return <button className="quick-action" onClick={onClick}><span className="quick-icon"><Icon name={icon}/></span>{label}<span aria-hidden="true">›</span></button>}
 function AttendanceMini({rows}:{rows:Absensi[]}){const { t } = useTranslation(); return <div className="table-wrap"><table><thead><tr><th>{t('employee')}</th><th>{t('date')}</th><th>{t('check_in')}</th><th>{t('check_out')}</th><th>{t('status')}</th></tr></thead><tbody>{rows.length?rows.map((a,i)=><tr key={a.id||i}><td><b>{a.nama||'-'}</b><small>{a.id_karyawan||''}</small></td><td>{a.tanggal||'-'}</td><td className="green">{a.jam_masuk||'-'}</td><td>{a.jam_pulang||'-'}</td><td><Status value={a.status||'Hadir'}/></td></tr>):<Empty cols={5}/>}</tbody></table></div>}
 
-function Employees({data,onDelete,onEdit,onDeactivate,canManageStatus,onExport,onAdd}:{data:Karyawan[];onDelete:(k:Karyawan)=>void;onEdit:(k:Karyawan)=>void;onDeactivate:(k:Karyawan)=>void;canManageStatus:boolean;onExport:(columns:string[],format:'csv'|'excel')=>void;onAdd:()=>void}){
+function Employees({data,onDelete,onEdit,onExport,onAdd}:{data:Karyawan[];onDelete:(k:Karyawan)=>void;onEdit:(k:Karyawan)=>void;onExport:(columns:string[],format:'csv'|'excel')=>void;onAdd:()=>void}){
   const { t } = useTranslation();
  const [open,setOpen]=useState(false);
   const [detail,setDetail]=useState<Karyawan|null>(null);
@@ -1695,6 +2188,10 @@ function Employees({data,onDelete,onEdit,onDeactivate,canManageStatus,onExport,o
   ["status_aktif","Status Aktif"],
   ["gaji_pokok","Gaji Pokok"],
   ["role","Role"],
+  ["bpjs_kesehatan","BPJS Kesehatan"],
+  ["bpjs_ketenagakerjaan","BPJS Ketenagakerjaan"],
+  ["bpjs_kesehatan_card_path","Kartu BPJS Kesehatan"],
+  ["bpjs_ketenagakerjaan_card_path","Kartu BPJS Ketenagakerjaan"],
   ["email_terverifikasi","Email Terverifikasi"]
  ] as const;
  const [selected,setSelected]=useState<string[]>(available.slice(0,9).map(x=>x[0]));
@@ -1778,7 +2275,6 @@ function Employees({data,onDelete,onEdit,onDeactivate,canManageStatus,onExport,o
     Edit
   </button>
 
-    <button className="danger-text" disabled={!canManageStatus} onClick={()=>onDeactivate(k)}>{t('deactivate_employee')}</button>
     <button className="danger-text" onClick={()=>onDelete(k)}>{t("delete")}</button>
   </div>
 </td></tr>):<Empty cols={7}/>}</tbody></table></div></div></>
@@ -1796,16 +2292,19 @@ function NewEmployees({data,onRefresh}:{data:Karyawan[];onRefresh:()=>void}) {
       const path=selected?.foto_url;
       if(!path) return;
 
-      const { data, error } = await supabase.storage
-        .from('profile-photos')
-        .createSignedUrl(path, 900);
-
-      if(active && !error && data?.signedUrl) {
-        setPhotoUrl(`${data.signedUrl}&v=${Date.now()}`);
+      try {
+        const { data, error } = await supabase.storage
+          .from('profile-photos')
+          .createSignedUrl(path, 900);
+        if(active && !error && data?.signedUrl) {
+          setPhotoUrl(data.signedUrl);
+        }
+      } catch {
+        if (active) setPhotoUrl('');
       }
     };
 
-    void load();
+    load();
     return()=>{active=false};
   },[selected?.id,selected?.foto_url]);
 
@@ -1813,31 +2312,39 @@ function NewEmployees({data,onRefresh}:{data:Karyawan[];onRefresh:()=>void}) {
     if(!selected) return;
     setBusy(true);
 
-    const { data, error } = await supabase.functions.invoke('approve-employee-registration', {
-      body: {
-        employee_id: selected.id_karyawan || '',
-        decision,
-      },
-    });
-
-    if (error) {
-      let message = error.message || 'Gagal memproses persetujuan registrasi.';
-      try {
-        const context = (error as any).context;
-        if (context) {
-          const payload = await context.json();
-          if (payload?.error) message = payload.error;
-        }
-      } catch {
-        // Gunakan pesan error standar dari invoke.
+    let catatan: string | null = null;
+    if(decision === 'Tolak'){
+      catatan = (await appPrompt(t('rejection_reason_prompt'), '') || '').trim() || null;
+      if(!catatan){
+        setBusy(false);
+        return;
       }
-      await appAlert(message);
+    }
+
+    const { data: request, error: requestError } = await supabase
+      .from('hris_approval_requests')
+      .select('id')
+      .eq('modul','employee_registration')
+      .eq('record_id', String(selected.id_karyawan || '').trim())
+      .eq('status','Menunggu')
+      .order('created_at',{ascending:false})
+      .limit(1)
+      .maybeSingle();
+
+    if(requestError || !request?.id){
+      await appAlert(requestError?.message || 'Approval registrasi karyawan tidak ditemukan. Jalankan patch Supabase V61 terlebih dahulu.');
       setBusy(false);
       return;
     }
 
-    if (!data?.ok) {
-      await appAlert(data?.error || 'Gagal memproses persetujuan registrasi.');
+    const { error: decisionError } = await supabase.rpc('hris_decide_approval', {
+      p_id: request.id,
+      p_status: decision === 'Terima' ? 'Disetujui' : 'Ditolak',
+      p_catatan: catatan,
+    });
+
+    if(decisionError){
+      await appAlert(decisionError.message || 'Gagal memproses persetujuan registrasi.');
       setBusy(false);
       return;
     }
@@ -1868,75 +2375,6 @@ function NewEmployees({data,onRefresh}:{data:Karyawan[];onRefresh:()=>void}) {
   </>;
 }
 
-const deactivationReasons = (t: (key: string) => string) => [
-  { value: 'resignation', label: t('deactivation_reason_resignation') },
-  { value: 'termination', label: t('deactivation_reason_termination') },
-  { value: 'contract_end', label: t('deactivation_reason_contract_end') },
-  { value: 'retirement', label: t('deactivation_reason_retirement') },
-  { value: 'inactive', label: t('deactivation_reason_not_working') },
-  { value: 'transfer', label: t('deactivation_reason_transfer') },
-  { value: 'other', label: t('deactivation_reason_other') },
-];
-
-const reasonLabelForCode = (code: string | null | undefined, t: (key: string) => string) => {
-  const found = deactivationReasons(t).find(item => item.value === code);
-  return found?.label || t('deactivation_reason_not_set');
-};
-
-function DeactivateEmployeeModal({employee,onClose,onConfirm}:{employee:Karyawan;onClose:()=>void;onConfirm:(payload:{reasonCode:string;effectiveDate:string;note:string})=>Promise<void>}) {
-  const { t } = useTranslation();
-  const [reasonCode,setReasonCode]=useState('');
-  const [effectiveDate,setEffectiveDate]=useState(isoToday());
-  const [note,setNote]=useState('');
-  const [saving,setSaving]=useState(false);
-
-  const submit=async(e:FormEvent)=>{
-    e.preventDefault();
-    if(!reasonCode){await appAlert(t('deactivation_reason_required'));return;}
-    if(!effectiveDate){await appAlert(t('deactivation_date_required'));return;}
-    if(effectiveDate > isoToday()){await appAlert(t('deactivation_date_future'));return;}
-    setSaving(true);
-    try {
-      await onConfirm({reasonCode,effectiveDate,note});
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return <div className="drawer-backdrop" onMouseDown={e=>{if(e.currentTarget===e.target&&!saving)onClose()}}>
-    <aside className="edit-drawer">
-      <div className="drawer-head">
-        <div><span>{t('employee_profile')}</span><h2>{t('deactivate_employee')}</h2></div>
-        <button type="button" className="icon-btn" onClick={onClose} disabled={saving}>×</button>
-      </div>
-      <form className="drawer-body" onSubmit={submit}>
-        <div style={{padding:14,border:'1px solid #e5e7eb',borderRadius:12,background:'#f8fafc',marginBottom:14}}>
-          <strong>{employee.nama}</strong>
-          <div style={{fontSize:12,color:'#667085',marginTop:4}}>{employee.id_karyawan||'—'} · {employee.jabatan||'—'}</div>
-        </div>
-        <p style={{margin:'0 0 16px',color:'#667085',fontSize:13,lineHeight:1.5}}>{t('deactivation_details_desc')}</p>
-        <label>{t('inactive_reason')}
-          <select required value={reasonCode} onChange={e=>setReasonCode(e.target.value)} disabled={saving}>
-            <option value="">{t('select_deactivation_reason')}</option>
-            {deactivationReasons(t).map(reason=><option key={reason.value} value={reason.value}>{reason.label}</option>)}
-          </select>
-        </label>
-        <label>{t('effective_date')}
-          <input required type="date" value={effectiveDate} onChange={e=>setEffectiveDate(e.target.value)} disabled={saving}/>
-        </label>
-        <label>{t('deactivation_note')}
-          <textarea rows={4} value={note} onChange={e=>setNote(e.target.value)} placeholder={t('deactivation_note_placeholder')} disabled={saving}/>
-        </label>
-        <div style={{padding:12,border:'1px solid #f0c7c7',borderRadius:10,background:'#fff8f8',color:'#7a271a',fontSize:12,lineHeight:1.5}}>{t('deactivation_warning')}</div>
-        <div className="drawer-foot">
-          <button type="button" className="secondary" onClick={onClose} disabled={saving}>{t('cancel')}</button>
-          <button type="submit" className="primary" disabled={saving}>{saving?t('processing'):t('confirm_deactivate')}</button>
-        </div>
-      </form>
-    </aside>
-  </div>
-}
-
 function InactiveEmployees({data,onEdit,onActivate}:{data:Karyawan[];onEdit:(k:Karyawan)=>void;onActivate:(k:Karyawan)=>void}) {
   const { t } = useTranslation();
   return <>
@@ -1944,20 +2382,19 @@ function InactiveEmployees({data,onEdit,onActivate}:{data:Karyawan[];onEdit:(k:K
     <div className="toolbar"><b>{data.length} {t('inactive_employees').toLowerCase()}</b></div>
     <div className="panel table-panel inactive-employee-panel">
       <div className="table-wrap"><table><thead><tr>
-        <th>{t('name')}</th><th>{t('employee_id')}</th><th>{t('position')}</th><th>{t('department')}</th><th>{t('inactive_reason')}</th><th>{t('effective_date')}</th><th>{t('actions')}</th>
+        <th>{t('name')}</th><th>{t('employee_id')}</th><th>{t('position')}</th><th>{t('department')}</th><th>{t('employee_status')}</th><th>{t('actions')}</th>
       </tr></thead><tbody>
         {data.length ? data.map(k => <tr key={k.id}>
           <td><div className="person"><div className="mini-avatar inactive-avatar">{k.nama?.[0]||'K'}</div><div><b>{k.nama||'—'}</b><small>{k.email||'—'}</small></div></div></td>
           <td>{k.id_karyawan||'—'}</td>
           <td>{k.jabatan||'—'}</td>
           <td>{k.departemen||'—'}</td>
-          <td><div><b>{reasonLabelForCode(k.alasan_keluar_kode, t)}</b>{k.alasan_keluar&&<small>{k.alasan_keluar}</small>}</div></td>
-          <td>{k.tanggal_keluar||'—'}</td>
+          <td><span className="status status-red-inactive">{t('inactive')}</span></td>
           <td><div className="row-actions inactive-actions">
             <button className="link-btn" type="button" onClick={()=>onEdit(k)}>{t('edit_data')}</button>
             <button className="secondary activate-btn" type="button" onClick={()=>onActivate(k)}>{t('activate_employee')}</button>
           </div></td>
-        </tr>) : <Empty cols={7}/>}</tbody></table></div>
+        </tr>) : <Empty cols={6}/>}</tbody></table></div>
     </div>
   </>;
 }
@@ -2062,14 +2499,17 @@ function AddEmployee({onDone,refresh}:{onDone:()=>void;refresh:()=>void}) {
 
 function EmployeeEditor({
   employee,
+  userRole,
   onClose,
   onSave,
 }: {
   employee: Karyawan;
+  userRole: string;
   onClose: () => void;
   onSave: (p: Record<string, unknown>) => Promise<boolean> | boolean;
 }) {
   const { t } = useTranslation();
+  const isSuperAdmin = userRole.trim().toLowerCase() === 'super admin';
 
   const [f, setF] = useState({
     nik_ktp: employee.nik_ktp || '',
@@ -2090,14 +2530,19 @@ function EmployeeEditor({
     gaji_pokok: String(employee.gaji_pokok || 0),
     bank_name: employee.bank_name || '',
     bank_account: employee.bank_account || '',
+    role: employee.role || 'Karyawan',
+    bpjs_kesehatan: employee.bpjs_kesehatan || '',
+    bpjs_ketenagakerjaan: employee.bpjs_ketenagakerjaan || '',
     status_aktif: employee.status_aktif !== false,
-    tanggal_keluar: employee.tanggal_keluar || '',
-    alasan_keluar_kode: employee.alasan_keluar_kode || '',
-    alasan_keluar: employee.alasan_keluar || ''
   });
 
+  const [roles, setRoles] = useState<string[]>([
+    'Karyawan', 'Supervisor', 'Payroll', 'HRD', 'Admin', 'Super Admin'
+  ]);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState('');
+  const [bpjsKesehatanFile, setBpjsKesehatanFile] = useState<File | null>(null);
+  const [bpjsKetenagakerjaanFile, setBpjsKetenagakerjaanFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
 
   const setField = (key: string, value: string | boolean) => {
@@ -2106,74 +2551,77 @@ function EmployeeEditor({
 
   useEffect(() => {
     let cancelled = false;
+    void supabase
+      .from('hris_roles')
+      .select('nama')
+      .eq('status', 'Aktif')
+      .order('nama')
+      .then(({ data }) => {
+        if (cancelled) return;
+        const next = Array.from(new Set([
+          ...roles,
+          ...((data || []).map((row: any) => String(row.nama || '').trim()).filter(Boolean))
+        ]));
+        setRoles(next);
+      });
+    return () => { cancelled = true; };
+  }, []);
 
+  useEffect(() => {
+    let cancelled = false;
     const loadCurrentPhoto = async () => {
       const photo = employee.foto_url || '';
-
       if (!photo) {
         setPhotoPreview('');
         return;
       }
-
-      if (
-        /^https?:\/\//i.test(photo) ||
-        /^data:image\//i.test(photo) ||
-        /^blob:/i.test(photo) ||
-        /^\//.test(photo)
-      ) {
+      if (/^https?:\/\//i.test(photo) || /^data:image\//i.test(photo) || /^blob:/i.test(photo) || /^\//.test(photo)) {
         setPhotoPreview(photo);
         return;
       }
-
       try {
-        const { data, error } = await supabase.storage
-          .from('profile-photos')
-          .createSignedUrl(photo, 900);
-
-        if (!cancelled) {
-          setPhotoPreview(error || !data?.signedUrl ? '' : data.signedUrl);
-        }
+        const { data, error } = await supabase.storage.from('profile-photos').createSignedUrl(photo, 900);
+        if (!cancelled) setPhotoPreview(error || !data?.signedUrl ? '' : data.signedUrl);
       } catch {
         if (!cancelled) setPhotoPreview('');
       }
     };
-
     void loadCurrentPhoto();
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [employee.id, employee.foto_url]);
 
-  useEffect(() => {
-    return () => {
-      if (photoPreview.startsWith('blob:')) {
-        URL.revokeObjectURL(photoPreview);
-      }
-    };
+  useEffect(() => () => {
+    if (photoPreview.startsWith('blob:')) URL.revokeObjectURL(photoPreview);
   }, [photoPreview]);
 
-  const handlePhotoChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-
     if (!file) return;
-
     if (!file.type.startsWith('image/')) {
       void appAlert('File foto harus berupa gambar.');
       e.target.value = '';
       return;
     }
-
     if (file.size > 2 * 1024 * 1024) {
       void appAlert('Ukuran foto maksimal 2 MB.');
       e.target.value = '';
       return;
     }
-
     setPhotoFile(file);
     setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const validateBpjsFile = async (file: File | null, label: string) => {
+    if (!file) return true;
+    if (!file.type.startsWith('image/')) {
+      await appAlert(`${label} harus berupa file gambar.`);
+      return false;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      await appAlert(`${label} maksimal 4 MB.`);
+      return false;
+    }
+    return true;
   };
 
   const isStoragePath = (value: string) =>
@@ -2183,357 +2631,184 @@ function EmployeeEditor({
     !/^blob:/i.test(value) &&
     !/^\//.test(value);
 
+  const uploadBpjsCard = async (
+    file: File,
+    kind: 'kesehatan' | 'ketenagakerjaan'
+  ) => {
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+    const id = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const path = `cards/${f.id_karyawan.trim().toUpperCase()}/bpjs-${kind}-${id}.${ext}`;
+
+    const { data: signed, error: signedError } = await supabase.storage
+      .from('bpjs-cards')
+      .createSignedUploadUrl(path, { upsert: false });
+    if (signedError) throw signedError;
+
+    const { error: uploadError } = await supabase.storage
+      .from('bpjs-cards')
+      .uploadToSignedUrl(path, signed.token, file);
+    if (uploadError) throw uploadError;
+
+    return path;
+  };
+
   const save = async () => {
     if (!f.id_karyawan.trim()) {
       await appAlert(t('employee_id_required'));
       return;
     }
 
-    if (!f.status_aktif) {
-      if (!f.alasan_keluar_kode) {
-        await appAlert(t('deactivation_reason_required'));
-        return;
-      }
-      if (!f.tanggal_keluar) {
-        await appAlert(t('deactivation_date_required'));
-        return;
-      }
-      if (f.tanggal_keluar > isoToday()) {
-        await appAlert(t('deactivation_date_future'));
-        return;
-      }
+    if (!isSuperAdmin && f.role !== (employee.role || 'Karyawan')) {
+      await appAlert('Perubahan Role hanya dapat dilakukan oleh Super Admin.');
+      return;
     }
+
+    if (!(await validateBpjsFile(bpjsKesehatanFile, 'Kartu BPJS Kesehatan'))) return;
+    if (!(await validateBpjsFile(bpjsKetenagakerjaanFile, 'Kartu BPJS Ketenagakerjaan'))) return;
 
     setSaving(true);
 
     let uploadedPhotoPath = '';
+    let uploadedBpjsKesehatanPath = '';
+    let uploadedBpjsKetenagakerjaanPath = '';
 
     try {
       const payload: Record<string, unknown> = {
         ...f,
         id_karyawan: f.id_karyawan.trim().toUpperCase(),
         gaji_pokok: Number(f.gaji_pokok || 0),
-        tanggal_keluar: f.status_aktif ? null : f.tanggal_keluar,
-        alasan_keluar_kode: f.status_aktif ? null : f.alasan_keluar_kode,
-        alasan_keluar: f.status_aktif ? null : (f.alasan_keluar.trim() || null),
       };
 
+      for (const key of ['tanggal_lahir', 'tanggal_masuk']) {
+        if (payload[key] === '') payload[key] = null;
+      }
+
       const oldPhotoPath = employee.foto_url || '';
+      const oldBpjsKesehatanPath = employee.bpjs_kesehatan_card_path || '';
+      const oldBpjsKetenagakerjaanPath = employee.bpjs_ketenagakerjaan_card_path || '';
 
       if (photoFile) {
-        const ext =
-          photoFile.name.split('.').pop()?.toLowerCase() || 'jpg';
-
-        const safeUuid =
-          typeof crypto !== 'undefined' &&
-          typeof crypto.randomUUID === 'function'
-            ? crypto.randomUUID()
-            : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-
+        const ext = photoFile.name.split('.').pop()?.toLowerCase() || 'jpg';
+        const safeUuid = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
         uploadedPhotoPath = `avatars/employee-${safeUuid}.${ext}`;
 
-        const { data: signedUpload, error: signedUploadError } =
-          await supabase.storage
-            .from('profile-photos')
-            .createSignedUploadUrl(uploadedPhotoPath, { upsert: false });
+        const { data: signedUpload, error: signedUploadError } = await supabase.storage
+          .from('profile-photos')
+          .createSignedUploadUrl(uploadedPhotoPath, { upsert: false });
+        if (signedUploadError) throw signedUploadError;
 
-        if (signedUploadError) {
-          throw signedUploadError;
-        }
-
-        const { error: uploadError } =
-          await supabase.storage
-            .from('profile-photos')
-            .uploadToSignedUrl(
-              uploadedPhotoPath,
-              signedUpload.token,
-              photoFile
-            );
-
-        if (uploadError) {
-          throw uploadError;
-        }
+        const { error: uploadError } = await supabase.storage
+          .from('profile-photos')
+          .uploadToSignedUrl(uploadedPhotoPath, signedUpload.token, photoFile);
+        if (uploadError) throw uploadError;
 
         payload.foto_url = uploadedPhotoPath;
       }
 
+      if (bpjsKesehatanFile) {
+        uploadedBpjsKesehatanPath = await uploadBpjsCard(bpjsKesehatanFile, 'kesehatan');
+        payload.bpjs_kesehatan_card_path = uploadedBpjsKesehatanPath;
+      }
+
+      if (bpjsKetenagakerjaanFile) {
+        uploadedBpjsKetenagakerjaanPath = await uploadBpjsCard(bpjsKetenagakerjaanFile, 'ketenagakerjaan');
+        payload.bpjs_ketenagakerjaan_card_path = uploadedBpjsKetenagakerjaanPath;
+      }
+
       const saved = await onSave(payload);
-
       if (!saved) {
-        if (uploadedPhotoPath) {
-          await supabase.storage
-            .from('profile-photos')
-            .remove([uploadedPhotoPath])
-            .catch(() => undefined);
-        }
-
+        if (uploadedPhotoPath) await supabase.storage.from('profile-photos').remove([uploadedPhotoPath]).catch(() => undefined);
+        if (uploadedBpjsKesehatanPath) await supabase.storage.from('bpjs-cards').remove([uploadedBpjsKesehatanPath]).catch(() => undefined);
+        if (uploadedBpjsKetenagakerjaanPath) await supabase.storage.from('bpjs-cards').remove([uploadedBpjsKetenagakerjaanPath]).catch(() => undefined);
         return;
       }
 
-      // Hapus foto lama hanya setelah DB berhasil menunjuk ke foto baru.
-      if (
-        uploadedPhotoPath &&
-        oldPhotoPath &&
-        oldPhotoPath !== uploadedPhotoPath &&
-        isStoragePath(oldPhotoPath)
-      ) {
-        await supabase.storage
-          .from('profile-photos')
-          .remove([oldPhotoPath])
-          .catch(error => {
-            console.warn('Foto lama tidak berhasil dihapus:', error);
-          });
-      }
-    } catch (error: any) {
-      if (uploadedPhotoPath) {
-        await supabase.storage
-          .from('profile-photos')
-          .remove([uploadedPhotoPath])
-          .catch(() => undefined);
+      if (uploadedPhotoPath && oldPhotoPath && oldPhotoPath !== uploadedPhotoPath && isStoragePath(oldPhotoPath)) {
+        await supabase.storage.from('profile-photos').remove([oldPhotoPath]).catch(error => {
+          console.warn('Foto lama tidak berhasil dihapus:', error);
+        });
       }
 
-      await appAlert(
-        `Gagal mengganti foto karyawan:
-${error?.message || 'Terjadi kesalahan.'}`
-      );
+      for (const [oldPath, newPath] of [
+        [oldBpjsKesehatanPath, uploadedBpjsKesehatanPath],
+        [oldBpjsKetenagakerjaanPath, uploadedBpjsKetenagakerjaanPath],
+      ]) {
+        if (oldPath && newPath && oldPath !== newPath && isStoragePath(oldPath)) {
+          await supabase.storage.from('bpjs-cards').remove([oldPath]).catch(error => {
+            console.warn('Kartu BPJS lama tidak berhasil dihapus:', error);
+          });
+        }
+      }
+    } catch (error: any) {
+      if (uploadedPhotoPath) await supabase.storage.from('profile-photos').remove([uploadedPhotoPath]).catch(() => undefined);
+      if (uploadedBpjsKesehatanPath) await supabase.storage.from('bpjs-cards').remove([uploadedBpjsKesehatanPath]).catch(() => undefined);
+      if (uploadedBpjsKetenagakerjaanPath) await supabase.storage.from('bpjs-cards').remove([uploadedBpjsKetenagakerjaanPath]).catch(() => undefined);
+
+      await appAlert(`Gagal menyimpan data karyawan:\n${error?.message || 'Terjadi kesalahan.'}`);
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div
-      className="drawer-backdrop"
-      onMouseDown={e => {
-        if (e.currentTarget === e.target && !saving) {
-          onClose();
-        }
-      }}
-    >
+    <div className="drawer-backdrop" onMouseDown={e => {
+      if (e.currentTarget === e.target && !saving) onClose();
+    }}>
       <aside className="edit-drawer">
         <div className="drawer-head">
           <div>
             <span>{t('employee_profile')}</span>
             <h2>{t('edit_employee')}</h2>
           </div>
-
-          <button
-            className="icon-btn"
-            onClick={onClose}
-            type="button"
-            disabled={saving}
-          >
-            ×
-          </button>
+          <button className="icon-btn" onClick={onClose} type="button" disabled={saving}>×</button>
         </div>
 
         <div className="drawer-body">
-
-          {/* FOTO KARYAWAN */}
-          <div
-            style={{
-              marginBottom: 20,
-              padding: 14,
-              border: '1px solid #d0d5dd',
-              borderRadius: 14,
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 16,
-              }}
-            >
-              <div
-                style={{
-                  width: 110,
-                  height: 135,
-                  flexShrink: 0,
-                  borderRadius: 12,
-                  overflow: 'hidden',
-                  background: '#eef2f7',
-                  border: '2px solid #d6ae58',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
+          <div style={{marginBottom:20,padding:14,border:'1px solid #d0d5dd',borderRadius:14}}>
+            <div style={{display:'flex',alignItems:'center',gap:16}}>
+              <div style={{width:110,height:135,flexShrink:0,borderRadius:12,overflow:'hidden',background:'#eef2f7',border:'2px solid #d6ae58',display:'flex',alignItems:'center',justifyContent:'center'}}>
                 {photoPreview ? (
-                  <img
-                    src={photoPreview}
-                    alt={`Foto ${employee.nama}`}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                    }}
-                  />
+                  <img src={photoPreview} alt={`Foto ${employee.nama}`} style={{width:'100%',height:'100%',objectFit:'cover'}} />
                 ) : (
-                  <span
-                    style={{
-                      fontSize: 38,
-                      fontWeight: 700,
-                      color: '#667085',
-                    }}
-                  >
-                    {employee.nama?.[0] || 'K'}
-                  </span>
+                  <span style={{fontSize:38,fontWeight:700,color:'#667085'}}>{employee.nama?.[0] || 'K'}</span>
                 )}
               </div>
-
               <div>
-                <strong
-                  style={{
-                    display: 'block',
-                    marginBottom: 6,
-                  }}
-                >
-                  Foto Karyawan
-                </strong>
-
-                <small
-                  style={{
-                    display: 'block',
-                    color: '#667085',
-                    marginBottom: 10,
-                  }}
-                >
-                  JPG, PNG, atau WebP · maksimal 2 MB
-                </small>
-
-                <input
-                  id={`employee-photo-${employee.id}`}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={handlePhotoChange}
-                  disabled={saving}
-                  style={{ display: 'none' }}
-                />
-
-                <label
-                  htmlFor={`employee-photo-${employee.id}`}
-                  className="secondary"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '9px 13px',
-                    cursor: saving ? 'not-allowed' : 'pointer',
-                  }}
-                >
+                <strong style={{display:'block',marginBottom:6}}>Foto Karyawan</strong>
+                <small style={{display:'block',color:'#667085',marginBottom:10}}>JPG, PNG, atau WebP · maksimal 2 MB</small>
+                <input id={`employee-photo-${employee.id}`} type="file" accept="image/jpeg,image/png,image/webp" onChange={handlePhotoChange} disabled={saving} style={{display:'none'}} />
+                <label htmlFor={`employee-photo-${employee.id}`} className="secondary" style={{display:'inline-flex',alignItems:'center',justifyContent:'center',padding:'9px 13px',cursor:saving?'not-allowed':'pointer'}}>
                   {photoFile ? 'Ganti Foto Lagi' : 'Ganti Foto'}
                 </label>
-
-                {photoFile && (
-                  <div
-                    style={{
-                      marginTop: 8,
-                      fontSize: 12,
-                      color: '#475467',
-                    }}
-                  >
-                    Foto baru siap diupload: {photoFile.name}
-                  </div>
-                )}
+                {photoFile && <div style={{marginTop:8,fontSize:12,color:'#475467'}}>Foto baru: {photoFile.name}</div>}
               </div>
             </div>
           </div>
 
-          <label>
-            NIK KTP
-            <input
-              value={f.nik_ktp}
-              onChange={e => setField('nik_ktp', e.target.value)}
-              disabled={saving}
-            />
-          </label>
+          <label>NIK KTP<input value={f.nik_ktp} onChange={e=>setField('nik_ktp',e.target.value)} disabled={saving}/></label>
+          <label>ID Karyawan<input value={f.id_karyawan} onChange={e=>setField('id_karyawan',e.target.value)} disabled={saving}/></label>
+          <label>Nama<input value={f.nama} onChange={e=>setField('nama',e.target.value)} disabled={saving}/></label>
+          <label>Tempat Lahir<input value={f.tempat_lahir} onChange={e=>setField('tempat_lahir',e.target.value)} disabled={saving}/></label>
+          <label>Tanggal Lahir<input type="date" value={f.tanggal_lahir} onChange={e=>setField('tanggal_lahir',e.target.value)} disabled={saving}/></label>
 
-          <label>
-            ID Karyawan
-            <input
-              value={f.id_karyawan}
-              onChange={e => setField('id_karyawan', e.target.value)}
-              disabled={saving}
-            />
-          </label>
-
-          <label>
-            Nama
-            <input
-              value={f.nama}
-              onChange={e => setField('nama', e.target.value)}
-              disabled={saving}
-            />
-          </label>
-
-          <label>
-            Tempat Lahir
-            <input
-              value={f.tempat_lahir}
-              onChange={e => setField('tempat_lahir', e.target.value)}
-              disabled={saving}
-            />
-          </label>
-
-          <label>
-            Tanggal Lahir
-            <input
-              type="date"
-              value={f.tanggal_lahir}
-              onChange={e => setField('tanggal_lahir', e.target.value)}
-              disabled={saving}
-            />
-          </label>
-
-          <label>
-            Jenis Kelamin
-            <select
-              value={f.jenis_kelamin}
-              onChange={e => setField('jenis_kelamin', e.target.value)}
-              disabled={saving}
-            >
+          <label>Jenis Kelamin
+            <select value={f.jenis_kelamin} onChange={e=>setField('jenis_kelamin',e.target.value)} disabled={saving}>
               <option value="">Pilih Jenis Kelamin</option>
               <option value="Laki-laki">Laki-laki</option>
               <option value="Perempuan">Perempuan</option>
             </select>
           </label>
 
-          <label>
-            Alamat
-            <input
-              value={f.alamat_rumah}
-              onChange={e => setField('alamat_rumah', e.target.value)}
-              disabled={saving}
-            />
-          </label>
+          <label>Alamat<input value={f.alamat_rumah} onChange={e=>setField('alamat_rumah',e.target.value)} disabled={saving}/></label>
+          <label>No. Telepon<input value={f.no_telp} onChange={e=>setField('no_telp',e.target.value)} disabled={saving}/></label>
+          <label>Email<input type="email" value={f.email} onChange={e=>setField('email',e.target.value)} disabled={saving}/></label>
 
-          <label>
-            No. Telepon
-            <input
-              value={f.no_telp}
-              onChange={e => setField('no_telp', e.target.value)}
-              disabled={saving}
-            />
-          </label>
-
-          <label>
-            Email
-            <input
-              type="email"
-              value={f.email}
-              onChange={e => setField('email', e.target.value)}
-              disabled={saving}
-            />
-          </label>
-
-          <label>
-            Status Pernikahan
-            <select
-              value={f.status_pernikahan}
-              onChange={e => setField('status_pernikahan', e.target.value)}
-              disabled={saving}
-            >
+          <label>Status Pernikahan
+            <select value={f.status_pernikahan} onChange={e=>setField('status_pernikahan',e.target.value)} disabled={saving}>
               <option value="">Pilih Status Pernikahan</option>
               <option value="Belum Menikah">Belum Menikah</option>
               <option value="Menikah">Menikah</option>
@@ -2541,40 +2816,12 @@ ${error?.message || 'Terjadi kesalahan.'}`
             </select>
           </label>
 
-          <label>
-            Nama Ibu Kandung
-            <input
-              value={f.nama_ibu_kandung}
-              onChange={e => setField('nama_ibu_kandung', e.target.value)}
-              disabled={saving}
-            />
-          </label>
+          <label>Nama Ibu Kandung<input value={f.nama_ibu_kandung} onChange={e=>setField('nama_ibu_kandung',e.target.value)} disabled={saving}/></label>
+          <label>Departemen<input value={f.departemen} onChange={e=>setField('departemen',e.target.value)} disabled={saving}/></label>
+          <label>Jabatan<input value={f.jabatan} onChange={e=>setField('jabatan',e.target.value)} disabled={saving}/></label>
 
-          <label>
-            Departemen
-            <input
-              value={f.departemen}
-              onChange={e => setField('departemen', e.target.value)}
-              disabled={saving}
-            />
-          </label>
-
-          <label>
-            Jabatan
-            <input
-              value={f.jabatan}
-              onChange={e => setField('jabatan', e.target.value)}
-              disabled={saving}
-            />
-          </label>
-
-          <label>
-            Status Karyawan
-            <select
-              value={f.status_karyawan}
-              onChange={e => setField('status_karyawan', e.target.value)}
-              disabled={saving}
-            >
+          <label>Status Karyawan
+            <select value={f.status_karyawan} onChange={e=>setField('status_karyawan',e.target.value)} disabled={saving}>
               <option value="Tetap">Tetap</option>
               <option value="Kontrak">Kontrak</option>
               <option value="Harian">Harian</option>
@@ -2582,126 +2829,55 @@ ${error?.message || 'Terjadi kesalahan.'}`
             </select>
           </label>
 
-          <label>
-            Tanggal Masuk
-            <input
-              type="date"
-              value={f.tanggal_masuk}
-              onChange={e => setField('tanggal_masuk', e.target.value)}
-              disabled={saving}
-            />
-          </label>
+          <label>Tanggal Masuk<input type="date" value={f.tanggal_masuk} onChange={e=>setField('tanggal_masuk',e.target.value)} disabled={saving}/></label>
+          <label>Gaji Pokok<input type="number" value={f.gaji_pokok} onChange={e=>setField('gaji_pokok',e.target.value)} disabled={saving}/></label>
+          <label>Nama Bank<input value={f.bank_name} onChange={e=>setField('bank_name',e.target.value)} disabled={saving}/></label>
+          <label>Nomor Rekening<input value={f.bank_account} onChange={e=>setField('bank_account',e.target.value)} disabled={saving}/></label>
 
           <label>
-            Gaji Pokok
-            <input
-              type="number"
-              value={f.gaji_pokok}
-              onChange={e => setField('gaji_pokok', e.target.value)}
-              disabled={saving}
-            />
+            Role
+            <select value={f.role} onChange={e=>setField('role',e.target.value)} disabled={saving || !isSuperAdmin}>
+              {!roles.includes(f.role) && <option value={f.role}>{f.role}</option>}
+              {roles.map(role => <option key={role} value={role}>{role}</option>)}
+            </select>
+            {!isSuperAdmin && <small style={{display:'block',marginTop:4,color:'#667085'}}>Hanya Super Admin yang dapat mengubah Role.</small>}
           </label>
 
-          <label>
-            Nama Bank
-            <input
-              value={f.bank_name}
-              onChange={e => setField('bank_name', e.target.value)}
-              disabled={saving}
-            />
-          </label>
+          <div style={{marginTop:6,padding:14,border:'1px solid #d0d5dd',borderRadius:14}}>
+            <strong style={{display:'block',marginBottom:12}}>BPJS Karyawan</strong>
 
-          <label>
-            Nomor Rekening
-            <input
-              value={f.bank_account}
-              onChange={e => setField('bank_account', e.target.value)}
-              disabled={saving}
-            />
-          </label>
+            <label>
+              BPJS Kesehatan
+              <input value={f.bpjs_kesehatan} onChange={e=>setField('bpjs_kesehatan',e.target.value)} disabled={saving} placeholder="Nomor BPJS Kesehatan" />
+            </label>
+
+            <label style={{marginTop:12}}>
+              Kartu BPJS Kesehatan
+              <input type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>setBpjsKesehatanFile(e.target.files?.[0] || null)} disabled={saving}/>
+              <small style={{display:'block',marginTop:5,color:'#667085'}}>JPG, PNG, WebP · maksimal 4 MB{bpjsKesehatanFile ? ` · ${bpjsKesehatanFile.name}` : ''}</small>
+            </label>
+
+            <label style={{marginTop:12}}>
+              BPJS Ketenagakerjaan
+              <input value={f.bpjs_ketenagakerjaan} onChange={e=>setField('bpjs_ketenagakerjaan',e.target.value)} disabled={saving} placeholder="Nomor BPJS Ketenagakerjaan" />
+            </label>
+
+            <label style={{marginTop:12}}>
+              Kartu BPJS Ketenagakerjaan
+              <input type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>setBpjsKetenagakerjaanFile(e.target.files?.[0] || null)} disabled={saving}/>
+              <small style={{display:'block',marginTop:5,color:'#667085'}}>JPG, PNG, WebP · maksimal 4 MB{bpjsKetenagakerjaanFile ? ` · ${bpjsKetenagakerjaanFile.name}` : ''}</small>
+            </label>
+          </div>
 
           <label className="switch-row">
             <span>{t('active_status')}</span>
-            <input
-              type="checkbox"
-              checked={f.status_aktif}
-              onChange={e => {
-                const next = e.target.checked;
-                setF(prev => ({
-                  ...prev,
-                  status_aktif: next,
-                  tanggal_keluar: next ? '' : (prev.tanggal_keluar || isoToday()),
-                  alasan_keluar_kode: next ? '' : (prev.alasan_keluar_kode || 'other'),
-                  alasan_keluar: next ? '' : prev.alasan_keluar,
-                }));
-              }}
-              disabled={saving}
-            />
+            <input type="checkbox" checked={f.status_aktif} onChange={e=>setField('status_aktif',e.target.checked)} disabled={saving}/>
           </label>
-
-          {!f.status_aktif && (
-            <div style={{
-              marginTop: 8,
-              padding: 16,
-              border: '1px solid #f0c7c7',
-              borderRadius: 12,
-              background: '#fff8f8',
-              gridColumn: '1 / -1',
-            }}>
-              <strong style={{display:'block', marginBottom:8}}>{t('deactivation_details')}</strong>
-              <p style={{margin:'0 0 14px', color:'#667085', fontSize:12}}>{t('deactivation_details_desc')}</p>
-              <label>
-                {t('inactive_reason')}
-                <select
-                  required={!f.status_aktif}
-                  value={f.alasan_keluar_kode || ''}
-                  onChange={e => setField('alasan_keluar_kode', e.target.value)}
-                  disabled={saving}
-                >
-                  <option value="">{t('select_deactivation_reason')}</option>
-                  {deactivationReasons(t).map(reason => <option key={reason.value} value={reason.value}>{reason.label}</option>)}
-                </select>
-              </label>
-              <label>
-                {t('effective_date')}
-                <input
-                  type="date"
-                  required={!f.status_aktif}
-                  value={f.tanggal_keluar}
-                  onChange={e => setField('tanggal_keluar', e.target.value)}
-                  disabled={saving}
-                />
-              </label>
-              <label style={{gridColumn:'1 / -1'}}>
-                {t('deactivation_note')}
-                <textarea
-                  rows={3}
-                  value={f.alasan_keluar}
-                  onChange={e => setField('alasan_keluar', e.target.value)}
-                  placeholder={t('deactivation_note_placeholder')}
-                  disabled={saving}
-                />
-              </label>
-            </div>
-          )}
         </div>
 
         <div className="drawer-foot">
-          <button
-            type="button"
-            className="secondary"
-            onClick={onClose}
-            disabled={saving}
-          >
-            Batal
-          </button>
-
-          <button
-            type="button"
-            className="primary"
-            onClick={() => void save()}
-            disabled={saving}
-          >
+          <button type="button" className="secondary" onClick={onClose} disabled={saving}>Batal</button>
+          <button type="button" className="primary" onClick={()=>void save()} disabled={saving}>
             {saving ? 'Mengupload & Menyimpan...' : 'Simpan Perubahan'}
           </button>
         </div>
@@ -2743,79 +2919,156 @@ function TalentModule({initial,employees}:{initial:MenuKey;employees:Karyawan[]}
  return <Branch title={t('talent')} desc={t('talent_desc')} items={items} tab={tab} setTab={setTab} action={`＋ ${t('add')}`} onAction={()=>setModal(true)}>{<TalentTable tab={tab} rows={rows}/>} {modal&&<TalentForm tab={tab} employees={employees} onClose={()=>setModal(false)} onSaved={()=>{setModal(false);load()}}/>}</Branch>
 
 }
-function TalentTable({tab,rows}:{tab:string;rows:any[]}){let cols:string[]=[];if(tab==='kpi')cols=['id_karyawan','periode','indikator','target','realisasi','skor','status'];else if(tab==='vacancies')cols=['posisi','departemen','jumlah_kebutuhan','status','tanggal_buka','tanggal_tutup'];else if(tab==='candidates')cols=['nama','email','no_telp','posisi','tahap','status'];else if(tab==='interviews')cols=['kandidat','tanggal','jam','interviewer','hasil','status'];else cols=['id_karyawan','periode','nilai','catatan','status'];return <div className="panel table-panel"><div className="table-wrap"><table><thead><tr>{cols.map(c=><th key={c}>{fieldLabel(c)}</th>)}</tr></thead><tbody>{rows.length?rows.map(r=><tr key={r.id}>{cols.map(c=><td key={c}>{c==='status'?<Status value={String(r[c]??'-')}/>:String(r[c]??'-')}</td>)}</tr>):<Empty cols={cols.length}/>}</tbody></table></div></div>}
+function TalentTable({tab,rows}:{tab:string;rows:any[]}){const { t } = useTranslation();let cols:string[]=[];if(tab==='kpi')cols=['id_karyawan','periode','indikator','target','realisasi','skor','status'];else if(tab==='vacancies')cols=['posisi','departemen','jumlah_kebutuhan','status','tanggal_buka','tanggal_tutup'];else if(tab==='candidates')cols=['nama','email','no_telp','posisi','tahap','status'];else if(tab==='interviews')cols=['kandidat','tanggal','jam','interviewer','hasil','status'];else cols=['id_karyawan','periode','nilai','catatan','status'];return <div className="panel table-panel"><div className="table-wrap"><table><thead><tr>{cols.map(c=><th key={c}>{fieldLabel(c,t)}</th>)}</tr></thead><tbody>{rows.length?rows.map(r=><tr key={r.id}>{cols.map(c=><td key={c}>{c==='status'?<Status value={String(r[c]??'-')}/>:String(r[c]??'-')}</td>)}</tr>):<Empty cols={cols.length}/>}</tbody></table></div></div>}
 function TalentForm({tab,employees,onClose,onSaved}:{tab:string;employees:Karyawan[];onClose:()=>void;onSaved:()=>void}){const {t}=useTranslation();
  const [f,setF]=useState<any>(tab==='kpi'?{id_karyawan:'',periode:new Date().toISOString().slice(0,7),indikator:'',target:'',realisasi:'',bobot:'0',skor:'0',status:'Draft'}:tab==='vacancies'?{posisi:'',departemen:'',jumlah_kebutuhan:'1',status:'Open',tanggal_buka:isoToday(),tanggal_tutup:'',deskripsi:''}:tab==='candidates'?{nama:'',email:'',no_telp:'',posisi:'',sumber:'',tahap:'Screening',status:'Aktif',catatan:''}:tab==='interviews'?{kandidat:'',tanggal:isoToday(),jam:'09:00',interviewer:'',hasil:'',status:'Terjadwal'}:{id_karyawan:'',periode:new Date().toISOString().slice(0,7),nilai:'0',catatan:'',status:'Draft'});
  const table=tab==='kpi'?'hris_kpi':tab==='vacancies'?'hris_lowongan':tab==='candidates'?'hris_kandidat':tab==='interviews'?'hris_interview':'hris_performance';
  const save=async(e:FormEvent)=>{e.preventDefault();const numeric=['target','realisasi','bobot','skor','jumlah_kebutuhan','nilai'];const payload={...f};numeric.forEach(k=>{if(k in payload)payload[k]=Number(payload[k]||0)});const {error}=await supabase.from(table).insert(payload);if(error)await appAlert(error.message);else onSaved()};
- return <SimpleModal title={`${t('add')} ${tab==='kpi'?t('kpi'):tab==='vacancies'?t('vacancies'):tab==='candidates'?t('candidates'):tab==='interviews'?t('interviews'):t('performance')}`} onClose={onClose} onSave={save}>{Object.entries(f).map(([k,v])=><label key={k}>{fieldLabel(k)}{k==='id_karyawan'?<select required value={String(v)} onChange={e=>setF({...f,[k]:e.target.value})}><option value="">{t('select_employee')}</option>{employees.map(x=><option key={x.id_karyawan} value={x.id_karyawan}>{x.nama} — {x.id_karyawan}</option>)}</select>:<input required={['nama','posisi','indikator','kandidat'].includes(k)} type={['target','realisasi','bobot','skor','jumlah_kebutuhan','nilai'].includes(k)?'number':k==='tanggal'||k.includes('tanggal')?'date':k==='jam'?'time':'text'} value={String(v??'')} onChange={e=>setF({...f,[k]:e.target.value})}/>}</label>)}</SimpleModal>
+ return <SimpleModal title={`${t('add')} ${tab==='kpi'?t('kpi'):tab==='vacancies'?t('vacancies'):tab==='candidates'?t('candidates'):tab==='interviews'?t('interviews'):t('performance')}`} onClose={onClose} onSave={save}>{Object.entries(f).map(([k,v])=><label key={k}>{fieldLabel(k,t)}{k==='id_karyawan'?<select required value={String(v)} onChange={e=>setF({...f,[k]:e.target.value})}><option value="">{t('select_employee')}</option>{employees.map(x=><option key={x.id_karyawan} value={x.id_karyawan}>{x.nama} — {x.id_karyawan}</option>)}</select>:<input required={['nama','posisi','indikator','kandidat'].includes(k)} type={['target','realisasi','bobot','skor','jumlah_kebutuhan','nilai'].includes(k)?'number':k==='tanggal'||k.includes('tanggal')?'date':k==='jam'?'time':'text'} value={String(v??'')} onChange={e=>setF({...f,[k]:e.target.value})}/>}</label>)}</SimpleModal>
 }
-function Reports({employees,attendance,onExport}:{employees:Karyawan[];attendance:Absensi[];onExport:(r:any[],f:string)=>void}){const {t}=useTranslation();const [tab,setTab]=useState('overview'),[payroll,setPayroll]=useState<any[]>([]);useEffect(()=>{if(tab!=='payroll')return;return watchSupabaseAuth(async()=>{const {data}=await supabase.from('hris_payroll').select('*').order('created_at',{ascending:false}).limit(2000);setPayroll(data||[])})},[tab]);const items=[['overview',t('analytics'),'report'],['attendance',t('attendance_report'),'clock'],['payroll',t('payroll_report'),'payroll'],['people',t('employee_report'),'users']].map(([key,label,icon])=>({key,label,icon}));return <Branch title={t('reports')} desc={t('reports_desc')} items={items} tab={tab} setTab={setTab}>{tab==='overview'?<div className="report-grid"><ReportCard name={t('master_employees')} count={employees.length} onClick={()=>onExport(employees,'laporan-karyawan.csv')}/><ReportCard name={t('attendance')} count={attendance.length} onClick={()=>onExport(attendance,'laporan-absensi.csv')}/><ReportCard name={t('payroll')} count={payroll.length} onClick={()=>onExport(payroll,'laporan-payroll.csv')}/></div>:tab==='attendance'?<ReportCard name={t('attendance_report')} count={attendance.length} onClick={()=>onExport(attendance,'laporan-absensi.csv')}/>:tab==='people'?<ReportCard name={t('employee_report')} count={employees.length} onClick={()=>onExport(employees,'laporan-karyawan.csv')}/>:<ReportCard name={t('payroll_report')} count={payroll.length} onClick={()=>onExport(payroll,'laporan-payroll.csv')}/>}</Branch>}
-function ReportCard({name,count,onClick}:{name:string;count:number;onClick:()=>void}){const {t}=useTranslation();return <div className="report-card"><span>{t('reports')||'LAPORAN'}</span><h3>{name}</h3><b>{count}</b><p>{t('data_available')||'data tersedia'}</p><button className="primary" onClick={onClick}>{t('export_csv')||'Export CSV'}</button></div>}
+function Reports({ employees, attendance, onExport }: { employees: Karyawan[]; attendance: Absensi[]; onExport: (r: any[], f: string) => void }) {
+  const { t } = useTranslation();
+  const [tab, setTab] = useState('overview');
+  const [payroll, setPayroll] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (tab !== 'payroll') return;
+    return watchSupabaseAuth(async () => {
+      const { data } = await supabase
+        .from('hris_payroll')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(2000);
+      setPayroll(data || []);
+    });
+  }, [tab]);
+
+  const items = [
+    ['overview', t('analytics'), 'report'],
+    ['attendance', t('attendance_report'), 'clock'],
+    ['payroll', t('payroll_report'), 'payroll'],
+    ['people', t('employee_report'), 'users'],
+  ].map(([key, label, icon]) => ({ key, label, icon }));
+
+  return (
+    <div className="reports-page-content">
+      <Heading title={t('reports')} desc={t('reports_desc')} />
+      <nav className="branch-nav reports-nav" aria-label={t('reports')}>
+        {items.map(item => (
+          <button key={item.key} className={tab === item.key ? 'active' : ''} onClick={() => setTab(item.key)}>
+            <span>{item.icon}</span>{item.label}
+          </button>
+        ))}
+      </nav>
+
+      {tab === 'overview' ? (
+        <div className="report-grid reports-card-grid">
+          <ReportCard name={t('master_employees')} count={employees.length} icon="users" onClick={() => onExport(employees, 'laporan-karyawan.csv')} />
+          <ReportCard name={t('attendance')} count={attendance.length} icon="clock" onClick={() => onExport(attendance, 'laporan-absensi.csv')} />
+          <ReportCard name={t('payroll')} count={payroll.length} icon="payroll" onClick={() => onExport(payroll, 'laporan-payroll.csv')} />
+        </div>
+      ) : tab === 'attendance' ? (
+        <div className="reports-single-card"><ReportCard name={t('attendance_report')} count={attendance.length} icon="clock" onClick={() => onExport(attendance, 'laporan-absensi.csv')} /></div>
+      ) : tab === 'people' ? (
+        <div className="reports-single-card"><ReportCard name={t('employee_report')} count={employees.length} icon="users" onClick={() => onExport(employees, 'laporan-karyawan.csv')} /></div>
+      ) : (
+        <div className="reports-single-card"><ReportCard name={t('payroll_report')} count={payroll.length} icon="payroll" onClick={() => onExport(payroll, 'laporan-payroll.csv')} /></div>
+      )}
+    </div>
+  );
+}
+
+function ReportCard({ name, count, icon, onClick }: { name: string; count: number; icon: string; onClick: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <article className="report-card">
+      <div className="report-card-icon" aria-hidden="true"><Icon name={icon} /></div>
+      <div className="report-card-copy">
+        <span>{t('reports') || 'LAPORAN'}</span>
+        <h3>{name}</h3>
+        <strong>{count.toLocaleString()}</strong>
+        <p>{t('data_available') || 'data tersedia'}</p>
+      </div>
+      <button className="primary report-card-action" onClick={onClick}>{t('export_csv') || 'Export CSV'}</button>
+    </article>
+  );
+}
+
 function ThemeControl({ userRole }: { userRole: string }) {
   const [open, setOpen] = useState(false);
-  const [theme, setTheme] = useState<CosmicThemeId | AdminThemeId>(() => getAdminTheme() ?? getCosmicTheme());
+  const [theme, setTheme] = useState<import('../../../lib/userPreferences').PublicAppTheme>('professional');
 
   useEffect(() => {
     let active = true;
     const load = async () => {
-      const { data: session } = await supabase.auth.getSession();
-      const userId = session.session?.user?.id;
-      if (!userId) return;
-      const adminTheme = await loadAdminThemePreference(userId);
+      const next = await getPublicAppTheme();
       if (!active) return;
-      if (adminTheme) {
-        setTheme(adminTheme);
-        applyAdminTheme(adminTheme, false);
-        return;
-      }
-      const cosmicTheme = await loadUserThemePreference(userId);
-      if (!active) return;
-      setTheme(cosmicTheme);
-      applyCosmicTheme(cosmicTheme, false);
+      setTheme(next);
+      applyProjectTheme(next, false);
     };
     void load();
-    return () => { active = false; };
+    const onTheme = (event: Event) => {
+      const next = (event as CustomEvent<string>).detail;
+      if (next === 'professional' || next in COSMIC_THEMES) setTheme(next as import('../../../lib/userPreferences').PublicAppTheme);
+    };
+    window.addEventListener('project-tirta-public-theme-change', onTheme);
+    window.addEventListener('project-tirta-theme-change', onTheme);
+    return () => {
+      active = false;
+      window.removeEventListener('project-tirta-public-theme-change', onTheme);
+      window.removeEventListener('project-tirta-theme-change', onTheme);
+    };
   }, []);
 
-  const chooseTheme = async (next: CosmicThemeId | AdminThemeId) => {
+  const chooseTheme = async (next: import('../../../lib/userPreferences').PublicAppTheme) => {
     setTheme(next);
+    applyProjectTheme(next, true);
+
     const { data: session } = await supabase.auth.getSession();
     const userId = session.session?.user?.id;
-    if (next in COSMIC_THEMES) {
-      const cosmic = next as CosmicThemeId;
-      applyCosmicTheme(cosmic, true);
-      if (userId) {
-        await clearAdminThemePreference(userId);
-        await saveUserThemePreference(userId, cosmic);
-        if (userRole.trim().toLowerCase() === 'super admin') await setEmployeePortalTheme(cosmic);
+
+    if (userId) {
+      await saveUserThemePreference(userId, next);
+
+      if (userRole.trim().toLowerCase() === 'super admin') {
+        const employeeSync = await setEmployeePortalTheme(next);
+        const publicSync = await setPublicAppTheme(next);
+        if (!employeeSync || !publicSync) {
+          console.warn('ThemeControl sync incomplete:', {
+            employeeSync,
+            publicSync,
+            theme: next,
+          });
+        }
       }
-    } else {
-      const adminTheme = next as AdminThemeId;
-      applyAdminTheme(adminTheme, true);
-      if (userId) await saveAdminThemePreference(userId, adminTheme);
     }
+
     setOpen(false);
   };
+
+  const options = [
+    { id:'professional' as const, name:'Professional' },
+    ...(['sun','moon','galaxy','blackhole','nebula','aurora'] as CosmicThemeId[])
+      .map(id => ({ id, name:COSMIC_THEMES[id].name })),
+  ];
 
   return (
     <div className="theme-control">
       <button type="button" className="icon-btn theme-control-button" aria-label="Pilih tema" aria-expanded={open} title="Tema" onClick={() => setOpen(value => !value)}>◫</button>
       {open && (
         <div className="theme-control-menu" role="menu" aria-label="Pilih tema">
-          {(Object.keys(COSMIC_THEMES) as CosmicThemeId[]).map(id => (
-            <button key={id} type="button" className={`theme-control-option ${theme === id ? 'active' : ''}`} role="menuitemradio" aria-checked={theme === id} onClick={() => void chooseTheme(id)}>
-              <span className={`theme-control-dot cosmic-theme-${id}`} aria-hidden="true" />
-              <span>{COSMIC_THEMES[id].name}</span>
-              {theme === id && <b>✓</b>}
-            </button>
-          ))}
-          <div className="theme-control-section" role="presentation">Tema HR/Admin</div>
-          {(Object.keys(ADMIN_THEMES) as AdminThemeId[]).map(id => (
-            <button key={id} type="button" className={`theme-control-option ${theme === id ? 'active' : ''}`} role="menuitemradio" aria-checked={theme === id} onClick={() => void chooseTheme(id)}>
-              <span className={`theme-control-dot admin-theme-${id}`} aria-hidden="true" />
-              <span>{ADMIN_THEMES[id].name}</span>
-              {theme === id && <b>✓</b>}
+          {options.map(item => (
+            <button
+              key={item.id}
+              type="button"
+              className={`theme-control-option ${theme === item.id ? 'active' : ''}`}
+              role="menuitemradio"
+              aria-checked={theme === item.id}
+              onClick={() => void chooseTheme(item.id)}
+            >
+              <span className={`theme-control-dot ${item.id === 'professional' ? 'theme-professional' : `cosmic-theme-${item.id}`}`} aria-hidden="true" />
+              <span>{item.name}</span>
+              {theme === item.id && <b>✓</b>}
             </button>
           ))}
         </div>
@@ -2868,13 +3121,12 @@ function Settings({
     sidebarMuted:string;
     sidebarActive:string;
     sidebarActiveText:string;
-    adminOnly?:boolean;
   };
 
   const DEFAULT_THEME: ThemeDefinition = {
-    id:'sun', name:'Tema Matahari', description:'Energi hangat dan aksen emas futuristik.',
-    primary:'#0a111f', accent:'#f6c767', background:'#0a111f', surface:'#101a2c', text:'#f8fafc', border:'#f6c767',
-    sidebar:'#050c18', sidebarText:'#f8fafc', sidebarMuted:'#aeb8c8', sidebarActive:'#f6c767', sidebarActiveText:'#07111f'
+    id:'professional', name:'Professional', description:'Energi hangat dan aksen emas futuristik.',
+    primary:'#101a33', accent:'#c9a227', background:'#f6f7fb', surface:'#ffffff', text:'#172033', border:'#dfe5ee',
+    sidebar:'#0b1736', sidebarText:'#ffffff', sidebarMuted:'#aeb7c5', sidebarActive:'#d6ae58', sidebarActiveText:'#0b1222'
   };
 
   const [customTheme,setCustomTheme]=useState({
@@ -2884,13 +3136,13 @@ function Settings({
   const [activeThemeId,setActiveThemeId]=useState<string>(()=>getCosmicTheme());
 
   const themes:ThemeDefinition[]=[
+    {id:'professional',name:'Professional',description:'Tampilan HR profesional tanpa latar cosmic.',primary:'#101a33',accent:'#c9a227',background:'#f6f7fb',surface:'#ffffff',text:'#172033',border:'#dfe5ee',sidebar:'#0b1736',sidebarText:'#ffffff',sidebarMuted:'#aeb7c5',sidebarActive:'#d6ae58',sidebarActiveText:'#0b1222'},
     {id:'sun',name:'Matahari',description:'Solar flare, gold energy, dan warm cosmic glow.',primary:'#0a111f',accent:'#f6c767',background:'#0a111f',surface:'#101a2c',text:'#f8fafc',border:'#f6c767',sidebar:'#050c18',sidebarText:'#ffffff',sidebarMuted:'#b7c2d2',sidebarActive:'#f6c767',sidebarActiveText:'#07111f'},
     {id:'moon',name:'Bulan',description:'Moonlight silver, midnight blue, dan calm glow.',primary:'#071222',accent:'#e4d1a0',background:'#071222',surface:'#101d31',text:'#f8fafc',border:'#e4d1a0',sidebar:'#040b17',sidebarText:'#ffffff',sidebarMuted:'#aab8cc',sidebarActive:'#e4d1a0',sidebarActiveText:'#07111f'},
     {id:'galaxy',name:'Galaksi',description:'Deep violet, nebula haze, dan electric blue.',primary:'#0d0820',accent:'#d7adff',background:'#0d0820',surface:'#17102e',text:'#f8fafc',border:'#d7adff',sidebar:'#070314',sidebarText:'#ffffff',sidebarMuted:'#c8bae0',sidebarActive:'#d7adff',sidebarActiveText:'#160b27'},
     {id:'blackhole',name:'Blackhole',description:'Singularity black, cyan ring, dan gravitational glow.',primary:'#06070a',accent:'#e8c36f',background:'#06070a',surface:'#10151b',text:'#f8fafc',border:'#e8c36f',sidebar:'#020305',sidebarText:'#ffffff',sidebarMuted:'#a8b6c0',sidebarActive:'#e8c36f',sidebarActiveText:'#07111f'},
     {id:'nebula',name:'Nebula',description:'Cosmic pink, blue haze, dan deep-space ambience.',primary:'#100614',accent:'#ffbfe8',background:'#100614',surface:'#1b0d22',text:'#f8fafc',border:'#ffbfe8',sidebar:'#07030c',sidebarText:'#ffffff',sidebarMuted:'#cbb7ca',sidebarActive:'#ffbfe8',sidebarActiveText:'#1a0d16'},
-    {id:'aurora',name:'Aurora Glass',description:'Glassmorphism modern untuk workspace HR dengan nuansa aurora.',primary:'#07131B',accent:'#7CFFB2',background:'#07131B',surface:'#0d202a',text:'#effffc',border:'#7CFFB2',sidebar:'#061019',sidebarText:'#f3fffb',sidebarMuted:'#9fc1bb',sidebarActive:'#7CFFB2',sidebarActiveText:'#052012'},
-    {id:'professional',name:'Professional HRIS',description:'Tema HRIS umum yang bersih, netral, formal, dan mudah dibaca.',primary:'#17345f',accent:'#2563EB',background:'#F4F7FB',surface:'#FFFFFF',text:'#1F2937',border:'#D9E2EC',sidebar:'#17345f',sidebarText:'#FFFFFF',sidebarMuted:'#CBD7E8',sidebarActive:'#2563EB',sidebarActiveText:'#FFFFFF',adminOnly:true}
+    {id:'aurora',name:'Aurora',description:'Aurora hijau-biru dengan ambient glow futuristik.',primary:'#07131b',accent:'#7cffb2',background:'#07131b',surface:'#0b2428',text:'#f3fffb',border:'#7cffb2',sidebar:'#061019',sidebarText:'#f3fffb',sidebarMuted:'#9fc1bb',sidebarActive:'#7cffb2',sidebarActiveText:'#062016'}
   ];
 
   const isHexColor=(value:string)=>/^#[0-9a-f]{6}$/i.test(value);
@@ -2951,75 +3203,58 @@ function Settings({
 
   useEffect(() => {
     const handleTheme = (event: Event) => {
-      const id = (event as CustomEvent<CosmicThemeId | AdminThemeId>).detail;
-      if (id && (id in COSMIC_THEMES || id in ADMIN_THEMES)) setActiveThemeId(id);
-    };
-    const handleAdminTheme = (event: Event) => {
-      const id = (event as CustomEvent<AdminThemeId>).detail;
-      if (id && id in ADMIN_THEMES) setActiveThemeId(id);
+      const id = (event as CustomEvent<string>).detail;
+      if (id === 'professional' || id in COSMIC_THEMES) setActiveThemeId(id);
     };
     window.addEventListener('project-tirta-theme-change', handleTheme);
-    window.addEventListener('project-tirta-admin-theme-change', handleAdminTheme);
-    setActiveThemeId(getAdminTheme() ?? getCosmicTheme());
+    window.addEventListener('project-tirta-public-theme-change', handleTheme);
+    void getPublicAppTheme().then(next => {
+      setActiveThemeId(next);
+      applyProjectTheme(next, false);
+    });
     return () => {
       window.removeEventListener('project-tirta-theme-change', handleTheme);
-      window.removeEventListener('project-tirta-admin-theme-change', handleAdminTheme);
+      window.removeEventListener('project-tirta-public-theme-change', handleTheme);
     };
   }, []);
 
   const applyTheme=async(input:Partial<ThemeDefinition>,persist=true)=>{
     const theme=normalizeTheme(input);
+    const isProfessional = theme.id === 'professional';
+    const isCosmic = theme.id in COSMIC_THEMES;
     const root=document.documentElement;
-    if (theme.id in ADMIN_THEMES) {
-      const adminTheme = theme.id as AdminThemeId;
-      applyAdminTheme(adminTheme, true);
-      setActiveThemeId(adminTheme);
-      setCustomTheme({
-        primary:theme.primary, accent:theme.accent, background:theme.background, surface:theme.surface,
-        text:theme.text, border:theme.border, sidebar:theme.sidebar, sidebarText:theme.sidebarText,
-        sidebarMuted:theme.sidebarMuted, sidebarActive:theme.sidebarActive, sidebarActiveText:theme.sidebarActiveText
-      });
-      if (persist) {
-        const { data: session } = await supabase.auth.getSession();
-        const userId = session.session?.user?.id;
-        if (userId) await saveAdminThemePreference(userId, adminTheme);
-        setMsg(`Tema "${theme.name}" berhasil diterapkan khusus untuk area HR/admin.`);
-      }
-      return;
-    }
-    if (theme.id in COSMIC_THEMES) {
-      applyCosmicTheme(theme.id as CosmicThemeId, true);
+
+    if (isProfessional) {
+      applyProjectTheme('professional', true);
+      setActiveThemeId('professional');
+    } else if (isCosmic) {
+      applyProjectTheme(theme.id as CosmicThemeId, true);
       setActiveThemeId(theme.id);
-    } else {
-      // Custom themes are independent from the admin-only presets.
-      const adminStyle = document.getElementById('project-by-tirta-admin-theme-overrides');
-      adminStyle?.remove();
-      delete document.documentElement.dataset.adminTheme;
     }
+
     const pageText = getReadableText(theme.background, '#172033');
     const vars:Record<string,string>={
-      // The selected theme controls only the main page background.
       '--mx-primary':'#0b1222',
       '--mx-primary-contrast':'#f8fafc',
-      '--mx-accent':'#d6ae58',
+      '--mx-accent':theme.accent,
       '--mx-background':theme.background,
-      '--mx-surface':'#101827',
-      '--mx-surface-alt':'#172033',
-      '--mx-text':'#e2e5ea',
-      '--mx-text-secondary':'#c7ccd5',
-      '--mx-text-muted':'#9ba6b6',
+      '--mx-surface':isProfessional ? '#ffffff' : '#101827',
+      '--mx-surface-alt':isProfessional ? '#eef2f7' : '#172033',
+      '--mx-text':isProfessional ? '#172033' : '#e2e5ea',
+      '--mx-text-secondary':isProfessional ? '#475467' : '#c7ccd5',
+      '--mx-text-muted':isProfessional ? '#667085' : '#9ba6b6',
       '--mx-page-text':pageText,
-      '--mx-control-bg':'#111b33',
-      '--mx-control-text':'#eef1f5',
-      '--mx-control-border':'#d6ae58',
-      '--mx-sidebar':'#070f20',
+      '--mx-control-bg':isProfessional ? '#ffffff' : '#111b33',
+      '--mx-control-text':isProfessional ? '#172033' : '#eef1f5',
+      '--mx-control-border':isProfessional ? '#dfe5ee' : theme.border,
+      '--mx-sidebar':isProfessional ? '#0b1736' : '#070f20',
       '--mx-sidebar-text':'#eef1f5',
       '--mx-sidebar-muted':'#aeb7c5',
       '--mx-sidebar-active':'#d6ae58',
       '--mx-sidebar-active-text':'#0b1222',
-      '--mx-border':'#d6ae58',
-      '--mx-border-strong':'#d6ae58',
-      '--mx-focus':'#d6ae58',
+      '--mx-border':theme.border,
+      '--mx-border-strong':theme.border,
+      '--mx-focus':theme.accent,
       '--mx-blue':'#0b1222',
       '--mx-blue-soft':'rgba(214,174,88,.10)',
       '--mx-success':'#44c58a',
@@ -3029,21 +3264,23 @@ function Settings({
       '--blue':'#0b1222',
       '--blue2':'#172033',
       '--blue-soft':'rgba(214,174,88,.10)',
-      '--ink':'#e2e5ea',
-      '--line':'#d6ae58',
-      '--surface':'#101827',
+      '--ink':isProfessional ? '#172033' : '#e2e5ea',
+      '--line':theme.border,
+      '--surface':isProfessional ? '#ffffff' : '#101827',
       '--bg':theme.background,
       '--app-primary':'#0b1222',
       '--app-primary-contrast':'#f8fafc',
-      '--app-accent':'#d6ae58',
+      '--app-accent':theme.accent,
       '--app-bg':theme.background,
-      '--app-surface':'#101827',
-      '--app-surface-alt':'#172033',
-      '--app-text':'#e2e5ea',
-      '--app-muted':'#9ba6b6',
-      '--app-border':'#d6ae58'
+      '--app-surface':isProfessional ? '#ffffff' : '#101827',
+      '--app-surface-alt':isProfessional ? '#eef2f7' : '#172033',
+      '--app-text':isProfessional ? '#172033' : '#e2e5ea',
+      '--app-muted':isProfessional ? '#667085' : '#9ba6b6',
+      '--app-border':theme.border
     };
+
     Object.entries(vars).forEach(([key,value])=>root.style.setProperty(key,value));
+
     setCustomTheme({
       primary:theme.primary,
       accent:theme.accent,
@@ -3058,25 +3295,26 @@ function Settings({
       sidebarActiveText:theme.sidebarActiveText
     });
     setActiveThemeId(theme.id);
+
     if(persist){
       const { data: session } = await supabase.auth.getSession();
       const userId = session.session?.user?.id;
-      if (userId) {
-        if (theme.id in ADMIN_THEMES) {
-          await saveAdminThemePreference(userId, theme.id as AdminThemeId);
-        } else if (theme.id in COSMIC_THEMES) {
-          await clearAdminThemePreference(userId);
-          await saveUserThemePreference(userId, theme.id as CosmicThemeId);
-          if (canManageThemes) await setEmployeePortalTheme(theme.id as CosmicThemeId);
-        } else {
-          await clearAdminThemePreference(userId);
-          saveCustomThemeCache(userId, theme);
+      if (userId && (isProfessional || isCosmic)) {
+        await saveUserThemePreference(userId, theme.id as import('../../../lib/userPreferences').PublicAppTheme);
+
+        if (canManageThemes) {
+          const employeeSync = await setEmployeePortalTheme(theme.id as import('../../../lib/userPreferences').PublicAppTheme);
+          const publicSync = await setPublicAppTheme(theme.id as import('../../../lib/userPreferences').PublicAppTheme);
+          if (!employeeSync || !publicSync) {
+            console.warn('Theme sync incomplete:', { employeeSync, publicSync, theme: theme.id });
+          }
         }
+      } else if (userId) {
+        saveCustomThemeCache(userId, theme);
       }
       setMsg(`Tema "${theme.name || 'Tema Kustom'}" berhasil diterapkan.`);
     }
   };
-
   const updateCustomColor=(key:keyof typeof customTheme,value:string)=>{
     if(!isHexColor(value)) return;
     setCustomTheme(prev=>({...prev,[key]:value}));
@@ -3087,18 +3325,9 @@ function Settings({
   useEffect(()=>{
     supabase.from('hris_company_settings').select('*').eq('id',1).maybeSingle().then(({data})=>{if(data)setF(data);});
     const loadTheme = async () => {
-      const { data: session } = await supabase.auth.getSession();
-      const userId = session.session?.user?.id;
-      if (!userId) return;
-      const adminTheme = await loadAdminThemePreference(userId);
-      if (adminTheme) {
-        applyAdminTheme(adminTheme, false);
-        setActiveThemeId(adminTheme);
-      } else {
-        const cosmic = await loadUserThemePreference(userId);
-        applyCosmicTheme(cosmic, true);
-        setActiveThemeId(cosmic);
-      }
+      const next = await getPublicAppTheme();
+      applyProjectTheme(next, false);
+      setActiveThemeId(next);
     };
     void loadTheme();
   },[canManageThemes]);
@@ -3232,7 +3461,7 @@ function Settings({
                   <div
                     className="theme-preview-sidebar"
                     style={{
-                      background:theme.sidebar
+                      background:'#070f20'
                     }}
                   >
                     <span></span>
@@ -3246,26 +3475,26 @@ function Settings({
                     <div
                       className="theme-preview-top"
                       style={{
-                        borderColor:theme.border
+                        borderColor:'#d6ae58'
                       }}
                     ></div>
 
                     <div className="theme-preview-cards">
                       <i
                         style={{
-                          background:theme.accent
+                          background:'#d6ae58'
                         }}
                       ></i>
 
                       <i
                         style={{
-                          background:theme.sidebar
+                          background:'#070f20'
                         }}
                       ></i>
 
                       <i
                         style={{
-                          background:theme.accent
+                          background:'#d6ae58'
                         }}
                       ></i>
                     </div>
@@ -3273,7 +3502,7 @@ function Settings({
                     <div
                       className="theme-preview-line"
                       style={{
-                        background:theme.accent
+                        background:'#d6ae58'
                       }}
                     ></div>
 
@@ -3289,9 +3518,6 @@ function Settings({
                     <small>
                       {theme.description}
                     </small>
-                    {theme.adminOnly && (
-                      <span className="theme-scope-badge">Khusus HR/Admin · tidak memengaruhi karyawan</span>
-                    )}
                   </div>
 
                   {activeThemeId===theme.id && (
@@ -3301,7 +3527,7 @@ function Settings({
                   <span
                     className="theme-color-dot"
                     style={{
-                      background:theme.accent
+                      background:'#d6ae58'
                     }}
                   ></span>
                 </div>
@@ -3596,7 +3822,7 @@ function Audit() {
         desc="Riwayat aktivitas dan perubahan data yang tercatat di database."
       />
 
-      <div className="panel" style={{ marginBottom: 16 }}>
+      <div className="audit-filter-bar">
         <div
           style={{
             display: 'grid',
@@ -3852,8 +4078,7 @@ function Audit() {
             zIndex: 9999,
           }}
         >
-          <div
-            onClick={(e) => e.stopPropagation()}
+          <div className="audit-detail-modal" onClick={(e) => e.stopPropagation()}
             style={{
               width: 'min(1000px, 100%)',
               maxHeight: '85vh',
@@ -4075,4 +4300,19 @@ function SystemHealth(){const { t } = useTranslation(); const [h,setH]=useState<
 function SimpleModal({title,onClose,onSave,children}:{title:string;onClose:()=>void;onSave:(e:FormEvent)=>void;children:ReactNode}){return <div className="drawer-backdrop"><aside className="edit-drawer"><div className="drawer-head"><h2>{title}</h2><button className="icon-btn" onClick={onClose}>×</button></div><form className="drawer-body" onSubmit={onSave}>{children}<div className="drawer-foot"><button type="button" className="secondary" onClick={onClose}>Batal</button><button className="primary">Simpan</button></div></form></aside></div>}
 function Status({value}:{value:string}){const v=value.toLowerCase();const cls=v.includes('non')||v.includes('tolak')||v.includes('sakit')?'red':v.includes('terlambat')||v.includes('draft')||v.includes('menunggu')?'orange':v.includes('izin')?'blue':'green';return <span className={`status ${cls}`}>{value}</span>}
 function Empty({cols}:{cols:number}){return <tr><td colSpan={cols} className="empty-cell">Belum ada data.</td></tr>}
-function fieldLabel(k:string){return ({id_karyawan:'ID Karyawan',nama:'Nama Lengkap',jabatan:'Jabatan',email:'Email',no_telp:'No. Telepon',departemen:'Departemen',tanggal_masuk:'Tanggal Masuk',gaji_pokok:'Gaji Pokok',periode:'Periode',indikator:'Indikator',target:'Target',realisasi:'Realisasi',bobot:'Bobot',skor:'Skor',jumlah_kebutuhan:'Jumlah Kebutuhan',tanggal_buka:'Tanggal Buka',tanggal_tutup:'Tanggal Tutup',deskripsi:'Deskripsi',posisi:'Posisi',sumber:'Sumber',tahap:'Tahap',catatan:'Catatan',nilai:'Nilai',kandidat:'Kandidat',jam:'Jam',interviewer:'Pewawancara',hasil:'Hasil',company_name:'Nama Perusahaan',work_start:'Jam Masuk',work_end:'Jam Pulang',break_minutes:'Istirahat (menit)',payday_day:'Hari Gajian',currency:'Mata Uang',timezone:'Timezone'})[k]||k}
+const FIELD_LABEL_KEYS: Record<string, string> = {
+  id_karyawan: 'employee_id', nama: 'name', jabatan: 'position', email: 'email', no_telp: 'phone', departemen: 'department', tanggal_masuk: 'join_date', gaji_pokok: 'basic_salary', periode: 'period', indikator: 'indicator', target: 'target', realisasi: 'actual', bobot: 'weight', skor: 'score', jumlah_kebutuhan: 'requirement_count', tanggal_buka: 'open_date', tanggal_tutup: 'close_date', deskripsi: 'description', posisi: 'position', sumber: 'source', tahap: 'stage', catatan: 'notes', nilai: 'value', kandidat: 'candidate', jam: 'time', interviewer: 'interviewer', hasil: 'result', company_name: 'company_name', work_start: 'work_start', work_end: 'work_end', break_minutes: 'break_minutes', payday_day: 'payday_day', currency: 'currency', timezone: 'timezone'
+};
+
+const FIELD_LABEL_FALLBACKS: Record<string, string> = {
+  id_karyawan: 'ID Karyawan', nama: 'Nama Lengkap', jabatan: 'Jabatan', email: 'Email', no_telp: 'No. Telepon', departemen: 'Departemen', tanggal_masuk: 'Tanggal Masuk', gaji_pokok: 'Gaji Pokok', periode: 'Periode', indikator: 'Indikator', target: 'Target', realisasi: 'Realisasi', bobot: 'Bobot', skor: 'Skor', jumlah_kebutuhan: 'Jumlah Kebutuhan', tanggal_buka: 'Tanggal Buka', tanggal_tutup: 'Tanggal Tutup', deskripsi: 'Deskripsi', posisi: 'Posisi', sumber: 'Sumber', tahap: 'Tahap', catatan: 'Keterangan', nilai: 'Nilai', kandidat: 'Kandidat', jam: 'Jam', interviewer: 'Pewawancara', hasil: 'Hasil', company_name: 'Nama Perusahaan', work_start: 'Jam Masuk', work_end: 'Jam Pulang', break_minutes: 'Istirahat (menit)', payday_day: 'Hari Gajian', currency: 'Mata Uang', timezone: 'Zona Waktu'
+};
+
+function fieldLabel(k: string, t?: (key: string) => string) {
+  const translationKey = FIELD_LABEL_KEYS[k];
+  if (t && translationKey) {
+    const translated = t(translationKey);
+    if (translated !== translationKey) return translated;
+  }
+  return FIELD_LABEL_FALLBACKS[k] || k;
+}

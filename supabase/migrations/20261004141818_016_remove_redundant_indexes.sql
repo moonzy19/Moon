@@ -1,0 +1,11 @@
+drop index if exists public.ix_hris_audit_logs_created_at;
+drop index if exists public.idx_hri_cuti_karyawan;
+drop index if exists public.ix_hris_cuti_status_dates_v45;
+drop index if exists public.idx_hri_kpi_karyawan;
+drop index if exists public.idx_hri_payroll_karyawan;
+drop index if exists public.idx_payroll_employee_period;
+drop index if exists public.idx_payroll_periode_status;
+drop index if exists public.ix_hris_payroll_period_status_v45;
+drop index if exists public.uq_hris_payroll_employee_period;
+drop index if exists public.ux_hris_role_permissions_role_permission;
+drop index if exists public.uq_hris_saldo_cuti_employee_year_type;

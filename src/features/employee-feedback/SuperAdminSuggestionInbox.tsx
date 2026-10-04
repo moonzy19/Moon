@@ -27,22 +27,22 @@ export default function SuperAdminSuggestionInbox({
   const { t } = useTranslation();
 
   return (
-    <section aria-label={t('suggestion_inbox')}>
-      <header>
+    <section className="feedback-inbox-page" aria-label={t('suggestion_inbox')}>
+      <header className="feedback-inbox-head">
         <h2>{t('suggestion_inbox')}</h2>
         <p>{t('suggestion_inbox_desc')}</p>
       </header>
       {suggestions.length === 0 ? <p>{t('suggestion_none')}</p> : (
-        <div>
+        <div className="feedback-case-list">
           {suggestions.map((s) => (
-            <article key={s.id}>
+            <article className="feedback-case" key={s.id}>
               <h3>{s.title}</h3>
               <p>{s.content}</p>
               <small>
                 {s.anonymous ? t('anonymous') : (s.submittedBy || t('employee'))}
                 {' · '}{t(categoryKeys[s.category] || 'category')} · {s.priority} · {t(statusKeys[s.status] || s.status)}
               </small>
-              <div>
+              <div className="feedback-case-actions">
                 <label>{t('status')}
                   <select value={s.status} onChange={(e) => onStatusChange?.(s.id, e.target.value as Suggestion['status'])}>
                     <option value="new">{t('new')}</option>

@@ -29,7 +29,7 @@ create policy hris_id_card_tokens_admin_select
 on public.hris_id_card_tokens
 for select
  to authenticated
-using (public.hris_has_permission('people.read'));
+using (private.is_hris_admin());
 
 create or replace function public.ensure_id_card_verification_token(
   p_id_karyawan text
@@ -43,7 +43,7 @@ declare
   v_id text := trim(coalesce(p_id_karyawan, ''));
   v_token text;
 begin
-  if not public.hris_has_permission('people.read') then
+  if not private.is_hris_admin() then
     raise exception 'not authorized';
   end if;
 

@@ -1,17 +1,35 @@
+import '../../../styles/android-id-card.css';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from '../../../locales/LanguageContext';
 import { supabase } from '../../../lib/supabase/client';
-import { getPublicAppTheme } from '../../../lib/userPreferences';
-import { applyCosmicTheme } from '../../../theme/professionalTheme';
+import { getEmployeePortalTheme, applyProjectTheme } from '../../../lib/userPreferences';
+import { cacheAttendance, cacheEmployee, countOfflineAttendance, enqueueOfflineAttendance, getCachedAttendance, getCachedEmployee, syncOfflineAttendance } from '../../../lib/androidOfflineAttendance';
 
 import moonLogo from '../../../assets/moon-logo.svg';
 import AndroidCosmicBackground from './AndroidCosmicBackground';
+import AndroidEmployeeIdCard from './AndroidEmployeeIdCard';
 import SuggestionBox from '../../../features/employee-feedback/SuggestionBox';
 import EmployeeAnnouncementCenter from '../../../features/announcements/EmployeeAnnouncementCenter';
 import type { SuggestionDraft } from '../../../features/employee-feedback/types';
 
-type Employee={id:string;id_karyawan:string;nama:string;email:string;jabatan?:string|null;departemen?:string|null;status_karyawan?:string|null;status_aktif?:boolean|null;tanggal_masuk?:string|null};
-type Tab='home'|'announcements'|'attendance'|'leave'|'overtime'|'schedule'|'payslip'|'jobs'|'feedback'|'profile';
+type Employee={
+  id:string;
+  id_karyawan:string;
+  nama:string;
+  email:string;
+  jabatan?:string|null;
+  departemen?:string|null;
+  status_karyawan?:string|null;
+  status_aktif?:boolean|null;
+  tanggal_masuk?:string|null;
+  tanggal_lahir?:string|null;
+  foto_url?:string|null;
+  bpjs_kesehatan?:string|null;
+  bpjs_ketenagakerjaan?:string|null;
+  bpjs_kesehatan_card_path?:string|null;
+  bpjs_ketenagakerjaan_card_path?:string|null;
+};
+type Tab='home'|'announcements'|'attendance'|'leave'|'overtime'|'schedule'|'payslip'|'jobs'|'feedback'|'profile'|'bpjs'|'idcard'|'help';
 type Geo={lat:number;lng:number;accuracy:number};
 const money=(n:number,locale='id-ID')=>new Intl.NumberFormat(locale,{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(n||0);
 const jakartaNow=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Jakarta',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date());
@@ -32,6 +50,7 @@ const formatWorkDuration=(seconds:number)=>{
   const h=Math.floor(total/3600),m=Math.floor((total%3600)/60),s=total%60;
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 };
+
 
 export default function PortalKaryawan({onLogout}:{onLogout?:()=>void}){
   const { t, lang } = useTranslation();
@@ -92,13 +111,28 @@ export default function PortalKaryawan({onLogout}:{onLogout?:()=>void}){
   // Employee language remains independently controlled by its own account.
   useEffect(() => {
     let active = true;
+    let requestSerial = 0;
 
     const applyEmployeeTheme = async () => {
-      const next = await getPublicAppTheme();
-      if (active) applyCosmicTheme(next, false);
+      const serial = ++requestSerial;
+      const next = await getEmployeePortalTheme();
+
+      // Ignore responses from an older request.
+      if (!active || serial !== requestSerial) return;
+
+      const current =
+        document.documentElement.dataset.cosmicTheme || '';
+
+      // Reapply only when the server theme actually changed.
+      if (current !== next) {
+        applyProjectTheme(next, false);
+      }
     };
 
     void applyEmployeeTheme();
+
+    // Keep 5-second synchronization, but do not visually reapply
+    // an unchanged theme.
     const timer = window.setInterval(() => {
       void applyEmployeeTheme();
     }, 5000);
@@ -107,6 +141,7 @@ export default function PortalKaryawan({onLogout}:{onLogout?:()=>void}){
       active = false;
       window.clearInterval(timer);
     };
+
   }, []);
 
   useEffect(() => {
@@ -127,6 +162,13 @@ export default function PortalKaryawan({onLogout}:{onLogout?:()=>void}){
  const [otForm,setOtForm]=useState({tanggal:today(),menit:'60',alasan:''});
  const [feedbacks,setFeedbacks]=useState<any[]>([]);
  const [detailPayroll,setDetailPayroll]=useState<string|null>(null);
+ const [offlinePending,setOfflinePending]=useState(0);
+ const [bpjsUrls,setBpjsUrls]=useState({kesehatan:'',ketenagakerjaan:''});
+ const [bpjsLoading,setBpjsLoading]=useState(false);
+ const [helpQuestion,setHelpQuestion]=useState('');
+ const [helpAnswer,setHelpAnswer]=useState('');
+ const [helpLoading,setHelpLoading]=useState(false);
+ const [callCenter,setCallCenter]=useState('');
 
  const getGeo=()=>{setGeoLoading(true);setError('');if(!navigator.geolocation){setGeoLoading(false);setError(t('portal_browser_no_gps'));return}navigator.geolocation.getCurrentPosition(p=>{if(!Number.isFinite(p.coords.accuracy)||p.coords.accuracy>100){setGeo(null);setGeoLoading(false);setError(t('portal_gps_low_accuracy').replace('{meters}',String(Math.round(p.coords.accuracy||999))));return}setGeo({lat:p.coords.latitude,lng:p.coords.longitude,accuracy:p.coords.accuracy});setGeoLoading(false)},e=>{setGeoLoading(false);setError(e.message||t('portal_location_unavailable'))},{enableHighAccuracy:true,timeout:12000,maximumAge:30000})};
  const stopCamera=(resetState=true)=>{
@@ -271,28 +313,119 @@ export default function PortalKaryawan({onLogout}:{onLogout?:()=>void}){
 
  useEffect(()=>()=>stopCamera(),[]);
 
- const load=async()=>{setLoading(true);setError('');const {data:{user:u}}=await supabase.auth.getUser();setUser(u);if(!u){setLoading(false);return}const {data:e,error:ee}=await supabase.from('karyawan').select('id,id_karyawan,nama,email,jabatan,departemen,status_karyawan,status_aktif,tanggal_masuk').eq('auth_user_id',u.id).maybeSingle();if(ee){setError(ee.message);setLoading(false);return}if(!e){setLoading(false);return}setEmployee(e);
+ const syncPendingOffline=async(idKaryawan:string,authUserId:string)=>{
+  if(typeof navigator!=='undefined'&&!navigator.onLine)return;
+  try{
+   await syncOfflineAttendance(authUserId, idKaryawan);
+   setOfflinePending(await countOfflineAttendance(authUserId, idKaryawan));
+  }catch(e:any){
+   console.warn('Sinkronisasi absensi offline gagal:',e?.message||e);
+  }
+ };
+
+ const load=async()=>{
+  setLoading(true);setError('');
+  const {data:sessionData}=await supabase.auth.getSession();
+  const u=sessionData.session?.user||null;
+  setUser(u);
+  if(!u){setLoading(false);return;}
+
+  const online=typeof navigator==='undefined'||navigator.onLine;
+  const cached=await getCachedEmployee(u.id);
+
+  if(!online){
+   if(cached){
+    setEmployee(cached as Employee);
+    setAttendance(await getCachedAttendance(u.id));
+    setOfflinePending(await countOfflineAttendance(u.id,cached.id_karyawan));
+    setLoading(false);
+    return;
+   }
+   setError('Koneksi internet diperlukan untuk login pertama dan verifikasi akun pada perangkat ini.');
+   setLoading(false);
+   return;
+  }
+
+  const {data:e,error:ee}=await supabase.from('karyawan')
+   .select('id,id_karyawan,nama,email,jabatan,departemen,status_karyawan,status_aktif,tanggal_masuk,tanggal_lahir,foto_url,bpjs_kesehatan,bpjs_ketenagakerjaan,bpjs_kesehatan_card_path,bpjs_ketenagakerjaan_card_path')
+   .eq('auth_user_id',u.id).maybeSingle();
+
+  if(ee){
+   if(cached){
+    setEmployee(cached as Employee);
+    setAttendance(await getCachedAttendance(u.id));
+    setOfflinePending(await countOfflineAttendance(u.id,cached.id_karyawan));
+   }else setError(ee.message);
+   setLoading(false);
+   return;
+  }
+  if(!e){setLoading(false);return;}
+
+  setEmployee(e as Employee);
+  await cacheEmployee(u.id,e as any);
+  await syncPendingOffline(e.id_karyawan, u.id);
+
   const [a,l,b,p,j,o,ann]=await Promise.all([
    supabase.from('absensi').select('*').eq('id_karyawan',e.id_karyawan).order('tanggal',{ascending:false}).limit(90),
    supabase.from('hris_cuti').select('*').eq('id_karyawan',e.id_karyawan).order('created_at',{ascending:false}).limit(40),
    supabase.from('hris_saldo_cuti').select('*').eq('id_karyawan',e.id_karyawan).order('tahun',{ascending:false}),
    supabase.from('hris_payroll').select('*').eq('id_karyawan',e.id_karyawan).order('periode',{ascending:false}).limit(12),
    supabase.from('hris_jadwal').select('*,hris_shift(*)').eq('id_karyawan',e.id_karyawan).gte('tanggal',today()).order('tanggal').limit(45),
-      supabase.from('hris_employee_overtime_requests').select('*').eq('id_karyawan',e.id_karyawan).order('tanggal',{ascending:false}).limit(30),
+   supabase.from('hris_employee_overtime_requests').select('*').eq('id_karyawan',e.id_karyawan).order('tanggal',{ascending:false}).limit(30),
    supabase.from('hris_announcements').select('*').eq('status','published').order('pinned',{ascending:false}).order('published_at',{ascending:false}).limit(50)
   ]);
-  setAttendance(a.data||[]);setLeaves(l.data||[]);setBalances(b.data||[]);setPayroll(p.data||[]);setSchedule(j.data||[]);setOtRequests(o.data||[]);setAnnouncements(ann.data||[]);
- const {data:announcementReads}=await supabase.from('hris_announcement_reads').select('announcement_id').eq('user_id',u.id);
- setAnnouncementReadIds((announcementReads||[]).map(x=>x.announcement_id));
- const {data:fb,error:fbError}=await supabase.from('hris_employee_feedback').select('id,kategori,judul,isi,status,tanggapan_hr,created_at,updated_at').eq('id_karyawan',e.id_karyawan).order('created_at',{ascending:false}).limit(30);
- if(!fbError)setFeedbacks(fb||[]);
-  const ids=(p.data||[]).map(x=>x.id);if(ids.length){const {data:pl}=await supabase.from('hris_payroll_lines').select('*').in('payroll_id',ids);const grouped:any={};(pl||[]).forEach(x=>(grouped[x.payroll_id]??=[]).push(x));setLines(grouped)}else setLines({});setLoading(false)
+  setAttendance(a.data||[]);await cacheAttendance(u.id,a.data||[]);
+  setLeaves(l.data||[]);setBalances(b.data||[]);setPayroll(p.data||[]);setSchedule(j.data||[]);setOtRequests(o.data||[]);setAnnouncements(ann.data||[]);
+  setOfflinePending(await countOfflineAttendance(u.id,e.id_karyawan));
+
+  const {data:announcementReads}=await supabase.from('hris_announcement_reads').select('announcement_id').eq('user_id',u.id);
+  setAnnouncementReadIds((announcementReads||[]).map(x=>x.announcement_id));
+  const {data:fb,error:fbError}=await supabase.from('hris_employee_feedback').select('id,kategori,judul,isi,status,tanggapan_hr,created_at,updated_at').eq('id_karyawan',e.id_karyawan).order('created_at',{ascending:false}).limit(30);
+  if(!fbError)setFeedbacks(fb||[]);
+  const ids=(p.data||[]).map(x=>x.id);
+  if(ids.length){const {data:pl}=await supabase.from('hris_payroll_lines').select('*').in('payroll_id',ids);const grouped:any={};(pl||[]).forEach(x=>(grouped[x.payroll_id]??=[]).push(x));setLines(grouped)}else setLines({});
+  setLoading(false);
  };
- useEffect(()=>{load()},[]);
+
+ useEffect(()=>{void load()},[]);
+ useEffect(()=>{
+  const onOnline=()=>{if(employee?.id_karyawan)void load()};
+  window.addEventListener('online',onOnline);
+  return()=>window.removeEventListener('online',onOnline);
+ },[employee?.id_karyawan]);
  const logout=async()=>{stopCamera();await supabase.auth.signOut();setEmployee(null);setUser(null);onLogout?.()};
  const requireSecurity=()=>{if(!geo){setError(t('portal_gps_first'));getGeo();return false}if(!selfie){setError(t('portal_selfie_first'));return false}return true};
- const clockIn=async()=>{if(!employee||!requireSecurity())return;setClockBusy(true);const {error:e1}=await supabase.rpc('hris_ess_clock_in',{p_id_karyawan:employee.id_karyawan,p_tanggal:today(),p_jam:null,p_lat:geo?.lat,p_long:geo?.lng,p_accuracy:geo?.accuracy,p_selfie:selfie,p_lokasi:'GPS ESS'});setClockBusy(false);if(e1)setError(e1.message);else{setNotice(t('portal_clockin_success'));setSelfie('');setGeo(null);await load()}};
- const clockOut=async()=>{if(!employee||!requireSecurity())return;setClockBusy(true);const {error:e1}=await supabase.rpc('hris_ess_clock_out',{p_id_karyawan:employee.id_karyawan,p_tanggal:today(),p_jam:null,p_lat:geo?.lat,p_long:geo?.lng,p_accuracy:geo?.accuracy,p_selfie:selfie,p_lokasi:'GPS ESS'});setClockBusy(false);if(e1)setError(e1.message);else{setNotice(t('portal_clockout_success'));setSelfie('');setGeo(null);await load()}};
+ const makeOfflineEventId=(action:'clock_in'|'clock_out')=>{
+  const base=`${employee?.id_karyawan||'EMP'}-${action}-${today()}-${Date.now()}`;
+  return typeof crypto!=='undefined'&&typeof crypto.randomUUID==='function'?`${crypto.randomUUID()}-${base}`:base;
+ };
+ const currentJakartaTime=()=>{const p=Object.fromEntries(jakartaNow().map(x=>[x.type,x.value]));return `${p.hour}:${p.minute}:${p.second}`};
+ const queueAttendance=(action:'clock_in'|'clock_out')=>{
+  if(!employee||!geo||!selfie)return;
+  return enqueueOfflineAttendance({client_event_id:makeOfflineEventId(action),auth_user_id:user?.id||'',action,id_karyawan:employee.id_karyawan,tanggal:today(),jam:currentJakartaTime(),lat:geo.lat,long:geo.lng,accuracy:geo.accuracy,selfie,lokasi:'GPS ESS OFFLINE'});
+ };
+ const clockIn=async()=>{
+  if(!employee||!requireSecurity())return;
+  setClockBusy(true);setError('');
+  const {error:e1}=await supabase.rpc('hris_ess_clock_in',{p_id_karyawan:employee.id_karyawan,p_tanggal:today(),p_jam:null,p_lat:geo?.lat,p_long:geo?.lng,p_accuracy:geo?.accuracy,p_selfie:selfie,p_lokasi:'GPS ESS'});
+  if(e1&&typeof navigator!=='undefined'&&!navigator.onLine){
+   try{await queueAttendance('clock_in');setNotice('Check In tersimpan di antrean offline dan akan disinkronkan saat internet kembali.');setOfflinePending(await countOfflineAttendance(user?.id||'',employee.id_karyawan));setSelfie('');setGeo(null);}
+   catch(queueError:any){setError(queueError?.message||e1.message)}
+  }else if(e1){setError(e1.message)}
+  else{setNotice(t('portal_clockin_success'));setSelfie('');setGeo(null);await load()}
+  setClockBusy(false);
+ };
+ const clockOut=async()=>{
+  if(!employee||!requireSecurity())return;
+  setClockBusy(true);setError('');
+  const {error:e1}=await supabase.rpc('hris_ess_clock_out',{p_id_karyawan:employee.id_karyawan,p_tanggal:today(),p_jam:null,p_lat:geo?.lat,p_long:geo?.lng,p_accuracy:geo?.accuracy,p_selfie:selfie,p_lokasi:'GPS ESS'});
+  if(e1&&typeof navigator!=='undefined'&&!navigator.onLine){
+   try{await queueAttendance('clock_out');setNotice('Check Out tersimpan di antrean offline dan akan disinkronkan saat internet kembali.');setOfflinePending(await countOfflineAttendance(user?.id||'',employee.id_karyawan));setSelfie('');setGeo(null);}
+   catch(queueError:any){setError(queueError?.message||e1.message)}
+  }else if(e1){setError(e1.message)}
+  else{setNotice(t('portal_clockout_success'));setSelfie('');setGeo(null);await load()}
+  setClockBusy(false);
+ };
  const todayDate=today();
 const todayRows=attendance.filter(a=>a.tanggal===todayDate);
 
@@ -337,6 +470,9 @@ const canClockOut=!!todayAtt?.jam_masuk&&!todayAtt?.jam_pulang;
   {key:'announcements',icon:'◒',title:t('announcement_center'),sub:t('announcements'),badge:announcementUnread},
   {key:'schedule',icon:'◷',title:t('work_schedule'),sub:t('portal_upcoming_schedule')},
   {key:'feedback',icon:'▤',title:t('feedback_inbox'),sub:t('portal_my_feedback'),badge:feedbackUnread},
+  {key:'bpjs',icon:'✚',title:'BPJS',sub:'Data & kartu BPJS'},
+  {key:'idcard',icon:'▣',title:'ID Card',sub:'Kartu identitas karyawan'},
+  {key:'help',icon:'?',title:'Bantuan',sub:'AI Assistant & Call Center'},
  ];
  const openMenuTarget=(key:MenuTarget)=>{setTab(key);window.scrollTo({top:0,behavior:'smooth'});};
  const menuGrid=(compact=false)=><div className={`pt-feature-grid${compact?' pt-feature-grid-home':''}`}>
@@ -371,7 +507,7 @@ const canClockOut=!!todayAtt?.jam_masuk&&!todayAtt?.jam_pulang;
      <div className="attendance-actions pt-home-attendance-actions"><button className="portal-secondary" type="button" onClick={()=>cameraOn?takeSelfie():startCamera()} disabled={cameraOn&&!cameraReady}>{cameraOn?(cameraReady?t('portal_take_selfie'):t('portal_camera_prepare')):t('portal_open_camera')}</button><button className="portal-secondary" type="button" onClick={getGeo} disabled={geoLoading}>{geoLoading?t('portal_getting_gps'):geo?t('portal_gps_accuracy').replace('{meters}',String(Math.round(geo.accuracy))):t('portal_get_gps')}</button></div>
      <div className="attendance-actions pt-home-attendance-actions"><button className="portal-primary" disabled={clockBusy||!canClockIn} onClick={clockIn}>{clockBusy?t('portal_processing'):t('check_in')}</button><button className="portal-primary" disabled={clockBusy||!canClockOut} onClick={clockOut}>{clockBusy?t('portal_processing'):t('check_out')}</button></div>
     </section>
-    <section className="pt-feature-section pt-home-menu-section"><div className="pt-section-heading pt-heading-plain"><div><h2>{t('portal_my_services')}</h2></div></div>{menuGrid(true)}</section>
+    <section className="pt-feature-section pt-home-menu-section"><div className="pt-section-heading pt-heading-plain"><div><h2>{t('portal_my_services')}</h2>{offlinePending>0&&<small className="pt-offline-pending">{offlinePending} absensi menunggu sinkronisasi</small>}</div></div>{menuGrid(true)}</section>
 
    </>}
 
@@ -447,7 +583,14 @@ const canClockOut=!!todayAtt?.jam_masuk&&!todayAtt?.jam_pulang;
 
    {tab==='payslip'&&<section className="payslip-grid pt-page-grid"><PayslipReadTracker payroll={payroll} onRead={setPayslipReadIds}/>{payroll.map(p=><div className="portal-card payslip-card pt-page-card" key={p.id}><div className="card-title"><div><span className="card-kicker">{t('portal_salary_slip')}</span><h2>{t('period')} {p.periode}</h2></div><span className="status-badge">{p.status}</span></div><div className="salary-value">{money(Number(p.gaji_bersih||0),locale)}</div><p>{t('portal_net_salary')}</p><div className="salary-lines">{(lines[p.id]||[]).map(x=><div key={x.id}><span>{x.nama}</span><b>{money(Number(x.amount||0),locale)}</b></div>)}</div><button className="portal-secondary full" onClick={()=>printPayslip(p.id)}>{t('portal_print_pdf')}</button></div>)}{!payroll.length&&<div className="portal-card empty-state pt-page-card"><div className="empty-icon">P</div><h2>{t('portal_no_payslip')}</h2><p>{t('portal_payslip_desc')}</p></div>}{detailPayroll&&<div className="print-slip" id="print-slip">{(()=>{const p=payroll.find(x=>x.id===detailPayroll);return p?<><div className="print-head"><b>Project by Tirta</b><span>{t('portal_salary_slip')} · {t('employee')}</span></div><h2>{t('payroll_payslip')} · {p.periode}</h2><p>{employee.nama} · {employee.id_karyawan}</p><hr/><div className="print-lines">{(lines[p.id]||[]).map(x=><div key={x.id}><span>{x.nama}</span><b>{money(Number(x.amount||0),locale)}</b></div>)}<div className="total"><span>{t('portal_net_salary')}</span><b>{money(Number(p.gaji_bersih||0),locale)}</b></div></div></>:null})()}</div>}</section>}
 
+   {tab==='idcard'&&<AndroidEmployeeIdCard employee={employee}/>}
+
    {tab==='feedback'&&<><FeedbackReadTracker feedbacks={feedbacks} onRead={setFeedbackReadIds}/><section className="portal-grid pt-page-grid"><SuggestionBox onSubmit={submitFeedback}/><div className="portal-card info-card pt-page-card"><div className="card-title"><div><span className="card-kicker">{t('feedback_inbox')}</span><h2>{t('portal_my_feedback')}</h2></div></div><div className="request-list">{feedbacks.map(x=><div key={x.id}><div><b>{x.judul}</b><small>{x.kategori} · {new Date(x.created_at).toLocaleDateString(locale)}</small>{x.tanggapan_hr&&<small><strong>{t('portal_hr_response')}</strong> {x.tanggapan_hr}</small>}</div><span className="status-badge">{x.status}</span></div>)}{!feedbacks.length&&<p className="muted">{t('portal_no_feedback')}</p>}</div></div></section></>}
+
+   {tab==='bpjs'&&<BpjsEmployeePage employee={employee} urls={bpjsUrls} setUrls={setBpjsUrls} loading={bpjsLoading} setLoading={setBpjsLoading} />}
+
+
+   {tab==='help'&&<EmployeeHelpPage question={helpQuestion} setQuestion={setHelpQuestion} answer={helpAnswer} setAnswer={setHelpAnswer} loading={helpLoading} setLoading={setHelpLoading} callCenter={callCenter} setCallCenter={setCallCenter} />}
 
    {tab==='profile'&&<section className="portal-grid pt-page-grid"><div className="portal-card info-card pt-page-card pt-profile-flat"><div className="portal-profile"><div className="portal-avatar">{employee.nama.charAt(0).toUpperCase()}</div><div><h3>{employee.nama}</h3><p>{employee.jabatan||t('employee')} · {employee.departemen||'-'}</p></div></div><div className="info-list"><div><small>{t('email')}</small><b>{employee.email||'-'}</b></div><div><small>{t('employee_id')}</small><b>{employee.id_karyawan}</b></div><div><small>Status</small><b>{employee.status_karyawan||t('active')}</b></div></div><button type="button" className="portal-secondary pt-profile-logout" onClick={logout}>{t('logout')}</button></div><div className="portal-card info-card pt-page-card pt-profile-flat"><div className="card-title"><div><span className="card-kicker">{t('portal_profile_change')}</span><h2>{t('request_data_change')}</h2></div></div><form className="employee-form" onSubmit={submitProfile}><label>{t('data_to_change')}<select value={profileForm.field_name} onChange={e=>setProfileForm({...profileForm,field_name:e.target.value})}><option value="no_telp">{t('phone_number')}</option><option value="alamat_rumah">{t('home_address')}</option><option value="email">Email</option></select></label><label>{t('new_value')}<input value={profileForm.new_value} onChange={e=>setProfileForm({...profileForm,new_value:e.target.value})} required/></label><label>{t('reason')}<textarea value={profileForm.reason} onChange={e=>setProfileForm({...profileForm,reason:e.target.value})}/></label><button className="portal-primary">{t('send_request')}</button></form></div></section>}
   </main>
@@ -504,4 +647,51 @@ function FeedbackReadTracker({
   }, [feedbacks, onRead]);
 
   return null;
+}
+
+
+function BpjsEmployeePage({employee,urls,setUrls,loading,setLoading}:{employee:Employee;urls:{kesehatan:string;ketenagakerjaan:string};setUrls:(v:{kesehatan:string;ketenagakerjaan:string})=>void;loading:boolean;setLoading:(v:boolean)=>void}){
+ const [center,setCenter]=useState('');
+ useEffect(()=>{
+  let active=true;
+  const run=async()=>{
+   setLoading(true);
+   const next={kesehatan:'',ketenagakerjaan:''};
+   for(const [key,path] of [['kesehatan',employee.bpjs_kesehatan_card_path],['ketenagakerjaan',employee.bpjs_ketenagakerjaan_card_path]] as const){
+    if(!path)continue;
+    const {data,error}=await supabase.storage.from('bpjs-cards').createSignedUrl(path,900);
+    if(!error&&data?.signedUrl) next[key]=data.signedUrl;
+   }
+   if(active)setUrls(next);
+   const {data}=await supabase.from('hris_company_settings').select('bpjs_call_center').eq('id',1).maybeSingle();
+   if(active)setCenter(String(data?.bpjs_call_center||''));
+   if(active)setLoading(false);
+  };
+  void run();
+  return()=>{active=false};
+ },[employee.bpjs_kesehatan_card_path,employee.bpjs_ketenagakerjaan_card_path,setLoading,setUrls]);
+ const download=(url:string,name:string)=>{if(!url)return;const a=document.createElement('a');a.href=url;a.download=name;a.target='_blank';a.rel='noopener';a.click()};
+ return <section className="pt-page-card pt-bpjs-page">
+  <div className="pt-page-heading pt-heading-plain"><span className="portal-eyebrow">BPJS</span><h1>Kartu & Data BPJS</h1><p>Data hanya untuk akun karyawan yang sedang masuk.</p></div>
+  <div className="pt-bpjs-identity"><div><small>Nama</small><b>{employee.nama||'-'}</b></div><div><small>Tanggal Lahir</small><b>{employee.tanggal_lahir||'-'}</b></div><div><small>ID Karyawan</small><b>{employee.id_karyawan||'-'}</b></div></div>
+  <div className="pt-bpjs-list">
+   <article className="pt-bpjs-item"><div><span>Kesehatan</span><b>{employee.bpjs_kesehatan||'Belum diisi'}</b></div>{urls.kesehatan?<><img src={urls.kesehatan} alt="Kartu BPJS Kesehatan" className="pt-bpjs-preview"/><button type="button" className="portal-primary" onClick={()=>download(urls.kesehatan,`BPJS-Kesehatan-${employee.id_karyawan}`)}>Download Kartu</button></>:<small>{loading?'Memuat kartu...':'Kartu belum diunggah HR.'}</small>}</article>
+   <article className="pt-bpjs-item"><div><span>Ketenagakerjaan</span><b>{employee.bpjs_ketenagakerjaan||'Belum diisi'}</b></div>{urls.ketenagakerjaan?<><img src={urls.ketenagakerjaan} alt="Kartu BPJS Ketenagakerjaan" className="pt-bpjs-preview"/><button type="button" className="portal-primary" onClick={()=>download(urls.ketenagakerjaan,`BPJS-Ketenagakerjaan-${employee.id_karyawan}`)}>Download Kartu</button></>:<small>{loading?'Memuat kartu...':'Kartu belum diunggah HR.'}</small>}</article>
+  </div>
+  {center&&<p className="pt-bpjs-help">Call Center: <a href={`tel:${center}`}>{center}</a></p>}
+ </section>;
+}
+
+function EmployeeHelpPage({question,setQuestion,answer,setAnswer,loading,setLoading,callCenter,setCallCenter}:{question:string;setQuestion:(v:string)=>void;answer:string;setAnswer:(v:string)=>void;loading:boolean;setLoading:(v:boolean)=>void;callCenter:string;setCallCenter:(v:string)=>void}){
+ useEffect(()=>{void supabase.from('hris_company_settings').select('bpjs_call_center').eq('id',1).maybeSingle().then(({data})=>setCallCenter(String(data?.bpjs_call_center||'')))},[setCallCenter]);
+ const ask=async()=>{
+  const text=question.trim();if(!text)return;
+  setLoading(true);setAnswer('');
+  const {data,error}=await supabase.functions.invoke('employee-ai',{body:{message:text}});
+  if(error||!data?.answer){setAnswer(error?.message||data?.error||'Asisten AI belum dapat merespons.');setLoading(false);return;}
+  setAnswer(String(data.answer));
+  if(data.call_center)setCallCenter(String(data.call_center));
+  setLoading(false);
+ };
+ return <section className="pt-page-card pt-help-page"><div className="pt-page-heading pt-heading-plain"><span className="portal-eyebrow">BANTUAN</span><h1>AI Assistant</h1><p>Tanyakan cara menggunakan fitur HRIS, termasuk cuti dan absensi.</p></div><label className="pt-help-input"><span>Pertanyaan</span><textarea value={question} maxLength={3000} placeholder="Contoh: bagaimana cara mengajukan cuti?" onChange={e=>setQuestion(e.target.value)}/></label><button type="button" className="portal-primary" disabled={loading||!question.trim()} onClick={()=>void ask()}>{loading?'Memproses...':'Tanyakan AI'}</button>{answer&&<div className="pt-help-answer"><strong>Jawaban AI</strong><p>{answer}</p></div>}<div className="pt-human-help"><div><strong>Bantuan manusia</strong><span>Untuk kebutuhan yang memerlukan Call Center.</span></div>{callCenter?<a className="portal-secondary" href={`tel:${callCenter}`}>☎ Hubungi Call Center</a>:<small>Nomor Call Center belum diatur HR.</small>}</div></section>;
 }

@@ -1,6 +1,22 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from '../../../locales/LanguageContext';
 import { supabase } from '../../../lib/supabase/client';
+import { appAlert, appPrompt } from '../../../lib/app-dialog';
+
+const BUCKET = 'bpjs-cards';
+
+
+function Header(props: any) {
+  return (
+    <div className="w-section-head">
+      <div>
+        {props.title && <h2>{props.title}</h2>}
+        {props.description && <p>{props.description}</p>}
+      </div>
+      {props.children}
+    </div>
+  );
+}
 
 type EmployeeBPJS = {
   id: string;
@@ -8,10 +24,10 @@ type EmployeeBPJS = {
   nama: string;
   departemen?: string;
   jabatan?: string;
-  nomor_bpjs_kesehatan?: string;
-  nomor_bpjs_ketenagakerjaan?: string;
   bpjs_kesehatan?: string;
   bpjs_ketenagakerjaan?: string;
+  bpjs_kesehatan_card_path?: string;
+  bpjs_ketenagakerjaan_card_path?: string;
 };
 
 export default function BPJSModule() {
@@ -21,180 +37,317 @@ export default function BPJSModule() {
   const [search, setSearch] = useState('');
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [formValues, setFormValues] = useState({ bpjs_kes: '', bpjs_ket: '' });
+  const [uploading, setUploading] = useState('');
 
   const fetchEmployees = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    setError('');
+
+    const { data, error: fetchError } = await supabase
       .from('karyawan')
-      .select('id, id_karyawan, nama, departemen, jabatan, nomor_bpjs_kesehatan, nomor_bpjs_ketenagakerjaan, bpjs_kesehatan, bpjs_ketenagakerjaan')
+      .select(
+        'id,id_karyawan,nama,departemen,jabatan,bpjs_kesehatan,bpjs_ketenagakerjaan,bpjs_kesehatan_card_path,bpjs_ketenagakerjaan_card_path'
+      )
       .order('nama', { ascending: true });
 
-    if (error) {
-      setError(error.message);
-    } else {
-      setEmployees(data || []);
-    }
+    if (fetchError) setError(fetchError.message);
+    setEmployees((data || []) as EmployeeBPJS[]);
     setLoading(false);
   };
 
   useEffect(() => {
-    fetchEmployees();
+    void fetchEmployees();
   }, []);
 
-  const handleEdit = (emp: EmployeeBPJS) => {
-    setEditingId(emp.id);
-    setFormValues({
-      bpjs_kes: emp.nomor_bpjs_kesehatan || emp.bpjs_kesehatan || '',
-      bpjs_ket: emp.nomor_bpjs_ketenagakerjaan || emp.bpjs_ketenagakerjaan || '',
-    });
+  const filtered = employees.filter(employee => {
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
+
+    return [
+      employee.nama,
+      employee.id_karyawan,
+      employee.departemen,
+      employee.jabatan,
+    ]
+      .map(v => String(v || ''))
+      .join(' ')
+      .toLowerCase()
+      .includes(q);
+  });
+
+  const saveNumber = async (
+    id: string,
+    field: 'bpjs_kesehatan' | 'bpjs_ketenagakerjaan',
+    value: string,
+  ) => {
+    const { error: saveError } = await supabase
+      .from('karyawan')
+      .update({ [field]: value.trim() || null })
+      .eq('id', id);
+
+    if (saveError) {
+      setError(saveError.message);
+      return;
+    }
+
+    setNotice(t('bpjs_number_updated'));
+    await fetchEmployees();
   };
 
-  const handleSave = async (id: string) => {
+  const uploadCard = async (
+    employee: EmployeeBPJS,
+    kind: 'kesehatan' | 'ketenagakerjaan',
+    file: File,
+  ) => {
     setError('');
     setNotice('');
 
-    const { error: updateError } = await supabase
-      .from('karyawan')
-      .update({
-        nomor_bpjs_kesehatan: formValues.bpjs_kes,
-        nomor_bpjs_ketenagakerjaan: formValues.bpjs_ket,
-      })
-      .eq('id', id);
+    const allowed = [
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'application/pdf',
+    ];
 
-    if (updateError) {
-      setError(updateError.message);
-    } else {
-      setNotice('Nomor BPJS berhasil diperbarui.');
-      setEditingId(null);
-      fetchEmployees();
+    if (!allowed.includes(file.type)) {
+      await appAlert(t('bpjs_card_format_error'), t('dialog_information'));
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      await appAlert(t('bpjs_card_size_error'), t('dialog_information'));
+      return;
+    }
+
+    const oldPath =
+      kind === 'kesehatan'
+        ? employee.bpjs_kesehatan_card_path
+        : employee.bpjs_ketenagakerjaan_card_path;
+
+    const ext =
+      file.name.split('.').pop()?.toLowerCase() ||
+      (file.type === 'application/pdf' ? 'pdf' : 'jpg');
+
+    const random =
+      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+    const path = `employees/${employee.id_karyawan}/${kind}-${random}.${ext}`;
+
+    setUploading(`${employee.id}:${kind}`);
+
+    try {
+      const { data: signed, error: signedError } = await supabase.storage
+        .from(BUCKET)
+        .createSignedUploadUrl(path, { upsert: false });
+
+      if (signedError) throw signedError;
+      if (!signed?.token) throw new Error(t('bpjs_upload_token_missing'));
+
+      const { error: uploadError } = await supabase.storage
+        .from(BUCKET)
+        .uploadToSignedUrl(path, signed.token, file);
+
+      if (uploadError) throw uploadError;
+
+      const column =
+        kind === 'kesehatan'
+          ? 'bpjs_kesehatan_card_path'
+          : 'bpjs_ketenagakerjaan_card_path';
+
+      const { error: saveError } = await supabase
+        .from('karyawan')
+        .update({ [column]: path })
+        .eq('id', employee.id);
+
+      if (saveError) {
+        await supabase.storage.from(BUCKET).remove([path]).catch(() => undefined);
+        throw saveError;
+      }
+
+      if (oldPath && oldPath !== path) {
+        await supabase.storage.from(BUCKET).remove([oldPath]).catch(() => undefined);
+      }
+
+      setNotice(
+        kind === 'kesehatan'
+          ? t('bpjs_health_upload_success')
+          : t('bpjs_work_upload_success'),
+      );
+
+      await fetchEmployees();
+    } catch (uploadError) {
+      setError(
+        uploadError instanceof Error
+          ? uploadError.message
+          : t('bpjs_upload_failed'),
+      );
+    } finally {
+      setUploading('');
     }
   };
 
-  const filtered = employees.filter(e =>
-    `${e.nama} ${e.id_karyawan} ${e.departemen || ''}`.toLowerCase().includes(search.toLowerCase())
-  );
+  const openCard = async (path?: string | null) => {
+    if (!path) {
+      setError(t('bpjs_card_not_available'));
+      return;
+    }
 
-  const totalKes = employees.filter(e => (e.nomor_bpjs_kesehatan || e.bpjs_kesehatan)).length;
-  const totalKet = employees.filter(e => (e.nomor_bpjs_ketenagakerjaan || e.bpjs_ketenagakerjaan)).length;
+    const { data, error: linkError } = await supabase.storage
+      .from(BUCKET)
+      .createSignedUrl(path, 900);
+
+    if (linkError || !data?.signedUrl) {
+      setError(linkError?.message || t('bpjs_card_open_failed'));
+      return;
+    }
+
+    window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
+  };
 
   return (
-    <div className="panel" style={{ padding: '24px' }}>
-      <div className="page-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <div>
-          <h2>{t('bpjs_compliance_title')}</h2>
-          <p style={{ color: '#667085', fontSize: '13px' }}>{t('bpjs_compliance_desc')}</p>
-        </div>
-      </div>
+    <section>
+      <Header
+        title={t('web_bpjs')}
+        description={t('web_bpjs_desc')}
+      />
 
-      {/* Ringkasan Statistik BPJS */}
-      <div className="mini-kpi-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px', marginBottom: '20px' }}>
-        <div className="stat-card" style={{ padding: '16px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #d8dee8' }}>
-          <span style={{ fontSize: '12px', color: '#667085' }}>{t('total_employees')}</span>
-          <strong style={{ fontSize: '22px', display: 'block', marginTop: '4px' }}>{employees.length}</strong>
-        </div>
-        <div className="stat-card" style={{ padding: '16px', background: '#ecfdf3', borderRadius: '12px', border: '1px solid #abefc6' }}>
-          <span style={{ fontSize: '12px', color: '#087443' }}>{t('bpjs_health_registered')}</span>
-          <strong style={{ fontSize: '22px', display: 'block', marginTop: '4px', color: '#087443' }}>{totalKes} / {employees.length}</strong>
-        </div>
-        <div className="stat-card" style={{ padding: '16px', background: '#eff8ff', borderRadius: '12px', border: '1px solid #b2ddff' }}>
-          <span style={{ fontSize: '12px', color: '#175cd3' }}>{t('bpjs_work_registered')}</span>
-          <strong style={{ fontSize: '22px', display: 'block', marginTop: '4px', color: '#175cd3' }}>{totalKet} / {employees.length}</strong>
-        </div>
-      </div>
-
-      {notice && <div style={{ padding: '10px 14px', background: '#ecfdf3', color: '#087443', borderRadius: '8px', marginBottom: '15px', fontSize: '13px' }}>{notice}</div>}
-      {error && <div style={{ padding: '10px 14px', background: '#fef3f2', color: '#b42318', borderRadius: '8px', marginBottom: '15px', fontSize: '13px' }}>{error}</div>}
-
-      <div style={{ marginBottom: '15px' }}>
+      <div className="web-f-toolbar">
         <input
-          type="text"
-          placeholder={t("search_employee_id_department")}
           value={search}
           onChange={e => setSearch(e.target.value)}
-          style={{ width: '100%', maxWidth: '380px', padding: '10px 14px', borderRadius: '8px', border: '1px solid #d8dee8', fontSize: '13px' }}
+          placeholder={t('web_search_employee')}
         />
+        <button
+          type="button"
+          className="web-f-secondary"
+          onClick={() => void fetchEmployees()}
+        >
+          {t('web_refresh')}
+        </button>
       </div>
 
-      {loading ? (
-        <p style={{ textAlign: 'center', padding: '30px', color: '#667085' }}>{t('loading_bpjs')}</p>
-      ) : (
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+      {notice && <div className="web-f-alert">{notice}</div>}
+      {error && <div className="web-f-alert">{error}</div>}
+
+      <div className="web-f-panel web-f-table-panel">
+        <div className="web-f-scroll">
+          <table className="web-f-table">
             <thead>
-              <tr style={{ background: '#f8fafc', borderBottom: '1px solid #d8dee8', textAlign: 'left' }}>
-                <th style={{ padding: '12px' }}>{t('employee')}</th>
-                <th style={{ padding: '12px' }}>{t('department_position')}</th>
-                <th style={{ padding: '12px' }}>{t('bpjs_health_number')}</th>
-                <th style={{ padding: '12px' }}>{t('bpjs_work_number')}</th>
-                <th style={{ padding: '12px', textAlign: 'right' }}>{t('actions')}</th>
+              <tr>
+                <th>{t('web_name')}</th>
+                <th>{t('web_id_employee')}</th>
+                <th>{t('web_bpjs_health')}</th>
+                <th>{t('web_bpjs_work')}</th>
+                <th>{t('web_action')}</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map(emp => {
-                const isEditing = editingId === emp.id;
-                const noKes = emp.nomor_bpjs_kesehatan || emp.bpjs_kesehatan;
-                const noKet = emp.nomor_bpjs_ketenagakerjaan || emp.bpjs_ketenagakerjaan;
-
-                return (
-                  <tr key={emp.id} style={{ borderBottom: '1px solid #eef1f5' }}>
-                    <td style={{ padding: '12px' }}>
-                      <b>{emp.nama}</b>
-                      <small style={{ display: 'block', color: '#667085' }}>{emp.id_karyawan}</small>
-                    </td>
-                    <td style={{ padding: '12px' }}>
-                      <span>{emp.departemen || '-'}</span>
-                      <small style={{ display: 'block', color: '#667085' }}>{emp.jabatan || '-'}</small>
-                    </td>
-                    <td style={{ padding: '12px' }}>
-                      {isEditing ? (
-                        <input
-                          type="text"
-                          value={formValues.bpjs_kes}
-                          onChange={e => setFormValues({ ...formValues, bpjs_kes: e.target.value })}
-                          placeholder={t("bpjs_health_number")}
-                          style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #d8dee8', width: '100%' }}
-                        />
-                      ) : (
-                        <span style={{ color: noKes ? '#172033' : '#98a2b3' }}>{noKes || 'Belum diisi'}</span>
-                      )}
-                    </td>
-                    <td style={{ padding: '12px' }}>
-                      {isEditing ? (
-                        <input
-                          type="text"
-                          value={formValues.bpjs_ket}
-                          onChange={e => setFormValues({ ...formValues, bpjs_ket: e.target.value })}
-                          placeholder={t("bpjs_work_number")}
-                          style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #d8dee8', width: '100%' }}
-                        />
-                      ) : (
-                        <span style={{ color: noKet ? '#172033' : '#98a2b3' }}>{noKet || 'Belum diisi'}</span>
-                      )}
-                    </td>
-                    <td style={{ padding: '12px', textAlign: 'right' }}>
-                      {isEditing ? (
-                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                          <button onClick={() => handleSave(emp.id)} className="primary" style={{ padding: '6px 12px', fontSize: '11px' }}>{t("save")}</button>
-                          <button onClick={() => setEditingId(null)} style={{ padding: '6px 12px', fontSize: '11px', background: '#eef2f7', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>{t("cancel")}</button>
-                        </div>
-                      ) : (
-                        <button onClick={() => handleEdit(emp)} style={{ padding: '6px 12px', fontSize: '11px', background: '#f8fafc', border: '1px solid #d8dee8', borderRadius: '6px', cursor: 'pointer' }}>{t("edit_bpjs")}</button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-              {!filtered.length && (
+              {loading ? (
                 <tr>
-                  <td colSpan={5} style={{ textAlign: 'center', padding: '24px', color: '#667085' }}>{t('no_employees_found')}</td>
+                  <td colSpan={5} className="web-f-empty">
+                    {t('web_loading')}
+                  </td>
+                </tr>
+              ) : filtered.length ? (
+                filtered.map(employee => (
+                  <tr key={employee.id}>
+                    <td>
+                      <b>{employee.nama}</b>
+                      <small>
+                        {employee.departemen || '—'} · {employee.jabatan || '—'}
+                      </small>
+                    </td>
+                    <td>{employee.id_karyawan}</td>
+                    <td>
+                      <div>{employee.bpjs_kesehatan || '—'}</div>
+                      <div className="web-f-inline-actions">
+                        <label className="web-f-upload-button">
+                          {uploading === `${employee.id}:kesehatan`
+                            ? t('web_processing')
+                            : t('web_upload_card')}
+                          <input
+                            hidden
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,application/pdf"
+                            disabled={Boolean(uploading)}
+                            onChange={e => {
+                              const file = e.target.files?.[0];
+                              if (file) void uploadCard(employee, 'kesehatan', file);
+                              e.target.value = '';
+                            }}
+                          />
+                        </label>
+                        {employee.bpjs_kesehatan_card_path && (
+                          <button
+                            type="button"
+                            className="web-f-link"
+                            onClick={() => void openCard(employee.bpjs_kesehatan_card_path)}
+                          >
+                            {t('web_open_saved_card')}
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className="web-f-link"
+                          onClick={() => void (async () => { const value = await appPrompt(t('web_bpjs_health'), employee.bpjs_kesehatan || '', { title: t('web_bpjs_health'), cancelText: t('cancel'), confirmText: t('web_save') }); if (value !== null) await saveNumber(employee.id, 'bpjs_kesehatan', value); })()}
+                        >
+                          {t('web_edit')}
+                        </button>
+                      </div>
+                    </td>
+                    <td>
+                      <div>{employee.bpjs_ketenagakerjaan || '—'}</div>
+                      <div className="web-f-inline-actions">
+                        <label className="web-f-upload-button">
+                          {uploading === `${employee.id}:ketenagakerjaan`
+                            ? t('web_processing')
+                            : t('web_upload_card')}
+                          <input
+                            hidden
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,application/pdf"
+                            disabled={Boolean(uploading)}
+                            onChange={e => {
+                              const file = e.target.files?.[0];
+                              if (file) void uploadCard(employee, 'ketenagakerjaan', file);
+                              e.target.value = '';
+                            }}
+                          />
+                        </label>
+                        {employee.bpjs_ketenagakerjaan_card_path && (
+                          <button
+                            type="button"
+                            className="web-f-link"
+                            onClick={() => void openCard(employee.bpjs_ketenagakerjaan_card_path)}
+                          >
+                            {t('web_open_saved_card')}
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className="web-f-link"
+                          onClick={() => void (async () => { const value = await appPrompt(t('web_bpjs_work'), employee.bpjs_ketenagakerjaan || '', { title: t('web_bpjs_work'), cancelText: t('cancel'), confirmText: t('web_save') }); if (value !== null) await saveNumber(employee.id, 'bpjs_ketenagakerjaan', value); })()}
+                        >
+                          {t('web_edit')}
+                        </button>
+                      </div>
+                    </td>
+                    <td>—</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5} className="web-f-empty">
+                    {t('web_no_employees')}
+                  </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
-      )}
-    </div>
+      </div>
+    </section>
   );
 }

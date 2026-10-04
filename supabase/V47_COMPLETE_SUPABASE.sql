@@ -368,7 +368,7 @@ stable
 security definer
 set search_path = public
 as $$
-  select public.current_hris_role() in ('Admin','Super Admin','Administrator HR','HR','HR Manager','HRD');
+  select public.current_hris_role() in ('Admin','Super Admin','Administrator HR','HR','HR Manager');
 $$;
 
 grant execute on function public.current_hris_role() to authenticated;
@@ -1250,7 +1250,6 @@ create index if not exists idx_approval_history_request on public.hris_approval_
 alter table public.karyawan add column if not exists nomor_induk text;
 alter table public.karyawan add column if not exists tanggal_keluar date;
 alter table public.karyawan add column if not exists alasan_keluar text;
-alter table public.karyawan add column if not exists alasan_keluar_kode text;
 alter table public.karyawan add column if not exists atasan_id text;
 alter table public.karyawan add column if not exists level_jabatan text;
 alter table public.karyawan add column if not exists lokasi_kerja text;
@@ -1273,17 +1272,7 @@ begin
       insert into public.hris_employee_history(id_karyawan,jenis,dari_nilai,ke_nilai,actor_email) values(new.id_karyawan,'Departemen',old.departemen,new.departemen,auth.jwt()->>'email');
     end if;
     if coalesce(old.status_aktif,true)<>coalesce(new.status_aktif,true) then
-      insert into public.hris_employee_history(
-        id_karyawan,jenis,dari_nilai,ke_nilai,efektif_mulai,alasan,actor_email
-      ) values (
-        new.id_karyawan,
-        'Status',
-        old.status_aktif::text,
-        new.status_aktif::text,
-        case when coalesce(new.status_aktif,true)=false then new.tanggal_keluar else old.tanggal_keluar end,
-        case when coalesce(new.status_aktif,true)=false then new.alasan_keluar else old.alasan_keluar end,
-        auth.jwt()->>'email'
-      );
+      insert into public.hris_employee_history(id_karyawan,jenis,dari_nilai,ke_nilai,actor_email) values(new.id_karyawan,'Status',old.status_aktif::text,new.status_aktif::text,auth.jwt()->>'email');
     end if;
   end if;
   return new;
@@ -4375,3 +4364,291 @@ using (
 );
 
 notify pgrst, 'reload schema';
+
+-- ============================================================
+-- PROJECT TIRTA RELEASE HARDENING (canonical migration: 20261004190000)
+-- Keep this snapshot aligned with supabase/migrations/.
+-- ============================================================
+
+-- Identity hardening: bind HR roles to Supabase auth user IDs where possible.
+alter table if exists public.hris_users add column if not exists auth_user_id uuid references auth.users(id) on delete set null;
+create unique index if not exists uq_hris_users_auth_user_id on public.hris_users(auth_user_id) where auth_user_id is not null;
+update public.hris_users h
+set auth_user_id = u.id
+from auth.users u
+where h.auth_user_id is null
+  and lower(h.email) = lower(u.email);
+
+create or replace function public.hris_my_role()
+returns text
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select role
+  from public.hris_users
+  where status = 'Aktif'
+    and (auth_user_id = auth.uid() or lower(email) = lower(coalesce(auth.jwt()->>'email','')))
+  order by (auth_user_id = auth.uid()) desc
+  limit 1;
+$$;
+revoke execute on function public.hris_my_role() from public, anon;
+grant execute on function public.hris_my_role() to authenticated;
+alter function public.hris_has_permission(text) set search_path = public, pg_temp;
+
+-- Server-side employee identity claim. The browser can request the claim, but
+-- only this SECURITY DEFINER function can bind an unclaimed employee by the
+-- authenticated email, and only when the email maps to exactly one row.
+create or replace function public.hris_claim_employee_account()
+returns boolean
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_user uuid := auth.uid();
+  v_email text := lower(trim(coalesce(auth.jwt()->>'email','')));
+  v_count integer;
+  v_employee_id uuid;
+begin
+  if v_user is null or v_email = '' then
+    return false;
+  end if;
+
+  select count(*), min(id)
+    into v_count, v_employee_id
+  from public.karyawan
+  where auth_user_id is null
+    and lower(trim(coalesce(email,''))) = v_email;
+
+  if v_count <> 1 or v_employee_id is null then
+    return false;
+  end if;
+
+  update public.karyawan
+     set auth_user_id = v_user
+   where id = v_employee_id
+     and auth_user_id is null;
+
+  return found;
+end;
+$$;
+revoke execute on function public.hris_claim_employee_account() from public, anon;
+grant execute on function public.hris_claim_employee_account() to authenticated;
+
+-- Enterprise table RLS hardening.
+-- These tables previously relied on application/UI boundaries. Explicit RLS
+-- makes the database the final enforcement point.
+
+alter table if exists public.hris_workflow_definitions enable row level security;
+alter table if exists public.hris_workflow_steps enable row level security;
+alter table if exists public.hris_people_metrics enable row level security;
+alter table if exists public.hris_document_types enable row level security;
+alter table if exists public.hris_compliance_tasks enable row level security;
+alter table if exists public.hris_performance_cycles enable row level security;
+alter table if exists public.hris_performance_reviews enable row level security;
+alter table if exists public.hris_workforce_roster enable row level security;
+alter table if exists public.hris_workforce_plans enable row level security;
+alter table if exists public.hris_compliance_controls enable row level security;
+alter table if exists public.hris_compliance_runs enable row level security;
+alter table if exists public.hris_enterprise_settings enable row level security;
+
+drop policy if exists workflow_definitions_read on public.hris_workflow_definitions;
+drop policy if exists workflow_definitions_write on public.hris_workflow_definitions;
+create policy workflow_definitions_read on public.hris_workflow_definitions for select to authenticated using (public.hris_has_permission('approval.read') or public.hris_has_permission('settings.write'));
+create policy workflow_definitions_write on public.hris_workflow_definitions for all to authenticated using (public.hris_has_permission('settings.write')) with check (public.hris_has_permission('settings.write'));
+
+drop policy if exists workflow_steps_read on public.hris_workflow_steps;
+drop policy if exists workflow_steps_write on public.hris_workflow_steps;
+create policy workflow_steps_read on public.hris_workflow_steps for select to authenticated using (public.hris_has_permission('approval.read') or public.hris_has_permission('settings.write'));
+create policy workflow_steps_write on public.hris_workflow_steps for all to authenticated using (public.hris_has_permission('settings.write')) with check (public.hris_has_permission('settings.write'));
+
+drop policy if exists people_metrics_read on public.hris_people_metrics;
+drop policy if exists people_metrics_write on public.hris_people_metrics;
+create policy people_metrics_read on public.hris_people_metrics for select to authenticated using (public.hris_has_permission('analytics.read') or public.hris_has_permission('reports.read'));
+create policy people_metrics_write on public.hris_people_metrics for all to authenticated using (public.hris_has_permission('analytics.write') or public.hris_has_permission('settings.write')) with check (public.hris_has_permission('analytics.write') or public.hris_has_permission('settings.write'));
+
+drop policy if exists document_types_read on public.hris_document_types;
+drop policy if exists document_types_write on public.hris_document_types;
+create policy document_types_read on public.hris_document_types for select to authenticated using (public.hris_has_permission('document.read') or public.hris_has_permission('people.documents'));
+create policy document_types_write on public.hris_document_types for all to authenticated using (public.hris_has_permission('document.compliance') or public.hris_has_permission('people.documents')) with check (public.hris_has_permission('document.compliance') or public.hris_has_permission('people.documents'));
+
+drop policy if exists compliance_tasks_read on public.hris_compliance_tasks;
+drop policy if exists compliance_tasks_write on public.hris_compliance_tasks;
+create policy compliance_tasks_read on public.hris_compliance_tasks for select to authenticated using (public.hris_has_permission('document.compliance') or public.hris_has_permission('audit.read'));
+create policy compliance_tasks_write on public.hris_compliance_tasks for all to authenticated using (public.hris_has_permission('document.compliance')) with check (public.hris_has_permission('document.compliance'));
+
+drop policy if exists performance_cycles_read on public.hris_performance_cycles;
+drop policy if exists performance_cycles_write on public.hris_performance_cycles;
+create policy performance_cycles_read on public.hris_performance_cycles for select to authenticated using (public.hris_has_permission('talent.read') or public.hris_has_permission('talent.write'));
+create policy performance_cycles_write on public.hris_performance_cycles for all to authenticated using (public.hris_has_permission('talent.write') or public.hris_has_permission('performance.review')) with check (public.hris_has_permission('talent.write') or public.hris_has_permission('performance.review'));
+
+drop policy if exists performance_reviews_read on public.hris_performance_reviews;
+drop policy if exists performance_reviews_write on public.hris_performance_reviews;
+create policy performance_reviews_read on public.hris_performance_reviews for select to authenticated using (public.hris_has_permission('talent.read') or public.hris_has_permission('performance.read') or id_karyawan in (select id_karyawan from public.karyawan where auth_user_id=auth.uid() or lower(email)=lower(coalesce(auth.jwt()->>'email',''))));
+create policy performance_reviews_write on public.hris_performance_reviews for all to authenticated using (public.hris_has_permission('talent.write') or public.hris_has_permission('performance.review')) with check (public.hris_has_permission('talent.write') or public.hris_has_permission('performance.review'));
+
+drop policy if exists workforce_roster_read on public.hris_workforce_roster;
+drop policy if exists workforce_roster_write on public.hris_workforce_roster;
+create policy workforce_roster_read on public.hris_workforce_roster for select to authenticated using (public.hris_has_permission('schedule.read') or public.hris_has_permission('people.read'));
+create policy workforce_roster_write on public.hris_workforce_roster for all to authenticated using (public.hris_has_permission('schedule.write') or public.hris_has_permission('people.write')) with check (public.hris_has_permission('schedule.write') or public.hris_has_permission('people.write'));
+
+drop policy if exists workforce_plans_read on public.hris_workforce_plans;
+drop policy if exists workforce_plans_write on public.hris_workforce_plans;
+create policy workforce_plans_read on public.hris_workforce_plans for select to authenticated using (public.hris_has_permission('schedule.read') or public.hris_has_permission('people.read'));
+create policy workforce_plans_write on public.hris_workforce_plans for all to authenticated using (public.hris_has_permission('schedule.write') or public.hris_has_permission('people.write')) with check (public.hris_has_permission('schedule.write') or public.hris_has_permission('people.write'));
+
+drop policy if exists compliance_controls_read on public.hris_compliance_controls;
+drop policy if exists compliance_controls_write on public.hris_compliance_controls;
+create policy compliance_controls_read on public.hris_compliance_controls for select to authenticated using (public.hris_has_permission('document.compliance') or public.hris_has_permission('security.read') or public.hris_has_permission('audit.read'));
+create policy compliance_controls_write on public.hris_compliance_controls for all to authenticated using (public.hris_has_permission('document.compliance') or public.hris_has_permission('security.manage')) with check (public.hris_has_permission('document.compliance') or public.hris_has_permission('security.manage'));
+
+drop policy if exists compliance_runs_read on public.hris_compliance_runs;
+drop policy if exists compliance_runs_write on public.hris_compliance_runs;
+create policy compliance_runs_read on public.hris_compliance_runs for select to authenticated using (public.hris_has_permission('document.compliance') or public.hris_has_permission('security.read') or public.hris_has_permission('audit.read'));
+create policy compliance_runs_write on public.hris_compliance_runs for all to authenticated using (public.hris_has_permission('document.compliance') or public.hris_has_permission('security.manage')) with check (public.hris_has_permission('document.compliance') or public.hris_has_permission('security.manage'));
+
+drop policy if exists enterprise_settings_read on public.hris_enterprise_settings;
+drop policy if exists enterprise_settings_write on public.hris_enterprise_settings;
+create policy enterprise_settings_read on public.hris_enterprise_settings for select to authenticated using (public.hris_has_permission('settings.read') or public.hris_has_permission('settings.write'));
+create policy enterprise_settings_write on public.hris_enterprise_settings for all to authenticated using (public.hris_has_permission('settings.write')) with check (public.hris_has_permission('settings.write'));
+
+-- Identity FK/uniqueness hardening for employee account binding.
+do $$
+begin
+  if to_regclass('public.karyawan') is not null and not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.karyawan'::regclass
+      and conname = 'fk_karyawan_auth_user_id'
+  ) then
+    alter table public.karyawan
+      add constraint fk_karyawan_auth_user_id
+      foreign key (auth_user_id) references auth.users(id) on delete set null
+      not valid;
+  end if;
+end $$;
+create unique index if not exists uq_karyawan_auth_user on public.karyawan(auth_user_id) where auth_user_id is not null;
+
+-- Close remaining RLS-deny-by-default gaps for V23/V24 enterprise data tables.
+-- Read/write rights stay permission-scoped; calculation/snapshot tables are read-only
+-- from the browser and are populated through trusted server-side workflows.
+
+alter table if exists public.hris_shift_definitions enable row level security;
+alter table if exists public.hris_shift_assignments_v24 enable row level security;
+alter table if exists public.hris_holidays_v24 enable row level security;
+alter table if exists public.hris_attendance_calculations_v24 enable row level security;
+alter table if exists public.hris_attendance_adjustments_v24 enable row level security;
+alter table if exists public.hris_payroll_statutory_rules enable row level security;
+alter table if exists public.hris_payroll_tax_reconciliations enable row level security;
+alter table if exists public.hris_payroll_statutory_snapshots enable row level security;
+
+drop policy if exists shift_definitions_read on public.hris_shift_definitions;
+drop policy if exists shift_definitions_write on public.hris_shift_definitions;
+create policy shift_definitions_read on public.hris_shift_definitions for select to authenticated using (
+  public.hris_has_permission('attendance.read')
+  or public.hris_has_permission('schedule.read')
+  or public.hris_has_permission('attendance.shift.manage')
+);
+create policy shift_definitions_write on public.hris_shift_definitions for all to authenticated using (
+  public.hris_has_permission('attendance.shift.manage')
+) with check (
+  public.hris_has_permission('attendance.shift.manage')
+);
+
+drop policy if exists shift_assignments_read on public.hris_shift_assignments_v24;
+drop policy if exists shift_assignments_write on public.hris_shift_assignments_v24;
+create policy shift_assignments_read on public.hris_shift_assignments_v24 for select to authenticated using (
+  public.hris_has_permission('attendance.read')
+  or public.hris_has_permission('schedule.read')
+  or public.hris_has_permission('attendance.shift.manage')
+);
+create policy shift_assignments_write on public.hris_shift_assignments_v24 for all to authenticated using (
+  public.hris_has_permission('attendance.shift.manage')
+) with check (
+  public.hris_has_permission('attendance.shift.manage')
+);
+
+drop policy if exists holidays_read on public.hris_holidays_v24;
+drop policy if exists holidays_write on public.hris_holidays_v24;
+create policy holidays_read on public.hris_holidays_v24 for select to authenticated using (
+  public.hris_has_permission('attendance.read')
+  or public.hris_has_permission('leave.read')
+  or public.hris_has_permission('attendance.holiday.manage')
+);
+create policy holidays_write on public.hris_holidays_v24 for all to authenticated using (
+  public.hris_has_permission('attendance.holiday.manage')
+) with check (
+  public.hris_has_permission('attendance.holiday.manage')
+);
+
+drop policy if exists attendance_calculations_read on public.hris_attendance_calculations_v24;
+create policy attendance_calculations_read on public.hris_attendance_calculations_v24 for select to authenticated using (
+  public.hris_has_permission('attendance.calculation.read')
+  or public.hris_has_permission('attendance.read')
+  or public.hris_has_permission('reports.attendance')
+);
+
+drop policy if exists attendance_adjustments_read on public.hris_attendance_adjustments_v24;
+drop policy if exists attendance_adjustments_write on public.hris_attendance_adjustments_v24;
+create policy attendance_adjustments_read on public.hris_attendance_adjustments_v24 for select to authenticated using (
+  public.hris_has_permission('attendance.adjustment.approve')
+  or public.hris_has_permission('attendance.read')
+);
+create policy attendance_adjustments_write on public.hris_attendance_adjustments_v24 for all to authenticated using (
+  public.hris_has_permission('attendance.adjustment.approve')
+) with check (
+  public.hris_has_permission('attendance.adjustment.approve')
+);
+
+drop policy if exists statutory_rules_read on public.hris_payroll_statutory_rules;
+drop policy if exists statutory_rules_write on public.hris_payroll_statutory_rules;
+create policy statutory_rules_read on public.hris_payroll_statutory_rules for select to authenticated using (
+  public.hris_has_permission('payroll.read')
+);
+create policy statutory_rules_write on public.hris_payroll_statutory_rules for all to authenticated using (
+  public.hris_has_permission('payroll.write')
+) with check (
+  public.hris_has_permission('payroll.write')
+);
+
+drop policy if exists statutory_reconciliations_read on public.hris_payroll_tax_reconciliations;
+drop policy if exists statutory_reconciliations_write on public.hris_payroll_tax_reconciliations;
+create policy statutory_reconciliations_read on public.hris_payroll_tax_reconciliations for select to authenticated using (
+  public.hris_has_permission('payroll.read')
+);
+create policy statutory_reconciliations_write on public.hris_payroll_tax_reconciliations for all to authenticated using (
+  public.hris_has_permission('payroll.write')
+) with check (
+  public.hris_has_permission('payroll.write')
+);
+
+drop policy if exists statutory_snapshots_read on public.hris_payroll_statutory_snapshots;
+create policy statutory_snapshots_read on public.hris_payroll_statutory_snapshots for select to authenticated using (
+  public.hris_has_permission('payroll.read')
+);
+
+-- SECURITY DEFINER RPCs must never inherit PostgreSQL's PUBLIC EXECUTE default.
+revoke all on function public.hris_v23_statutory_preflight(uuid) from public, anon;
+revoke all on function public.hris_v23_snapshot_statutory(uuid) from public, anon;
+revoke all on function public.hris_v24_upsert_calculation(text,date,timestamptz,timestamptz,timestamptz,timestamptz,integer,boolean,boolean) from public, anon;
+revoke all on function public.hris_v25_move_application(uuid,text,text) from public, anon;
+revoke all on function public.hris_v25_approve_requisition(uuid,boolean,text) from public, anon;
+revoke all on function public.hris_v25_approve_offer(uuid,boolean,text) from public, anon;
+revoke all on function public.hris_v25_hiring_handoff(uuid,date,text) from public, anon;
+grant execute on function public.hris_v23_statutory_preflight(uuid) to authenticated;
+grant execute on function public.hris_v23_snapshot_statutory(uuid) to authenticated;
+grant execute on function public.hris_v24_upsert_calculation(text,date,timestamptz,timestamptz,timestamptz,timestamptz,integer,boolean,boolean) to authenticated;
+grant execute on function public.hris_v25_move_application(uuid,text,text) to authenticated;
+grant execute on function public.hris_v25_approve_requisition(uuid,boolean,text) to authenticated;
+grant execute on function public.hris_v25_approve_offer(uuid,boolean,text) to authenticated;
+grant execute on function public.hris_v25_hiring_handoff(uuid,date,text) to authenticated;
+
+-- ESS identity/clock RPCs are authenticated-only; their SECURITY DEFINER bodies
+-- already validate the employee identity, so PUBLIC/anon execution is unnecessary.
+revoke all on function public.hris_ess_employee_id() from public, anon;
+revoke all on function public.hris_ess_clock_in(text,date,time,numeric,numeric,numeric,text,text) from public, anon;
+revoke all on function public.hris_ess_clock_out(text,date,time,numeric,numeric,numeric,text,text) from public, anon;
+grant execute on function public.hris_ess_employee_id() to authenticated;
+grant execute on function public.hris_ess_clock_in(text,date,time,numeric,numeric,numeric,text,text) to authenticated;
+grant execute on function public.hris_ess_clock_out(text,date,time,numeric,numeric,numeric,text,text) to authenticated;

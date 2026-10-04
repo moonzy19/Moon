@@ -1,6 +1,6 @@
 # Project by Tirta — Bernadya HRIS
 
-Current professional hardening baseline: **57.0.0**.
+Current application version: **57.1.3**. Active Android baseline: **V59**.
 
 Bernadya is a React/TypeScript HRIS platform backed by Supabase, with Admin Dashboard, Employee Self Service, payroll, attendance, talent/recruitment modules, PWA delivery and Capacitor readiness.
 
@@ -25,7 +25,7 @@ npm run build
 
 - The browser never contains a Supabase service-role key.
 - Missing Supabase browser variables fail closed; no real fallback project is embedded.
-- Service-role credentials belong only in server-side/Netlify environment variables.
+- Service-role credentials belong only in server-side environment variables.
 - RLS and backend authorization are the security boundary for privileged HRIS operations.
 
 ## Mobile
@@ -48,4 +48,4 @@ Six built-in themes plus a validated custom theme are supported by the Admin The
 
 - `PROFESSIONAL_RELEASE.md` — current release gate and engineering principles.
 - `RELEASE_CHECKLIST.md` — production checklist.
-- `docs/archive/` — historical implementation and release notes.
+- `docs/archive/` — historical implementation, release notes, and archived Android V58 material.

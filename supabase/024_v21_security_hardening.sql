@@ -22,6 +22,7 @@ returns boolean language sql stable security definer set search_path=public as $
         or permission_code=split_part(p_code,'.',1))
   );
 $$;
+revoke all on function public.hris_has_permission(text) from public, anon;
 grant execute on function public.hris_has_permission(text) to authenticated;
 
 -- Central approval authorization. Every decision must match both the current
@@ -81,6 +82,7 @@ begin
   );
 end;
 $$;
+revoke all on function public.hris_v21_decide_approval(uuid,text,text) from public, anon;
 grant execute on function public.hris_v21_decide_approval(uuid,text,text) to authenticated;
 
 -- V20 RPC is retained for compatibility but now delegates to the hardened RPC.
@@ -90,6 +92,7 @@ begin
   perform public.hris_v21_decide_approval(p_request_id,p_decision,p_note);
 end;
 $$;
+revoke all on function public.hris_v20_decide_approval(uuid,text,text) from public, anon;
 grant execute on function public.hris_v20_decide_approval(uuid,text,text) to authenticated;
 
 -- Immutable audit posture: authenticated users can read only through RLS;

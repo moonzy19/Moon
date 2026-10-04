@@ -3,8 +3,13 @@
 ## Fresh Supabase project
 Use `BOOTSTRAP_FRESH_DATABASE.sql` once in the Supabase SQL Editor. It contains the complete schema chain in dependency order: legacy foundation 000–025 followed by enterprise migrations 026 onward.
 
+## Migration source of truth
+The canonical migration history is `supabase/migrations/`. Apply these files in timestamp order with the Supabase CLI. The older `supabase/migration/` directory is retained as historical material and must not be applied alongside `supabase/migrations/`.
+
+`BOOTSTRAP_FRESH_DATABASE.sql`, `PROJECT_TIRTA_COMPLETE_SCHEMA.sql`, and `V47_COMPLETE_SUPABASE.sql` are installer/snapshot files for controlled fresh deployments. They contain the current hardening blocks, but they are not a second migration history.
+
 ## Existing MoonXprojecT database
-Do **not** blindly rerun the bootstrap file. Keep the database migration history already applied and run only the new migration files that are not yet applied, or use the Supabase CLI migration history for the project.
+Do **not** blindly rerun the bootstrap or snapshot files. Keep the database migration history already applied and run only the new files from `supabase/migrations/`, or use the Supabase CLI migration history for the project.
 
 ## Security
 Never put a Supabase service-role key in Vite/Netlify client variables. The browser must use the publishable/anon key only. Database authorization is enforced with RLS and HRIS permission functions.
@@ -13,11 +18,3 @@ Never put a Supabase service-role key in Vite/Netlify client variables. The brow
 The application does not expose a public endpoint for creating a Super Admin. This is intentional: an unauthenticated endpoint backed by the Supabase service-role key would allow anyone who can reach it to create a privileged account.
 
 For the first administrator, create the user in **Supabase Dashboard → Authentication → Users**, then run the one-time profile update shown in `BOOTSTRAP_FRESH_DATABASE.sql` (or update the matching `hris_users` row) to set the role to `Super Admin`. Subsequent account and role administration should be performed through authenticated HRIS flows and the database RLS policies.
-
-
-## 2026-10-01 release hardening
-
-After the existing migrations, apply `supabase/migrations/20261001070000_release_security_and_employee_lifecycle_hardening.sql`.
-This migration is idempotent and repairs employee deactivation reason storage, private employee photo access, ID-card QR verification, and ESS attendance helper references.
-
-For clean deployments, use the SQL files in `supabase/migrations/` in timestamp order after the legacy `supabase/migration/` sequence. Do not rely on an empty or hand-maintained migration file as the only source of a schema change.

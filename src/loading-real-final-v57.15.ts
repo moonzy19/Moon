@@ -16,46 +16,46 @@ body:has(.employee-loading-screen),
 html:has(.login-wrap:has(.loading)),
 body:has(.login-wrap:has(.loading)),
 #root:has(.login-wrap:has(.loading)) {
-  background: var(--tirta-loading-bg) !important;
+  background: var(--tirta-loading-bg) ;
 }
 
 .app-loading-screen,
 .employee-loading-screen,
 .login-wrap:has(.loading) {
-  position: fixed !important;
-  inset: 0 !important;
-  z-index: 2147483647 !important;
-  width: 100vw !important;
-  height: 100dvh !important;
-  min-height: 100dvh !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  display: grid !important;
-  place-items: center !important;
-  overflow: hidden !important;
-  box-sizing: border-box !important;
+  position: fixed ;
+  inset: 0 ;
+  z-index: 2147483647 ;
+  width: 100vw ;
+  height: 100dvh ;
+  min-height: 100dvh ;
+  margin: 0 ;
+  padding: 0 ;
+  display: grid ;
+  place-items: center ;
+  overflow: hidden ;
+  box-sizing: border-box ;
   background:
     radial-gradient(circle at 50% 45%, rgba(214,174,88,.09), transparent 28%),
-    linear-gradient(180deg, #071126 0%, var(--tirta-loading-bg) 100%) !important;
+    linear-gradient(180deg, #071126 0%, var(--tirta-loading-bg) 100%) ;
 }
 
 .app-loading-card,
 .employee-loading-card,
 .login-wrap:has(.loading) .login-card {
-  width: auto !important;
-  max-width: none !important;
-  min-width: 0 !important;
-  min-height: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  background: transparent !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
+  width: auto ;
+  max-width: none ;
+  min-width: 0 ;
+  min-height: 0 ;
+  margin: 0 ;
+  padding: 0 ;
+  display: flex ;
+  align-items: center ;
+  justify-content: center ;
+  background: transparent ;
+  border: 0 ;
+  border-radius: 0 ;
+  box-shadow: none ;
+  backdrop-filter: none ;
 }
 
 .app-loading-logo,
@@ -63,27 +63,27 @@ body:has(.login-wrap:has(.loading)),
 .employee-loading-logo img,
 .employee-loading-logo-only,
 .app-loading-logo-only {
-  width: 72px !important;
-  height: 72px !important;
-  max-width: 72px !important;
-  max-height: 72px !important;
-  min-width: 72px !important;
-  min-height: 72px !important;
-  display: block !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  object-fit: contain !important;
-  background: transparent !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  filter: drop-shadow(0 0 14px rgba(214,174,88,.34)) !important;
-  animation: tirta-loading-pulse 1.6s ease-in-out infinite !important;
+  width: 72px ;
+  height: 72px ;
+  max-width: 72px ;
+  max-height: 72px ;
+  min-width: 72px ;
+  min-height: 72px ;
+  display: block ;
+  margin: 0 ;
+  padding: 0 ;
+  object-fit: contain ;
+  background: transparent ;
+  border: 0 ;
+  border-radius: 0 ;
+  box-shadow: none ;
+  filter: drop-shadow(0 0 14px rgba(214,174,88,.34)) ;
+  animation: tirta-loading-pulse 1.6s ease-in-out infinite ;
 }
 
 .app-loading-brand,
 .employee-loading-logo {
-  display: contents !important;
+  display: contents ;
 }
 
 .app-loading-copy,
@@ -94,73 +94,73 @@ body:has(.login-wrap:has(.loading)),
 .app-loading-indicator i,
 .employee-loading-bar i,
 .employee-loading-skeletons i {
-  display: none !important;
+  display: none ;
 }
 
 .login-wrap:has(.loading) .login-card .loading {
-  position: fixed !important;
-  left: 50% !important;
-  top: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  width: 72px !important;
-  height: 72px !important;
-  min-width: 72px !important;
-  min-height: 72px !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  display: block !important;
-  color: transparent !important;
-  font-size: 0 !important;
-  background: transparent !important;
-  border: 0 !important;
-  box-shadow: none !important;
+  position: fixed ;
+  left: 50% ;
+  top: 50% ;
+  transform: translate(-50%, -50%) ;
+  width: 72px ;
+  height: 72px ;
+  min-width: 72px ;
+  min-height: 72px ;
+  margin: 0 ;
+  padding: 0 ;
+  display: block ;
+  color: transparent ;
+  font-size: 0 ;
+  background: transparent ;
+  border: 0 ;
+  box-shadow: none ;
 }
 
 .login-wrap:has(.loading) .login-card .loading::before {
-  content: "" !important;
-  display: block !important;
-  width: 72px !important;
-  height: 72px !important;
-  margin: 0 !important;
-  background: url("${moonLogo}") center / contain no-repeat !important;
-  filter: drop-shadow(0 0 14px rgba(214,174,88,.34)) !important;
-  animation: tirta-loading-pulse 1.6s ease-in-out infinite !important;
+  content: "" ;
+  display: block ;
+  width: 72px ;
+  height: 72px ;
+  margin: 0 ;
+  background: url("${moonLogo}") center / contain no-repeat ;
+  filter: drop-shadow(0 0 14px rgba(214,174,88,.34)) ;
+  animation: tirta-loading-pulse 1.6s ease-in-out infinite ;
 }
 
 .login-loading-content {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
+  display: inline-flex ;
+  align-items: center ;
+  justify-content: center ;
+  gap: 8px ;
 }
 
 .login-loading-logo {
-  width: 22px !important;
-  height: 22px !important;
-  object-fit: contain !important;
-  display: block !important;
-  animation: tirta-loading-pulse 1.6s ease-in-out infinite !important;
-  filter: drop-shadow(0 0 7px rgba(214,174,88,.30)) !important;
+  width: 22px ;
+  height: 22px ;
+  object-fit: contain ;
+  display: block ;
+  animation: tirta-loading-pulse 1.6s ease-in-out infinite ;
+  filter: drop-shadow(0 0 7px rgba(214,174,88,.30)) ;
 }
 
 .verify-id-loading {
-  min-height: 72px !important;
-  display: grid !important;
-  place-items: center !important;
+  min-height: 72px ;
+  display: grid ;
+  place-items: center ;
 }
 
 .verify-id-loading span {
-  display: none !important;
+  display: none ;
 }
 
 .verify-id-loading::before {
-  content: "" !important;
-  width: 56px !important;
-  height: 56px !important;
-  display: block !important;
-  background: url("${moonLogo}") center / contain no-repeat !important;
-  filter: drop-shadow(0 0 10px rgba(214,174,88,.30)) !important;
-  animation: tirta-loading-pulse 1.6s ease-in-out infinite !important;
+  content: "" ;
+  width: 56px ;
+  height: 56px ;
+  display: block ;
+  background: url("${moonLogo}") center / contain no-repeat ;
+  filter: drop-shadow(0 0 10px rgba(214,174,88,.30)) ;
+  animation: tirta-loading-pulse 1.6s ease-in-out infinite ;
 }
 
 @keyframes tirta-loading-pulse {
@@ -175,7 +175,7 @@ body:has(.login-wrap:has(.loading)),
 }
 
 .unified-login-button:disabled {
-  transform: none !important;
+  transform: none ;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -187,13 +187,16 @@ body:has(.login-wrap:has(.loading)),
   .login-wrap:has(.loading) .login-card .loading::before,
   .login-loading-logo,
   .verify-id-loading::before {
-    animation: none !important;
+    animation: none ;
   }
 }
 `;
 
 export function installLoadingStyles(): void {
   if (typeof document === 'undefined') return;
+  // Web loading visuals are owned by web-reference.css.
+  // Keep the existing runtime stylesheet unchanged for Android only.
+  if (document.documentElement.dataset.platform === 'web') return;
   const existing = document.getElementById(STYLE_ID);
   if (existing) existing.remove();
   const style = document.createElement('style');

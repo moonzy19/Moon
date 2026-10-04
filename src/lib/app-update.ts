@@ -3,7 +3,7 @@ import { Capacitor } from '@capacitor/core';
 import { appConfirm } from './app-dialog';
 
 const GITHUB_API =
-  'https://api.github.com/repos/Moonjustfine/Moonjustfine13/releases/latest';
+  'https://api.github.com/repos/ProjectByMoon/Tirta/releases/latest';
 
 function parseVersion(value: unknown): number[] {
   const match = String(value || '')
@@ -68,8 +68,8 @@ export async function checkForAppUpdate(): Promise<void> {
         asset.name?.toLowerCase().endsWith('.apk')
     );
 
-    if (!apkAsset?.browser_download_url) {
-      console.warn('Release terbaru tidak memiliki APK.');
+    if (!apkAsset?.browser_download_url || !release?.html_url) {
+      console.warn('Release terbaru tidak memiliki APK atau halaman release.');
       return;
     }
 
@@ -86,11 +86,12 @@ export async function checkForAppUpdate(): Promise<void> {
     );
 
     if (update) {
-      window.open(
-        apkAsset.browser_download_url,
-        '_blank',
-        'noopener,noreferrer'
-      );
+      const releaseUrl = new URL(String(release.html_url));
+      if (releaseUrl.protocol !== 'https:' || releaseUrl.hostname !== 'github.com') {
+        console.warn('URL release update tidak dipercaya.');
+        return;
+      }
+      window.open(releaseUrl.toString(), '_blank', 'noopener,noreferrer');
     }
   } catch (error) {
     // Kegagalan cek update tidak boleh menghalangi aplikasi dibuka.

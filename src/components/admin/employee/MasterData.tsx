@@ -112,8 +112,8 @@ export default function MasterData({
   }, [initialTab]);
 
   return (
-    <div style={styles.wrapper}>
-      <div style={styles.header}>
+    <div className="master-data-module" style={styles.wrapper}>
+      <header className="master-data-header" style={styles.header}>
         <div>
           <div style={styles.eyebrow}>{t("master_data_hris")}</div>
           <h1 style={styles.title}>{t("branch")} & {t("operational")}</h1>
@@ -121,9 +121,9 @@ export default function MasterData({
             {t('master_data_desc')}
           </p>
         </div>
-      </div>
+      </header>
 
-      <div style={styles.tabs}>
+      <nav className="master-data-tabs" style={styles.tabs}>
         <TabButton
           active={tab === 'cabang'}
           icon="building"
@@ -158,7 +158,7 @@ export default function MasterData({
           label={t("work_schedule")}
           onClick={() => setTab('jadwal')}
         />
-      </div>
+      </nav>
 
       {tab === 'cabang' && <CabangModule />}
       {tab === 'departemen' && <DepartemenModule />}
@@ -188,6 +188,7 @@ function TabButton({
     <button
       type="button"
       onClick={onClick}
+      className={active ? "master-data-tab active" : "master-data-tab"}
       style={{
         ...styles.tab,
         ...(active ? styles.tabActive : {}),
@@ -1042,12 +1043,12 @@ function ShiftModule() {
 
       <div style={styles.shiftGrid}>
         {loading ? (
-          <div style={styles.loadingBox}>{t('loading_shift')}</div>
+          <div className="master-data-loading-box" style={styles.loadingBox}>{t('loading_shift')}</div>
         ) : filtered.length === 0 ? (
-          <div style={styles.loadingBox}>{t('no_shift_data')}</div>
+          <div className="master-data-loading-box" style={styles.loadingBox}>{t('no_shift_data')}</div>
         ) : (
           filtered.map((item) => (
-            <div style={styles.shiftCard} key={item.id}>
+            <div className="master-data-shift-card" style={styles.shiftCard} key={item.id}>
               <div style={styles.shiftTop}>
                 <div>
                   <div style={styles.shiftName}>{item.nama}</div>
@@ -1617,7 +1618,7 @@ function SectionHeader({
 
 function TableCard({ children }: { children: React.ReactNode }) {
   return (
-    <div style={styles.tableCard}>{children}</div>
+    <div className="master-data-table-card" style={styles.tableCard}>{children}</div>
   );
 }
 
@@ -1935,7 +1936,7 @@ function Modal({
 }) {
   return (
     <div style={styles.overlay}>
-      <div style={styles.modal}>
+      <div className="master-data-modal" style={styles.modal}>
         <div style={styles.modalHeader}>
           <h3 style={styles.modalTitle}>{title}</h3>
 

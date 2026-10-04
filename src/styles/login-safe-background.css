@@ -1,0 +1,636 @@
+
+/*
+=========================================================
+LOGIN SAFE BACKGROUND
+JANGAN memindahkan AndroidCosmicBackground.
+Hanya atur layer dan pointer events.
+=========================================================
+*/
+
+/* Login transparan supaya background component yang terlihat */
+.unified-login-page.pt-cosmic-auth {
+  background: transparent ;
+  background-color: transparent ;
+}
+
+/*
+Background visual tidak boleh menerima sentuhan.
+Ini penting supaya tombol Login, Register, Forgot Password,
+close dan input tetap bisa diklik.
+*/
+.unified-login-page.pt-cosmic-auth > .pt-android-cosmic-bg {
+  pointer-events: none ;
+  z-index: 0 ;
+}
+
+/*
+Card login selalu berada di atas background.
+*/
+.unified-login-page.pt-cosmic-auth > .login-modal-card,
+.unified-login-page.pt-cosmic-auth > .pt-auth-card,
+.unified-login-page.pt-cosmic-auth > .unified-login-card {
+  position: relative ;
+  z-index: 20 ;
+  pointer-events: auto ;
+}
+
+/*
+Semua kontrol di dalam card wajib bisa disentuh.
+*/
+.unified-login-page.pt-cosmic-auth
+.login-modal-card
+button,
+.unified-login-page.pt-cosmic-auth
+.login-modal-card
+input,
+.unified-login-page.pt-cosmic-auth
+.login-modal-card
+a,
+.unified-login-page.pt-cosmic-auth
+.login-modal-card
+select,
+.unified-login-page.pt-cosmic-auth
+.login-modal-card
+textarea {
+  pointer-events: auto ;
+}
+
+/*
+Jangan gunakan overlay putih pada Android.
+*/
+.unified-login-page.pt-cosmic-auth::before,
+.unified-login-page.pt-cosmic-auth::after {
+  pointer-events: none ;
+}
+
+/* =========================================================
+   PROJECT BY TIRTA — ANDROID COSMIC LOGIN FINAL BACKGROUND
+   Gambar full viewport, tanpa crop/zoom.
+   Background statis; atmosfer tetap boleh bergerak.
+   Professional tidak terpengaruh.
+   ========================================================= */
+
+@media (max-width: 899px) {
+
+  html[data-cosmic-theme] .unified-login-page.pt-cosmic-auth {
+    position: fixed ;
+    inset: 0 ;
+    width: 100vw ;
+    height: 100dvh ;
+    min-width: 100vw ;
+    min-height: 100dvh ;
+    max-width: none ;
+    max-height: none ;
+    margin: 0 ;
+    padding: 0 ;
+    overflow: hidden ;
+    box-sizing: border-box ;
+    background-color: #020812 ;
+    background-image: none ;
+  }
+
+  html[data-cosmic-theme] .unified-login-page.pt-cosmic-auth
+  > .pt-android-cosmic-bg {
+    position: absolute ;
+    inset: 0 ;
+    width: 100vw ;
+    height: 100dvh ;
+    min-width: 100vw ;
+    min-height: 100dvh ;
+    max-width: none ;
+    max-height: none ;
+    margin: 0 ;
+    padding: 0 ;
+    overflow: hidden ;
+    background-position: center center ;
+    background-repeat: no-repeat ;
+    background-size: 100% 100% ;
+    transform: none ;
+  }
+
+  html[data-cosmic-theme="aurora"]
+  .unified-login-page.pt-cosmic-auth
+  > .pt-android-cosmic-bg {
+    background-image: url("/aurora-background.webp") ;
+    background-position: center center ;
+    background-repeat: no-repeat ;
+    background-size: 100% 100% ;
+  }
+
+  /* Jangan biarkan pseudo-element menimpa gambar dasar */
+  html[data-cosmic-theme] .unified-login-page.pt-cosmic-auth::before,
+  html[data-cosmic-theme] .unified-login-page.pt-cosmic-auth::after {
+    pointer-events: none ;
+  }
+
+  /* Konten login tetap di atas background */
+  html[data-cosmic-theme] .unified-login-page.pt-cosmic-auth
+  > .login-modal-card,
+  html[data-cosmic-theme] .unified-login-page.pt-cosmic-auth
+  > .pt-auth-card,
+  html[data-cosmic-theme] .unified-login-page.pt-cosmic-auth
+  > .unified-login-card {
+    position: relative ;
+    z-index: 10 ;
+  }
+}
+
+/* =========================================================
+   PROJECT BY TIRTA — AURORA FINAL
+   Android Login + Registration
+   Aurora = static high-res artwork only
+   ========================================================= */
+
+@media (max-width: 899px) {
+
+  /* -------------------------------------------------------
+     AURORA LOGIN
+     ------------------------------------------------------- */
+
+  html[data-cosmic-theme="aurora"]
+  .unified-login-page.pt-cosmic-auth {
+    position: fixed ;
+    inset: 0 ;
+
+    width: 100vw ;
+    height: 100dvh ;
+    min-width: 100vw ;
+    min-height: 100dvh ;
+
+    margin: 0 ;
+    padding: 18px 43px ;
+
+    box-sizing: border-box ;
+    overflow-y: auto ;
+    overflow-x: hidden ;
+
+    background-color: #020812 ;
+    background-image: url("/aurora-background.webp") ;
+    background-repeat: no-repeat ;
+
+    /* seluruh gambar terlihat */
+    background-position: center center ;
+    background-size: 100% 100% ;
+
+    filter: none ;
+    backdrop-filter: none ;
+    -webkit-backdrop-filter: none ;
+  }
+
+  /* Tidak ada overlay hitam */
+  html[data-cosmic-theme="aurora"]
+  .unified-login-page.pt-cosmic-auth::before,
+  html[data-cosmic-theme="aurora"]
+  .unified-login-page.pt-cosmic-auth::after {
+    content: none ;
+    display: none ;
+    background: transparent ;
+    box-shadow: none ;
+    filter: none ;
+    backdrop-filter: none ;
+    -webkit-backdrop-filter: none ;
+  }
+
+  /* Background component lama tidak boleh menutup Aurora */
+  html[data-cosmic-theme="aurora"]
+  .unified-login-page.pt-cosmic-auth
+  > .pt-android-cosmic-bg {
+    position: absolute ;
+    inset: 0 ;
+
+    width: 100vw ;
+    height: 100dvh ;
+
+    background: transparent ;
+    background-image: none ;
+
+    pointer-events: none ;
+    z-index: 0 ;
+  }
+
+  /* Hilangkan semua chrome pembungkus LOGIN */
+  html[data-cosmic-theme="aurora"]
+  .unified-login-page.pt-cosmic-auth
+  > .login-modal-card,
+  html[data-cosmic-theme="aurora"]
+  .unified-login-page.pt-cosmic-auth
+  > .pt-auth-card,
+  html[data-cosmic-theme="aurora"]
+  .unified-login-page.pt-cosmic-auth
+  > .unified-login-card {
+    position: relative ;
+    z-index: 10 ;
+
+    background: transparent ;
+    background-image: none ;
+
+    border: 0 ;
+    border-radius: 0 ;
+
+    box-shadow: none ;
+
+    backdrop-filter: none ;
+    -webkit-backdrop-filter: none ;
+  }
+
+
+  /* -------------------------------------------------------
+     AURORA REGISTRASI
+     ------------------------------------------------------- */
+
+  html[data-cosmic-theme="aurora"]
+  .pt-cosmic-register {
+    position: relative ;
+
+    width: 100vw ;
+    min-width: 100vw ;
+    min-height: 100dvh ;
+
+    margin: 0 ;
+    box-sizing: border-box ;
+
+    background-color: transparent ;
+    background-image: url("/aurora-background.webp") ;
+    background-repeat: no-repeat ;
+    background-position: center center ;
+    background-size: 100% 100% ;
+
+    overflow-x: hidden ;
+  }
+
+  /* Wrapper luar transparan */
+  html[data-cosmic-theme="aurora"]
+  .pt-cosmic-register .registration-shell {
+    background: transparent ;
+    background-image: none ;
+
+    border: 0 ;
+    box-shadow: none ;
+
+    backdrop-filter: none ;
+    -webkit-backdrop-filter: none ;
+  }
+
+  /* Card hitam BESAR di screenshot dihapus */
+  html[data-cosmic-theme="aurora"]
+  .pt-cosmic-register .registration-card {
+    background: transparent ;
+    background-image: none ;
+
+    border: 0 ;
+    border-radius: 0 ;
+
+    box-shadow: none ;
+
+    backdrop-filter: none ;
+    -webkit-backdrop-filter: none ;
+  }
+
+  html[data-cosmic-theme="aurora"]
+  .pt-cosmic-register .registration-card::before,
+  html[data-cosmic-theme="aurora"]
+  .pt-cosmic-register .registration-card::after {
+    content: none ;
+    display: none ;
+
+    background: transparent ;
+    box-shadow: none ;
+    filter: none ;
+
+    backdrop-filter: none ;
+    -webkit-backdrop-filter: none ;
+  }
+
+
+  /* -------------------------------------------------------
+     AURORA — NO ATMOSPHERE
+     Artwork WebP adalah satu-satunya background.
+     ------------------------------------------------------- */
+
+  html[data-cosmic-theme="aurora"]
+  .pt-android-cosmic-bg > div:not(:first-child) {
+    display: none ;
+    opacity: 0 ;
+    visibility: hidden ;
+
+    background: transparent ;
+    background-image: none ;
+
+    animation: none ;
+    transform: none ;
+
+    filter: none ;
+    backdrop-filter: none ;
+    -webkit-backdrop-filter: none ;
+  }
+
+  /* Artwork dasar tidak dianimasikan */
+  html[data-cosmic-theme="aurora"]
+  .pt-android-cosmic-bg > div:first-child {
+    position: absolute ;
+    inset: 0 ;
+
+    width: 100% ;
+    height: 100% ;
+
+    background-image: url("/aurora-background.webp") ;
+    background-repeat: no-repeat ;
+    background-position: center center ;
+    background-size: 100% 100% ;
+
+    transform: none ;
+    animation: none ;
+
+    filter: none ;
+    backdrop-filter: none ;
+    -webkit-backdrop-filter: none ;
+  }
+}
+
+/* =========================================================
+   AURORA — REFERENCE PHOTO FINAL
+   ========================================================= */
+
+@media (max-width: 899px) {
+
+  /* LOGIN */
+  html[data-cosmic-theme="aurora"]
+  .unified-login-page.pt-cosmic-auth {
+    position: fixed ;
+    inset: 0 ;
+    width: 100vw ;
+    height: 100dvh ;
+    min-height: 100dvh ;
+
+    margin: 0 ;
+    padding: 18px 43px ;
+
+    box-sizing: border-box ;
+    overflow-y: auto ;
+    overflow-x: hidden ;
+
+    background-color: #020812 ;
+    background-image: url("/aurora-background.webp") ;
+    background-repeat: no-repeat ;
+    background-position: center center ;
+
+    /*
+      Asset sudah portrait 2160x3840.
+      Tidak perlu stretch.
+    */
+    background-size: cover ;
+
+    filter: none ;
+    backdrop-filter: none ;
+    -webkit-backdrop-filter: none ;
+  }
+
+  /* Hilangkan overlay hitam login */
+  html[data-cosmic-theme="aurora"]
+  .unified-login-page.pt-cosmic-auth::before,
+  html[data-cosmic-theme="aurora"]
+  .unified-login-page.pt-cosmic-auth::after {
+    content: none ;
+    display: none ;
+    background: transparent ;
+    box-shadow: none ;
+    filter: none ;
+  }
+
+  /* Jangan biarkan background component lama menutup foto */
+  html[data-cosmic-theme="aurora"]
+  .unified-login-page.pt-cosmic-auth
+  > .pt-android-cosmic-bg {
+    position: absolute ;
+    inset: 0 ;
+    width: 100vw ;
+    height: 100dvh ;
+
+    background: transparent ;
+    background-image: none ;
+
+    pointer-events: none ;
+    z-index: 0 ;
+  }
+
+  /* Hapus pembungkus card login, bukan input/button */
+  html[data-cosmic-theme="aurora"]
+  .unified-login-page.pt-cosmic-auth
+  > .login-modal-card,
+  html[data-cosmic-theme="aurora"]
+  .unified-login-page.pt-cosmic-auth
+  > .pt-auth-card,
+  html[data-cosmic-theme="aurora"]
+  .unified-login-page.pt-cosmic-auth
+  > .unified-login-card {
+    position: relative ;
+    z-index: 10 ;
+
+    background: transparent ;
+    background-image: none ;
+
+    border: 0 ;
+    box-shadow: none ;
+    border-radius: 0 ;
+
+    backdrop-filter: none ;
+    -webkit-backdrop-filter: none ;
+  }
+
+  /* =======================================================
+     REGISTRASI
+     ======================================================= */
+
+  html[data-cosmic-theme="aurora"]
+  .pt-cosmic-register {
+    min-height: 100dvh ;
+    width: 100vw ;
+
+    background-color: transparent ;
+    background-image: url("/aurora-background.webp") ;
+    background-repeat: no-repeat ;
+    background-position: center center ;
+    background-size: cover ;
+
+    overflow-x: hidden ;
+  }
+
+  /*
+    Semua kemungkinan wrapper registration yang menjadi
+    panel hitam dibuat transparan.
+    Input / button tidak disentuh.
+  */
+  html[data-cosmic-theme="aurora"]
+  .pt-cosmic-register .registration-shell,
+  html[data-cosmic-theme="aurora"]
+  .pt-cosmic-register .registration-card,
+  html[data-cosmic-theme="aurora"]
+  .pt-cosmic-register .registration-content,
+  html[data-cosmic-theme="aurora"]
+  .pt-cosmic-register .registration-panel {
+    background: transparent ;
+    background-image: none ;
+
+    border: 0 ;
+    box-shadow: none ;
+
+    backdrop-filter: none ;
+    -webkit-backdrop-filter: none ;
+  }
+
+  html[data-cosmic-theme="aurora"]
+  .pt-cosmic-register
+  [class*="registration"][class*="card"],
+  html[data-cosmic-theme="aurora"]
+  .pt-cosmic-register
+  [class*="registration"][class*="panel"] {
+    background: transparent ;
+    background-image: none ;
+
+    box-shadow: none ;
+    backdrop-filter: none ;
+    -webkit-backdrop-filter: none ;
+  }
+
+  /* Aurora sama sekali tidak memakai atmosfer */
+  html[data-cosmic-theme="aurora"]
+  .pt-android-cosmic-bg > div:not(:first-child) {
+    display: none ;
+    visibility: hidden ;
+    opacity: 0 ;
+
+    animation: none ;
+    transform: none ;
+
+    background: transparent ;
+    background-image: none ;
+
+    filter: none ;
+    backdrop-filter: none ;
+    -webkit-backdrop-filter: none ;
+  }
+
+  html[data-cosmic-theme="aurora"]
+  .pt-android-cosmic-bg > div:first-child {
+    background-image: url("/aurora-background.webp") ;
+    background-repeat: no-repeat ;
+    background-position: center center ;
+    background-size: cover ;
+
+    transform: none ;
+    animation: none ;
+    filter: none ;
+  }
+}
+
+/* =========================================================
+   PROJECT BY TIRTA — ANDROID LOGIN
+   SEMUA COSMIC THEME = POLA VISUAL AURORA
+   Hanya artwork/gambar tema yang berbeda.
+   ========================================================= */
+
+@media (max-width: 899px) {
+
+  /* ROOT LOGIN TRANSPARAN */
+  html[data-cosmic-theme="sun"] .unified-login-page.pt-cosmic-auth,
+  html[data-cosmic-theme="moon"] .unified-login-page.pt-cosmic-auth,
+  html[data-cosmic-theme="galaxy"] .unified-login-page.pt-cosmic-auth,
+  html[data-cosmic-theme="blackhole"] .unified-login-page.pt-cosmic-auth,
+  html[data-cosmic-theme="nebula"] .unified-login-page.pt-cosmic-auth,
+  html[data-cosmic-theme="aurora"] .unified-login-page.pt-cosmic-auth {
+    background: transparent ;
+    background-color: transparent ;
+    background-image: none ;
+    filter: none ;
+    backdrop-filter: none ;
+    -webkit-backdrop-filter: none ;
+  }
+
+  /* BACKGROUND COMPONENT = ARTWORK UTAMA */
+  html[data-cosmic-theme] .unified-login-page.pt-cosmic-auth
+    > .pt-android-cosmic-bg {
+    position: absolute ;
+    inset: 0 ;
+    width: 100vw ;
+    height: 100dvh ;
+    z-index: 0 ;
+    pointer-events: none ;
+    background: transparent ;
+    background-color: transparent ;
+    overflow: hidden ;
+  }
+
+  /* SEMUA LAYER TAMBAHAN DIMATIKAN.
+     Gambar asli menjadi visual utama seperti Aurora. */
+  html[data-cosmic-theme]
+    .unified-login-page.pt-cosmic-auth
+    > .pt-android-cosmic-bg
+    .pt-android-cosmic-bg-glow,
+  html[data-cosmic-theme]
+    .unified-login-page.pt-cosmic-auth
+    > .pt-android-cosmic-bg
+    .pt-android-cosmic-bg-stars {
+    display: none ;
+  }
+
+  /* ARTWORK TETAP TAJAM DAN TIDAK DIZOOM / DITRANSFORM */
+  html[data-cosmic-theme]
+    .unified-login-page.pt-cosmic-auth
+    > .pt-android-cosmic-bg
+    .pt-android-cosmic-bg-art {
+    position: absolute ;
+    inset: 0 ;
+    width: 100% ;
+    height: 100% ;
+    background-repeat: no-repeat ;
+    background-position: center center ;
+    background-size: 100% 100% ;
+    transform: none ;
+    filter: none ;
+    opacity: 1 ;
+  }
+
+  /* CARD LOGIN = TRANSPARAN, SAMA SEPERTI AURORA */
+  html[data-cosmic-theme="sun"] .unified-login-page.pt-cosmic-auth
+    > .login-modal-card,
+  html[data-cosmic-theme="moon"] .unified-login-page.pt-cosmic-auth
+    > .login-modal-card,
+  html[data-cosmic-theme="galaxy"] .unified-login-page.pt-cosmic-auth
+    > .login-modal-card,
+  html[data-cosmic-theme="blackhole"] .unified-login-page.pt-cosmic-auth
+    > .login-modal-card,
+  html[data-cosmic-theme="nebula"] .unified-login-page.pt-cosmic-auth
+    > .login-modal-card,
+  html[data-cosmic-theme="aurora"] .unified-login-page.pt-cosmic-auth
+    > .login-modal-card {
+    position: relative ;
+    z-index: 10 ;
+    background: transparent ;
+    background-color: transparent ;
+    background-image: none ;
+    border: 0 ;
+    border-radius: 0 ;
+    box-shadow: none ;
+    backdrop-filter: none ;
+    -webkit-backdrop-filter: none ;
+  }
+
+  /* PSEUDO OVERLAY = MATI */
+  html[data-cosmic-theme] .unified-login-page.pt-cosmic-auth::before,
+  html[data-cosmic-theme] .unified-login-page.pt-cosmic-auth::after {
+    content: none ;
+    display: none ;
+    background: transparent ;
+    box-shadow: none ;
+    filter: none ;
+  }
+
+  /* FORM SENDIRI TETAP TERBACA */
+  html[data-cosmic-theme] .unified-login-page.pt-cosmic-auth
+    .unified-login-form input {
+    background: rgba(5, 15, 30, .72) ;
+    backdrop-filter: none ;
+    -webkit-backdrop-filter: none ;
+  }
+
+}

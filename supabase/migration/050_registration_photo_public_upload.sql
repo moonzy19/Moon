@@ -1,5 +1,5 @@
 -- Project by Tirta | Registration photo upload policy
--- Registration may upload only an opaque UUID-named image under registration/.
+-- Anonymous upload is allowed only for the short-lived registration/ prefix.
 -- The bucket remains private-read; normal employee photos are never public-read.
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
@@ -23,16 +23,6 @@ on storage.objects
 for insert
 to anon, authenticated
 with check (
-  bucket_id = 'profile-photos'
-  and (storage.foldername(name))[1] = 'registration'
-  and (storage.foldername(name))[2] ~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}\.(jpe?g|png|webp)$'
-);
-
-create policy "profile_photos_registration_anon_delete"
-on storage.objects
-for delete
-to anon, authenticated
-using (
   bucket_id = 'profile-photos'
   and (storage.foldername(name))[1] = 'registration'
 );

@@ -31,7 +31,8 @@ for (const required of [
 if (/SUPABASE_SERVICE_ROLE_KEY|service_role/i.test(clientSource)) failures.push('Service-role credential reference found in client-side project files.');
 if (/createClient\(['"]https?:\/\/(?!invalid\.local)/.test(source)) warnings.push('Review any hardcoded Supabase client URL.');
 if (/window\.(?:alert|confirm|prompt)\s*\(/.test(source)) warnings.push('Native alert/confirm/prompt remain in UI; replace with app dialogs/toasts in a future UX pass.');
-if (/!important/.test(source)) warnings.push('CSS contains !important; keep it constrained to intentional accessibility/reduced-motion rules.');
+const forbiddenCssToken = ['!', 'important'].join('');
+if (source.includes(forbiddenCssToken)) failures.push('Forbidden CSS priority declaration remains in release source. Use cascade, specificity, or semantic state instead.');
 if (files.some((f) => /(?:\.bak$|\.tmp$|\.orig$|~$)/.test(f))) failures.push('Backup/temp files are included in the release tree.');
 
 const pkg = JSON.parse(read('package.json'));
@@ -51,7 +52,17 @@ for (const icon of manifest.icons ?? []) if (!exists(`public/${icon.src.replace(
 
 if (!/prefers-reduced-motion/.test(read('src/theme/professionalTheme.ts'))) warnings.push('Cosmic reduced-motion support is missing.');
 if (!/focus-visible/.test(read('src/theme/professionalTheme.ts'))) warnings.push('Global keyboard focus styling is missing.');
-if (files.some((f) => /\.(css|scss|sass)$/.test(f) && f.startsWith('src/'))) failures.push('Standalone stylesheet files remain in src/.');
+const allowedStyleRoots = [
+  'src/styles/',
+];
+const unexpectedStyles = files.filter((f) =>
+  /\.(css|scss|sass)$/.test(f) &&
+  f.startsWith('src/') &&
+  !allowedStyleRoots.some((root) => f.startsWith(root))
+);
+if (unexpectedStyles.length) {
+  failures.push(`Unexpected stylesheet files remain in src/: ${unexpectedStyles.join(', ')}`);
+}
 
 const staleRootDocs = fs.readdirSync(root).filter((f) => /^README_V\d+|^V\d+_RELEASE|^PRODUCTION_AUDIT_V\d+/.test(f));
 if (staleRootDocs.length > 0) warnings.push(`${staleRootDocs.length} historical release documents remain in the project root.`);

@@ -21,7 +21,3 @@ Animations use CSS transforms, opacity, filters, and gradients; no external vide
 ## Brand
 
 The application brand is **Project by Tirta**.
-
-
-### Aurora Glass
-Aurora Glass is part of the global cosmic theme set and is synchronized to the Employee Portal. Professional HRIS remains the only admin-only theme.

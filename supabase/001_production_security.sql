@@ -65,7 +65,7 @@ stable
 security definer
 set search_path = public
 as $$
-  select public.current_hris_role() in ('Admin','Super Admin','Administrator HR','HR','HR Manager','HRD');
+  select public.current_hris_role() in ('Admin','Super Admin','Administrator HR','HR','HR Manager');
 $$;
 
 grant execute on function public.current_hris_role() to authenticated;

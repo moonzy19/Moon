@@ -152,6 +152,61 @@ export default function AttendanceUnified() {
     setKind('');
   };
 
+  const downloadRecap = () => {
+    if (!filtered.length) return;
+
+    const escapeCsv = (value: unknown) =>
+      '"' + String(value ?? '').replace(/"/g, '""') + '"';
+
+    const period = dateFrom || dateTo
+      ? `${dateFrom || 'awal'} s/d ${dateTo || 'sekarang'}`
+      : 'Semua periode';
+
+    const rowsForFile: unknown[][] = [
+      ['REKAP ABSENSI PROJECT BY TIRTA'],
+      ['Periode', period],
+      ['Total Record', summary.total],
+      ['Hadir', summary.hadir],
+      ['Terlambat', summary.terlambat],
+      ['Tidak Hadir', summary.tidakHadir],
+      ['Cuti', summary.cuti],
+      ['Sakit', summary.sakit],
+      ['Lembur', summary.lembur],
+      [],
+      [
+        'Nama', 'ID Karyawan', 'Jabatan/Departemen', 'Tanggal',
+        'Jam Masuk', 'Jam Pulang', 'Status',
+        'Keterlambatan (menit)', 'Lembur (menit)', 'Sumber', 'Keterangan',
+      ],
+      ...filtered.map(row => [
+        row.nama || '', row.id_karyawan || '', row.jabatan || '', row.tanggal || '',
+        row.jam_masuk || '', row.jam_pulang || '', statusText(row),
+        Number(row.keterlambatan_menit || 0), Number(row.lembur_menit || 0),
+        row.sumber || '', row.keterangan || '',
+      ]),
+    ];
+
+    const csv = rowsForFile
+      .map(row => row.map(escapeCsv).join(';'))
+      .join('\n');
+
+    const stamp = new Intl.DateTimeFormat('sv-SE', {
+      timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit',
+    }).format(new Date()).replace(/-/g, '');
+
+    const blob = new Blob(['\ufeff' + csv], {
+      type: 'text/csv;charset=utf-8',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `rekap-absensi-${stamp}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <section>
       <div className="panel-head">
@@ -159,9 +214,20 @@ export default function AttendanceUnified() {
           <h2>{t('attendance')}</h2>
           <p>{t('attendance_unified_desc')}</p>
         </div>
-        <button type="button" className="secondary" onClick={load}>
-          {t('reload')}
-        </button>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            className="primary"
+            onClick={downloadRecap}
+            disabled={loading || filtered.length === 0}
+            title="Unduh rekap absensi sesuai filter aktif"
+          >
+            ⬇ Download Rekap
+          </button>
+          <button type="button" className="secondary" onClick={load}>
+            {t('reload')}
+          </button>
+        </div>
       </div>
 
       <div className="attendance-summary-grid">

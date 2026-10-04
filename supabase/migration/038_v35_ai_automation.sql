@@ -5,7 +5,7 @@ create index if not exists idx_hris_ai_jobs_v35_status on public.hris_ai_jobs_v3
 insert into public.hris_permissions(kode,nama,modul) values ('ai.automation','Ai Automation','ai') on conflict(kode) do nothing;
 alter table public.hris_ai_jobs_v35 enable row level security;
 drop policy if exists enterprise_select on public.hris_ai_jobs_v35;
-create policy enterprise_select on public.hris_ai_jobs_v35 for select to authenticated using (public.hris_has_permission('ai_hr_center') or public.hris_has_permission('ai.automation'));
+create policy enterprise_select on public.hris_ai_jobs_v35 for select to authenticated using (public.hris_has_permission('ai.read') or public.hris_has_permission('ai.automation'));
 drop policy if exists enterprise_insert on public.hris_ai_jobs_v35;
 create policy enterprise_insert on public.hris_ai_jobs_v35 for insert to authenticated with check (public.hris_has_permission('ai.automation'));
 drop policy if exists enterprise_update on public.hris_ai_jobs_v35;

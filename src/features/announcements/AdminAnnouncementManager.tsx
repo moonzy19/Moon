@@ -66,7 +66,7 @@ export default function AdminAnnouncementManager({
   const label = (key: string) => t(key);
 
   return (
-    <section className="announcement-module" aria-label={t('announcement_management')}>
+    <section className="announcement-module announcement-page-shell" aria-label={t('announcement_management')}>
       <div className="announcement-hero">
         <div>
           <span className="announcement-kicker">{t('announcement_kicker')}</span>
@@ -84,7 +84,7 @@ export default function AdminAnnouncementManager({
         </div>
       )}
 
-      <div className="announcement-compose">
+      <section className="announcement-compose announcement-compose-surface">
         <div className="announcement-section-head">
           <div>
             <span className="announcement-kicker">{t('announcement_create_new')}</span>
@@ -138,9 +138,9 @@ export default function AdminAnnouncementManager({
           </label>
           <button type="button" className="announcement-primary" onClick={create}>{t('announcement_save_draft')}</button>
         </div>
-      </div>
+      </section>
 
-      <div className="announcement-list-card">
+      <section className="announcement-list-card announcement-list-surface">
         <div className="announcement-section-head">
           <div>
             <span className="announcement-kicker">{t('announcement_archive_publish')}</span>
@@ -183,7 +183,7 @@ export default function AdminAnnouncementManager({
             ))}
           </div>
         )}
-      </div>
+      </section>
     </section>
   );
 }
