@@ -1,0 +1,364 @@
+/* ================================================================
+   PROJECT BY TIRTA — GLOBAL COSMIC UI AUTHORITY V10
+   GLOBAL RULESET: ALL ADMIN / HRD / SUPER ADMIN PAGES
+   - one sharp cosmic background
+   - no white page canvas
+   - transparent page wrappers
+   - dark functional surfaces
+   - readable controls/buttons
+   - mobile safe / no horizontal page overflow
+   ================================================================ */
+
+html[data-platform="web"][data-cosmic-theme],
+html[data-platform="android"][data-cosmic-theme] {
+  min-height: 100%;
+  background: #03060e !important;
+}
+
+html[data-platform="web"][data-cosmic-theme] body:has(.talenta-shell),
+html[data-platform="android"][data-cosmic-theme] body:has(.talenta-shell) {
+  min-height: 100dvh !important;
+  background: #03060e !important;
+  color: #eef5ff !important;
+  overflow-x: hidden !important;
+}
+
+/* The artwork is owned by admin-theme-final-v4.css. Keep ALL shell/canvas
+   layers transparent so that artwork remains visible between functional cards. */
+html[data-platform="web"][data-cosmic-theme] body:has(.talenta-shell) #root,
+html[data-platform="web"][data-cosmic-theme] body:has(.talenta-shell) .app-root,
+html[data-platform="web"][data-cosmic-theme] body:has(.talenta-shell) .talenta-shell,
+html[data-platform="web"][data-cosmic-theme] body:has(.talenta-shell) .talenta-main,
+html[data-platform="web"][data-cosmic-theme] body:has(.talenta-shell) .main-content,
+html[data-platform="web"][data-cosmic-theme] body:has(.talenta-shell) .content-area,
+html[data-platform="web"][data-cosmic-theme] body:has(.talenta-shell) .page-content,
+html[data-platform="web"][data-cosmic-theme] body:has(.talenta-shell) .module-page,
+html[data-platform="web"][data-cosmic-theme] body:has(.talenta-shell) .admin-page-frame,
+html[data-platform="web"][data-cosmic-theme] body:has(.talenta-shell) .page,
+html[data-platform="android"][data-cosmic-theme] body:has(.talenta-shell) #root,
+html[data-platform="android"][data-cosmic-theme] body:has(.talenta-shell) .app-root,
+html[data-platform="android"][data-cosmic-theme] body:has(.talenta-shell) .talenta-shell,
+html[data-platform="android"][data-cosmic-theme] body:has(.talenta-shell) .talenta-main,
+html[data-platform="android"][data-cosmic-theme] body:has(.talenta-shell) .main-content,
+html[data-platform="android"][data-cosmic-theme] body:has(.talenta-shell) .content-area,
+html[data-platform="android"][data-cosmic-theme] body:has(.talenta-shell) .page-content,
+html[data-platform="android"][data-cosmic-theme] body:has(.talenta-shell) .module-page,
+html[data-platform="android"][data-cosmic-theme] body:has(.talenta-shell) .admin-page-frame,
+html[data-platform="android"][data-cosmic-theme] body:has(.talenta-shell) .page {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Dashboard reference canvas had a legacy light background with a more
+   specific :has() selector. Explicitly neutralize it. */
+html[data-platform="web"][data-cosmic-theme] .talenta-main:has(.reference-dashboard),
+html[data-platform="android"][data-cosmic-theme] .talenta-main:has(.reference-dashboard),
+html[data-platform="web"][data-cosmic-theme] .admin-page-frame:has(.reference-dashboard),
+html[data-platform="android"][data-cosmic-theme] .admin-page-frame:has(.reference-dashboard) {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Topbar is a functional surface, never the white page canvas. */
+html[data-platform="web"][data-cosmic-theme] .talenta-main .topbar,
+html[data-platform="android"][data-cosmic-theme] .talenta-main .topbar {
+  background: rgba(4, 10, 22, .94) !important;
+  color: #f4f8ff !important;
+  border-bottom-color: rgba(151,184,231,.26) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html[data-cosmic-theme] .topbar .icon-btn,
+html[data-cosmic-theme] .topbar .theme-control-button,
+html[data-cosmic-theme] .topbar .admin-floating-action,
+html[data-cosmic-theme] .topbar .avatar-button,
+html[data-cosmic-theme] .topbar .role-menu-button {
+  background: rgba(8,20,37,.86) !important;
+  color: #f3f7ff !important;
+  border-color: var(--pt-accent,#d7adff) !important;
+}
+
+/* Generic functional surfaces used across the application. */
+html[data-cosmic-theme] .talenta-shell :where(
+  .panel,
+  .card,
+  .section-card,
+  .content-card,
+  .form-panel,
+  .table-panel,
+  .table-card,
+  .detail-panel,
+  .setting-card,
+  .feature-card,
+  .calendar-card,
+  .org-card,
+  .export-card,
+  .report-card,
+  .permission-section,
+  .role-list-item,
+  .feedback-list-surface,
+  .feedback-detail-card,
+  .id-card-designer,
+  .id-card-pratinjau-panel,
+  .id-card-list,
+  .id-card-designer,
+  .ai-module-tools,
+  .ai-chat-surface,
+  .ai-snapshot,
+  .enterprise-card,
+  .reference-card,
+  .reference-stat
+) {
+  background: linear-gradient(145deg,rgba(8,22,39,.94),rgba(3,11,23,.97)) !important;
+  color: #eef5ff !important;
+  border-color: rgba(151,184,231,.24) !important;
+  box-shadow: 0 12px 30px rgba(0,0,0,.18) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Layout/group wrappers are never visual cards. */
+html[data-cosmic-theme] .talenta-shell :where(
+  .web-card-group,
+  .compact-panel,
+  .settings-content,
+  .announcement-compose,
+  .announcement-list-card,
+  .reports-page-content,
+  .reports-single-card,
+  .report-grid,
+  .reports-card-grid
+) {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Text hierarchy across every menu. */
+html[data-cosmic-theme] .talenta-shell :where(h1,h2,h3,h4,h5,h6,strong,b) {
+  color: #f5f9ff !important;
+  -webkit-text-fill-color: #f5f9ff !important;
+}
+html[data-cosmic-theme] .talenta-shell :where(p,label,small,.muted,.hint,.description,.subtitle,.caption,.help-text,.field-help) {
+  color: #aebfd3 !important;
+  -webkit-text-fill-color: #aebfd3 !important;
+}
+html[data-cosmic-theme] .talenta-shell a,
+html[data-cosmic-theme] .talenta-shell .link-btn {
+  color: var(--pt-accent,#d7adff) !important;
+  -webkit-text-fill-color: var(--pt-accent,#d7adff) !important;
+}
+
+/* All ordinary controls use the same dark language. */
+html[data-cosmic-theme] .talenta-shell :where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  select,
+  textarea
+) {
+  background: rgba(5,15,29,.94) !important;
+  color: #f6f9ff !important;
+  -webkit-text-fill-color: #f6f9ff !important;
+  border-color: rgba(151,184,231,.28) !important;
+  box-shadow: none !important;
+}
+html[data-cosmic-theme] .talenta-shell :where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  textarea
+)::placeholder {
+  color: #8398b0 !important;
+  opacity: 1 !important;
+}
+
+/* Buttons: readable everywhere, including legacy Android button rules. */
+html[data-cosmic-theme] .talenta-shell :where(
+  button.secondary,
+  button:not(.primary):not(.danger):not(.link-btn):not(.nav-item):not(.logout),
+  .portal-secondary
+) {
+  color: #eef5ff !important;
+  -webkit-text-fill-color: #eef5ff !important;
+  background: rgba(9,21,39,.90) !important;
+  border-color: rgba(151,184,231,.30) !important;
+  opacity: 1 !important;
+}
+html[data-cosmic-theme] .talenta-shell :where(
+  button.primary,
+  .primary,
+  .portal-primary
+) {
+  color: #07101c !important;
+  -webkit-text-fill-color: #07101c !important;
+  background: linear-gradient(
+    135deg,
+    var(--pt-accent,#d7adff),
+    color-mix(in srgb,var(--pt-accent,#d7adff) 64%,#fff 36%)
+  ) !important;
+  border-color: var(--pt-accent,#d7adff) !important;
+  opacity: 1 !important;
+}
+
+/* Dashboard reference-specific surfaces: no white leakage. */
+html[data-cosmic-theme] :where(
+  .reference-welcome,
+  .reference-stat,
+  .reference-card,
+  .reference-clock
+) {
+  color: #eef5ff !important;
+  border-color: rgba(151,184,231,.24) !important;
+}
+html[data-cosmic-theme] .reference-clock {
+  background: rgba(7,18,34,.88) !important;
+}
+html[data-cosmic-theme] .reference-stat,
+html[data-cosmic-theme] .reference-card {
+  background: linear-gradient(145deg,rgba(8,23,41,.91),rgba(2,10,21,.96)) !important;
+}
+
+/* Reports: compact functional cards and controls. */
+html[data-cosmic-theme] .reports-nav {
+  background: transparent !important;
+  overflow-x: auto !important;
+  max-width: 100% !important;
+}
+html[data-cosmic-theme] .reports-nav button {
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+  color: #edf4ff !important;
+  background: rgba(7,18,34,.84) !important;
+  border-color: rgba(151,184,231,.26) !important;
+}
+html[data-cosmic-theme] .report-card {
+  min-height: 0 !important;
+  height: auto !important;
+}
+html[data-cosmic-theme] .report-card-action {
+  color: #07101c !important;
+  -webkit-text-fill-color: #07101c !important;
+  background: linear-gradient(135deg,var(--pt-accent,#d7adff),#f7efff) !important;
+  opacity: 1 !important;
+}
+
+/* ID card module: preserve all functions but remove oversized/light wrappers. */
+html[data-cosmic-theme] :where(
+  .id-card-module-android,
+  .id-card-module,
+  .id-card-layout,
+  .id-card-pratinjau,
+  .id-card-actions,
+  .id-list-head
+) {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+html[data-platform="android"][data-cosmic-theme] .id-card-module-android {
+  overflow-x: hidden !important;
+}
+html[data-cosmic-theme] .id-card-actions {
+  max-width: 100% !important;
+}
+html[data-platform="android"][data-cosmic-theme] .id-card-actions button,
+html[data-platform="android"][data-cosmic-theme] .id-card-pratinjau-panel button,
+html[data-platform="android"][data-cosmic-theme] .id-card-list button {
+  color: #eef5ff !important;
+  -webkit-text-fill-color: #eef5ff !important;
+  background: rgba(9,21,39,.90) !important;
+  border-color: rgba(215,173,255,.55) !important;
+}
+html[data-platform="android"][data-cosmic-theme] .id-card-actions button.primary {
+  color: #07101c !important;
+  -webkit-text-fill-color: #07101c !important;
+  background: linear-gradient(135deg,var(--pt-accent,#d7adff),#f7efff) !important;
+}
+
+/* Role/permission and AI surfaces stay single-layer and readable. */
+html[data-cosmic-theme] .role-builder-v7,
+html[data-cosmic-theme] .ai-center-page {
+  background: transparent !important;
+}
+html[data-cosmic-theme] .role-builder-v7 > .panel {
+  min-width: 0 !important;
+}
+html[data-cosmic-theme] .role-builder-v7 .role-list-item,
+html[data-cosmic-theme] .role-builder-v7 .permission-item {
+  min-width: 0 !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+}
+html[data-cosmic-theme] .ai-center-page :where(.ai-module-tools,.ai-chat-surface,.ai-snapshot) {
+  background: rgba(5,15,29,.78) !important;
+}
+
+/* Tables stay functional, but never become white islands. */
+html[data-cosmic-theme] .talenta-shell :where(.table-wrap,.table-scroll,table) {
+  background: rgba(3,11,22,.82) !important;
+  color: #edf4ff !important;
+  border-color: rgba(151,184,231,.20) !important;
+}
+html[data-cosmic-theme] .talenta-shell :where(th) {
+  background: rgba(20,35,57,.72) !important;
+  color: #dfe8f3 !important;
+  -webkit-text-fill-color: #dfe8f3 !important;
+}
+html[data-cosmic-theme] .talenta-shell :where(td) {
+  background: transparent !important;
+  color: #e8f0fa !important;
+  -webkit-text-fill-color: #e8f0fa !important;
+}
+
+/* Never allow a page-level child to create horizontal overflow. */
+html[data-cosmic-theme] .talenta-shell,
+html[data-cosmic-theme] .talenta-main,
+html[data-cosmic-theme] .page,
+html[data-cosmic-theme] .admin-page-frame,
+html[data-cosmic-theme] .page-content,
+html[data-cosmic-theme] .content-area,
+html[data-cosmic-theme] .module-page {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 700px) {
+  html[data-cosmic-theme] .talenta-shell :where(.panel,.card,.reference-card,.reference-stat,.report-card) {
+    max-width: 100% !important;
+  }
+
+  html[data-cosmic-theme] .talenta-shell :where(.page-heading,.panel-head,.card-title,.reference-card-head) {
+    min-width: 0 !important;
+    flex-wrap: wrap !important;
+  }
+
+  html[data-cosmic-theme] .talenta-shell :where(.page-heading > *, .panel-head > *, .card-title > *) {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  html[data-cosmic-theme] .reports-nav {
+    padding-bottom: 4px !important;
+  }
+}
+
+@media (max-width: 430px) {
+  html[data-cosmic-theme] .talenta-shell :where(.panel,.card,.reference-card,.reference-stat,.report-card) {
+    border-radius: 14px !important;
+  }
+
+  html[data-cosmic-theme] .talenta-shell :where(button,input,select,textarea) {
+    max-width: 100% !important;
+  }
+}
+
+/* Do not blur the cosmic artwork or page canvas. */
+html[data-cosmic-theme] body:has(.talenta-shell)::before,
+html[data-cosmic-theme] body:has(.talenta-shell)::after {
+  filter: none !important;
+}

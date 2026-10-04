@@ -49,6 +49,7 @@ async function bootstrap() {
 
   await import('./styles/admin-theme-final-v4.css');
   await import('./styles/theme-authority-v7.css');
+  await import('./styles/theme-authority-v10.css');
 
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
