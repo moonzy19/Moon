@@ -2973,7 +2973,7 @@ function Reports({ employees, attendance, onExport }: { employees: Karyawan[]; a
       <nav className="branch-nav reports-nav" aria-label={t('reports')}>
         {items.map(item => (
           <button key={item.key} className={tab === item.key ? 'active' : ''} onClick={() => setTab(item.key)}>
-            <span>{item.icon}</span>{item.label}
+            <Icon name={item.icon} />{item.label}
           </button>
         ))}
       </nav>

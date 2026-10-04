@@ -808,3 +808,137 @@ body:has(.talenta-shell) .admin-page-frame {
   min-width: 0;
   overflow-x: clip;
 }
+
+/* ================================================================
+   PROJECT_BY_TIRTA_FINAL_UI_LOCK_V9
+   Structural + cascade fixes seen after V8 Android screenshot.
+   ================================================================ */
+
+/* ---------- REPORTS: use real icons, compact cards, readable actions ---------- */
+html[data-platform="android"][data-cosmic-theme] .reports-nav,
+html[data-platform="web"][data-cosmic-theme] .reports-nav {
+  display:flex;
+  align-items:center;
+  flex-wrap:nowrap;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  gap:8px;
+  padding:2px 0 8px;
+  scrollbar-width:thin;
+}
+
+html[data-platform="android"][data-cosmic-theme] .reports-nav button,
+html[data-platform="web"][data-cosmic-theme] .reports-nav button {
+  flex:0 0 auto;
+  width:max-content;
+  min-width:max-content;
+  max-width:calc(100vw - 40px);
+  min-height:42px;
+  white-space:nowrap;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  color:#eef5ff;
+  background:rgba(7,18,34,.88);
+  border:1px solid rgba(151,184,231,.34);
+  border-radius:11px;
+  padding:8px 13px;
+  box-sizing:border-box;
+}
+
+html[data-platform="android"][data-cosmic-theme] .reports-nav button svg,
+html[data-platform="web"][data-cosmic-theme] .reports-nav button svg {
+  width:17px;
+  height:17px;
+  flex:0 0 17px;
+  display:block;
+  color:currentColor;
+}
+
+html[data-platform="android"][data-cosmic-theme] .reports-nav button.active,
+html[data-platform="web"][data-cosmic-theme] .reports-nav button.active {
+  color:#07121d;
+  background:var(--pt-accent,#d7adff);
+  border-color:var(--pt-accent,#d7adff);
+}
+
+html[data-platform="android"][data-cosmic-theme] .reports-card-grid,
+html[data-platform="web"][data-cosmic-theme] .reports-card-grid {
+  align-items:start;
+  grid-auto-rows:max-content;
+}
+
+html[data-platform="android"][data-cosmic-theme] .report-card,
+html[data-platform="web"][data-cosmic-theme] .report-card {
+  height:auto !important;
+  min-height:0 !important;
+  align-self:start !important;
+  padding:17px !important;
+  box-sizing:border-box;
+}
+
+/* Force action contrast even when legacy Android button rules win specificity. */
+html[data-platform="android"][data-cosmic-theme] .talenta-main .report-card button.report-card-action.primary,
+html[data-platform="web"][data-cosmic-theme] .talenta-main .report-card button.report-card-action.primary {
+  color:#07121d !important;
+  -webkit-text-fill-color:#07121d !important;
+  background:linear-gradient(135deg,var(--pt-accent,#d7adff),color-mix(in srgb,var(--pt-accent,#d7adff) 64%,#fff 36%)) !important;
+  border-color:var(--pt-accent,#d7adff) !important;
+  opacity:1 !important;
+  text-shadow:none !important;
+  min-height:40px;
+  padding:9px 14px;
+  font-weight:800;
+}
+
+html[data-platform="android"][data-cosmic-theme] .talenta-main .report-card button.report-card-action.primary:disabled,
+html[data-platform="web"][data-cosmic-theme] .talenta-main .report-card button.report-card-action.primary:disabled {
+  opacity:.68 !important;
+  color:#253044 !important;
+  -webkit-text-fill-color:#253044 !important;
+}
+
+/* ---------- ID CARD: remove accidental duplicate pseudo-labels ---------- */
+html[data-platform="android"][data-cosmic-theme] .id-card-note::before,
+html[data-platform="android"][data-cosmic-theme] .id-card-note::after,
+html[data-platform="web"][data-cosmic-theme] .id-card-note::before,
+html[data-platform="web"][data-cosmic-theme] .id-card-note::after,
+html[data-platform="android"][data-cosmic-theme] .id-list-head small::before,
+html[data-platform="android"][data-cosmic-theme] .id-list-head small::after,
+html[data-platform="web"][data-cosmic-theme] .id-list-head small::before,
+html[data-platform="web"][data-cosmic-theme] .id-list-head small::after {
+  content:none !important;
+  display:none !important;
+}
+
+html[data-platform="android"][data-cosmic-theme] .id-card-note,
+html[data-platform="web"][data-cosmic-theme] .id-card-note {
+  white-space:normal;
+  overflow-wrap:normal;
+  word-break:normal;
+}
+
+/* ---------- final dashboard canvas specificity lock ---------- */
+html[data-platform="android"][data-cosmic-theme] .talenta-main:has(.reference-dashboard),
+html[data-platform="web"][data-cosmic-theme] .talenta-main:has(.reference-dashboard),
+html[data-platform="android"][data-cosmic-theme] .talenta-main:has(.reference-dashboard) .admin-page-frame,
+html[data-platform="web"][data-cosmic-theme] .talenta-main:has(.reference-dashboard) .admin-page-frame {
+  background:transparent !important;
+  background-color:transparent !important;
+  background-image:none !important;
+  filter:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+
+/* Keep page background artwork visible; no extra white canvas. */
+html[data-platform="android"][data-cosmic-theme] body:has(.talenta-shell),
+html[data-platform="web"][data-cosmic-theme] body:has(.talenta-shell),
+html[data-platform="android"][data-cosmic-theme] body:has(.talenta-shell) #root,
+html[data-platform="web"][data-cosmic-theme] body:has(.talenta-shell) #root {
+  background-color:transparent !important;
+}
