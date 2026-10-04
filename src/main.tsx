@@ -6,6 +6,7 @@ import { LanguageProvider } from './locales/LanguageContext';
 import { registerPwa } from './pwa';
 import { installLoadingStyles } from './loading-real-final-v57.15';
 import './styles/admin-dashboard-reference-v2.css';
+import './styles/theme-authority-v5.css';
 
 const platform = Capacitor.getPlatform();
 
@@ -45,6 +46,11 @@ async function bootstrap() {
   }
 
   installLoadingStyles();
+
+  await import('./styles/admin-theme-final-v4.css');
+  // V6 is intentionally loaded last so legacy/admin V4 surfaces cannot
+  // reintroduce the white page canvas or oversized login checkbox.
+  await import('./styles/theme-authority-v6.css');
 
   createRoot(document.getElementById('root')!).render(
     <StrictMode>

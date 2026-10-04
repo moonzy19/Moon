@@ -1,0 +1,224 @@
+/*
+ * PROJECT BY TIRTA — THEME AUTHORITY V6
+ * Final cascade after admin-theme-final-v4.
+ * Purpose: make the active Super Admin theme visibly fill every admin page
+ * and fix the oversized Android login "Remember me" checkbox.
+ */
+
+/* ================================================================
+   GLOBAL COSMIC CANVAS — ACTIVE THEME ARTWORK EVERYWHERE
+   ================================================================ */
+html[data-cosmic-theme][data-platform="android"],
+html[data-cosmic-theme][data-platform="web"],
+html[data-cosmic-theme][data-platform="android"] body,
+html[data-cosmic-theme][data-platform="web"] body,
+html[data-cosmic-theme][data-platform="android"] #root,
+html[data-cosmic-theme][data-platform="web"] #root,
+html[data-cosmic-theme][data-platform="android"] .app-root,
+html[data-cosmic-theme][data-platform="web"] .app-root {
+  background-color: var(--pt-bg-deep, #030710);
+}
+
+/* The Admin shell itself owns the art so white gaps can never expose a
+   legacy page background. This applies to every menu inside the shell. */
+html[data-cosmic-theme][data-platform="android"] body:has(.talenta-shell) .talenta-shell,
+html[data-cosmic-theme][data-platform="web"] body:has(.talenta-shell) .talenta-shell {
+  min-height: 100vh;
+  background-color: var(--pt-bg-deep, #030710);
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: cover;
+  background-attachment: fixed;
+  isolation: isolate;
+}
+
+html[data-platform="android"][data-cosmic-theme] body:has(.talenta-shell) .talenta-main,
+html[data-platform="web"][data-cosmic-theme] body:has(.talenta-shell) .talenta-main,
+html[data-platform="android"][data-cosmic-theme] body:has(.talenta-shell) .admin-page-frame,
+html[data-platform="web"][data-cosmic-theme] body:has(.talenta-shell) .admin-page-frame,
+html[data-platform="android"][data-cosmic-theme] body:has(.talenta-shell) .page,
+html[data-platform="web"][data-cosmic-theme] body:has(.talenta-shell) .page,
+html[data-platform="android"][data-cosmic-theme] body:has(.talenta-shell) .page-content,
+html[data-platform="web"][data-cosmic-theme] body:has(.talenta-shell) .page-content,
+html[data-platform="android"][data-cosmic-theme] body:has(.talenta-shell) .content-area,
+html[data-platform="web"][data-cosmic-theme] body:has(.talenta-shell) .content-area,
+html[data-platform="android"][data-cosmic-theme] body:has(.talenta-shell) .module-page,
+html[data-platform="web"][data-cosmic-theme] body:has(.talenta-shell) .module-page {
+  background: transparent;
+  background-color: transparent;
+  background-image: none;
+  filter: none;
+  -webkit-filter: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+html[data-platform="android"][data-cosmic-theme] body:has(.talenta-shell) .talenta-shell,
+html[data-platform="web"][data-cosmic-theme] body:has(.talenta-shell) .talenta-shell {
+  box-shadow: none;
+}
+
+/* Theme artwork per selected Super Admin theme. */
+html[data-cosmic-theme="sun"][data-platform="android"] body:has(.talenta-shell) .talenta-shell,
+html[data-cosmic-theme="sun"][data-platform="web"] body:has(.talenta-shell) .talenta-shell {
+  background-image: linear-gradient(rgba(12,7,2,.12),rgba(2,5,10,.54)), url('/cosmic-web/sun.webp');
+}
+html[data-cosmic-theme="moon"][data-platform="android"] body:has(.talenta-shell) .talenta-shell,
+html[data-cosmic-theme="moon"][data-platform="web"] body:has(.talenta-shell) .talenta-shell {
+  background-image: linear-gradient(rgba(3,9,20,.10),rgba(1,4,10,.56)), url('/cosmic-web/moon.webp');
+}
+html[data-cosmic-theme="galaxy"][data-platform="android"] body:has(.talenta-shell) .talenta-shell,
+html[data-cosmic-theme="galaxy"][data-platform="web"] body:has(.talenta-shell) .talenta-shell {
+  background-image: linear-gradient(rgba(10,3,24,.10),rgba(3,1,10,.56)), url('/cosmic-web/galaxy.webp');
+}
+html[data-cosmic-theme="blackhole"][data-platform="android"] body:has(.talenta-shell) .talenta-shell,
+html[data-cosmic-theme="blackhole"][data-platform="web"] body:has(.talenta-shell) .talenta-shell {
+  background-image: linear-gradient(rgba(0,2,7,.10),rgba(0,2,5,.60)), url('/cosmic-web/blackhole.webp');
+}
+html[data-cosmic-theme="nebula"][data-platform="android"] body:has(.talenta-shell) .talenta-shell,
+html[data-cosmic-theme="nebula"][data-platform="web"] body:has(.talenta-shell) .talenta-shell {
+  background-image: linear-gradient(rgba(15,2,21,.10),rgba(4,1,11,.58)), url('/cosmic-web/nebula.webp');
+}
+html[data-cosmic-theme="aurora"][data-platform="android"] body:has(.talenta-shell) .talenta-shell,
+html[data-cosmic-theme="aurora"][data-platform="web"] body:has(.talenta-shell) .talenta-shell {
+  background-image: linear-gradient(rgba(0,12,12,.08),rgba(0,4,8,.58)), url('/cosmic-web/aurora.webp');
+}
+
+/* Do not allow a dashboard-only white canvas to return through :has(). */
+html[data-cosmic-theme][data-platform="web"] .talenta-shell:has(.reference-dashboard),
+html[data-cosmic-theme][data-platform="android"] .talenta-shell:has(.reference-dashboard) {
+  background-color: transparent;
+}
+
+/* ================================================================
+   REMOVE PAGE-LEVEL HAZE/GLASS; KEEP CARDS AS SOLID READABLE SURFACES
+   ================================================================ */
+html[data-cosmic-theme] body:has(.talenta-shell) .talenta-shell,
+html[data-cosmic-theme] body:has(.talenta-shell) .talenta-main,
+html[data-cosmic-theme] body:has(.talenta-shell) .admin-page-frame,
+html[data-cosmic-theme] body:has(.talenta-shell) .page,
+html[data-cosmic-theme] body:has(.talenta-shell) .page-content,
+html[data-cosmic-theme] body:has(.talenta-shell) .content-area,
+html[data-cosmic-theme] body:has(.talenta-shell) .module-page,
+html[data-cosmic-theme] body:has(.talenta-shell) .announcement-module,
+html[data-cosmic-theme] body:has(.talenta-shell) .feedback-module,
+html[data-cosmic-theme] body:has(.talenta-shell) .id-card-module {
+  filter: none;
+  -webkit-filter: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Common small/secondary surfaces which were still light in the reference
+   dashboard. */
+html[data-cosmic-theme] body:has(.talenta-shell) .reference-bottom-grid .table-wrap,
+html[data-cosmic-theme] body:has(.talenta-shell) .reference-bottom-grid .table-scroll,
+html[data-cosmic-theme] body:has(.talenta-shell) .reference-quick-grid .quick-action,
+html[data-cosmic-theme] body:has(.talenta-shell) .reference-announcement-list > button,
+html[data-cosmic-theme] body:has(.talenta-shell) .reference-themes > button {
+  background: linear-gradient(145deg, rgba(9,24,43,.94), rgba(3,10,20,.97));
+  color: #eef5ff;
+  border-color: var(--admin-theme-border, rgba(151,183,224,.20));
+  box-shadow: none;
+}
+
+html[data-cosmic-theme] body:has(.talenta-shell) .reference-bottom-grid table th,
+html[data-cosmic-theme] body:has(.talenta-shell) .reference-bottom-grid table td {
+  color: #e8f0fa;
+  background: transparent;
+  border-bottom-color: rgba(151,183,224,.12);
+}
+
+html[data-cosmic-theme] body:has(.talenta-shell) .reference-bottom-grid table th {
+  background: rgba(255,255,255,.035);
+  color: #9fb2c8;
+}
+
+/* ================================================================
+   ANDROID LOGIN — REMEMBER ME CHECKBOX SIZE
+   Fixes the giant checkbox caused by the legacy .unified-login-form input
+   width:100% rule. Native checkmark remains available via accent-color.
+   ================================================================ */
+html[data-platform="android"] [data-cosmic-theme] .unified-login-form .remember-option,
+html[data-platform="android"] [data-cosmic-theme] .login-options .remember-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  width: auto;
+  max-width: 100%;
+  color: #f2f7ff;
+}
+
+html[data-platform="android"] [data-cosmic-theme] .unified-login-form .remember-option input[type="checkbox"],
+html[data-platform="android"] [data-cosmic-theme] .login-options .remember-option input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  max-width: 18px;
+  min-height: 18px;
+  max-height: 18px;
+  flex: 0 0 18px;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  accent-color: var(--pt-accent, #e4d1a0);
+  color-scheme: dark;
+}
+
+html[data-platform="android"] [data-cosmic-theme] .unified-login-form .remember-option span,
+html[data-platform="android"] [data-cosmic-theme] .login-options .remember-option span {
+  color: #eef5ff;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+/* Keep remember/forgot controls on one clean responsive row. */
+@media (max-width: 520px) {
+  html[data-platform="android"] [data-cosmic-theme] .unified-login-form .login-options,
+  html[data-platform="android"] [data-cosmic-theme] .login-options {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  html[data-platform="android"] [data-cosmic-theme] .unified-login-form .login-options > button,
+  html[data-platform="android"] [data-cosmic-theme] .login-options > button {
+    margin-left: auto;
+  }
+}
+
+/* ================================================================
+   GLOBAL MENU/PAGE HEADER READABILITY
+   ================================================================ */
+html[data-cosmic-theme][data-platform="android"] body:has(.talenta-shell) .page-heading h1,
+html[data-cosmic-theme][data-platform="web"] body:has(.talenta-shell) .page-heading h1,
+html[data-cosmic-theme][data-platform="android"] body:has(.talenta-shell) .page-heading h2,
+html[data-cosmic-theme][data-platform="web"] body:has(.talenta-shell) .page-heading h2,
+html[data-cosmic-theme][data-platform="android"] body:has(.talenta-shell) .page-heading h3,
+html[data-cosmic-theme][data-platform="web"] body:has(.talenta-shell) .page-heading h3,
+html[data-cosmic-theme][data-platform="android"] body:has(.talenta-shell) label,
+html[data-cosmic-theme][data-platform="web"] body:has(.talenta-shell) label,
+html[data-cosmic-theme][data-platform="android"] body:has(.talenta-shell) th,
+html[data-cosmic-theme][data-platform="web"] body:has(.talenta-shell) th {
+  color: #f5f8ff;
+  -webkit-text-fill-color: #f5f8ff;
+}
+
+html[data-cosmic-theme][data-platform="android"] body:has(.talenta-shell) .muted,
+html[data-cosmic-theme][data-platform="web"] body:has(.talenta-shell) .muted,
+html[data-cosmic-theme][data-platform="android"] body:has(.talenta-shell) .hint,
+html[data-cosmic-theme][data-platform="web"] body:has(.talenta-shell) .hint,
+html[data-cosmic-theme][data-platform="android"] body:has(.talenta-shell) small,
+html[data-cosmic-theme][data-platform="web"] body:has(.talenta-shell) small {
+  color: #a9bbcf;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-cosmic-theme][data-platform="android"] body:has(.talenta-shell) .talenta-shell,
+  html[data-cosmic-theme][data-platform="web"] body:has(.talenta-shell) .talenta-shell {
+    background-attachment: scroll;
+  }
+}
