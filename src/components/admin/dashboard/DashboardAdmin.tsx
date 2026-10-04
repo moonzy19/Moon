@@ -1499,6 +1499,12 @@ export default function DashboardAdmin() {
       </div>
       {/* ======================================================== */}
     </aside>
+    {!isWebReferenceSidebar && <button
+      type="button"
+      aria-label="Tutup menu"
+      className={`android-sidebar-scrim ${sidebar ? 'visible' : ''}`}
+      onClick={() => setSidebar(false)}
+    />}
     <SiDebarFloatingNavigator />
    <main className="talenta-main"><header className="topbar">
 <div className="topbar-left"><button className="icon-btn" aria-label="Buka menu" onClick={()=>setSidebar(v=>!v)}><Icon name="menu"/></button>

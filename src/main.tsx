@@ -5,6 +5,7 @@ import App from './App.tsx';
 import { LanguageProvider } from './locales/LanguageContext';
 import { registerPwa } from './pwa';
 import { installLoadingStyles } from './loading-real-final-v57.15';
+import './styles/admin-dashboard-reference-v2.css';
 
 const platform = Capacitor.getPlatform();
 
@@ -21,6 +22,7 @@ async function bootstrap() {
     await Promise.all([
       import('./styles/android-cosmic-background.css'),
       import('./styles/android-login-profile-polish.css'),
+      import('./styles/android-admin-dashboard.css'),
       import('./styles/login-safe-background.css'),
     ]);
   }
