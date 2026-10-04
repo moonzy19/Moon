@@ -419,3 +419,400 @@ html[data-platform="android"] .reference-dashboard {
     grid-template-columns:minmax(0,1.62fr) minmax(280px,.9fr) minmax(235px,.62fr);
   }
 }
+
+/* ========================================================================
+   THEME SYNC V3 — GLOBAL ANDROID/WEB SURFACES
+   The Super Admin selected cosmic theme is the single visual source for
+   dashboard, admin modules, public login and employee portal.
+   Professional theme intentionally stays clean/light without cosmic art.
+   ======================================================================== */
+
+/* --------------------------- cosmic canvas ----------------------------- */
+html[data-cosmic-theme]:is([data-platform="android"],[data-platform="web"]) body,
+html[data-cosmic-theme]:is([data-platform="android"],[data-platform="web"]) .app-root,
+html[data-cosmic-theme]:is([data-platform="android"],[data-platform="web"]) .talenta-shell,
+html[data-cosmic-theme]:is([data-platform="android"],[data-platform="web"]) .talenta-main,
+html[data-cosmic-theme]:is([data-platform="android"],[data-platform="web"]) .admin-page-frame,
+html[data-cosmic-theme]:is([data-platform="android"],[data-platform="web"]) .page,
+html[data-cosmic-theme]:is([data-platform="android"],[data-platform="web"]) .page-content,
+html[data-cosmic-theme]:is([data-platform="android"],[data-platform="web"]) .content-area,
+html[data-cosmic-theme]:is([data-platform="android"],[data-platform="web"]) .module-page,
+html[data-cosmic-theme]:is([data-platform="android"],[data-platform="web"]) .announcement-module,
+html[data-cosmic-theme]:is([data-platform="android"],[data-platform="web"]) .feedback-module,
+html[data-cosmic-theme]:is([data-platform="android"],[data-platform="web"]) .id-card-module {
+  background: transparent;
+  background-color: transparent;
+  background-image: none;
+}
+
+html[data-platform="android"][data-cosmic-theme] body.pt-android-cosmic-mode {
+  color: #eef5ff;
+}
+
+html[data-platform="android"][data-cosmic-theme] .talenta-main,
+html[data-platform="android"][data-cosmic-theme] .admin-page-frame {
+  position: relative;
+  z-index: 11;
+}
+
+/* Make the global Android fixed art visible behind every page, not only the
+   employee portal. The background component remains the single art layer. */
+html[data-platform="android"][data-cosmic-theme] #root {
+  background: transparent;
+}
+
+/* ---------------------- Dashboard: dark themed cards ------------------- */
+html[data-platform="android"][data-cosmic-theme] .reference-dashboard,
+html[data-platform="web"][data-cosmic-theme] .reference-dashboard {
+  color: #f2f7ff;
+}
+
+html[data-platform="android"][data-cosmic-theme] .reference-welcome,
+html[data-platform="web"][data-cosmic-theme] .reference-welcome {
+  border-color: var(--android-admin-border, var(--web-border, rgba(125,255,179,.30)));
+  background:
+    linear-gradient(90deg, rgba(3,10,20,.92) 0%, rgba(3,10,20,.56) 55%, rgba(3,10,20,.24) 100%),
+    center/cover no-repeat url('/cosmic-web/galaxy.webp');
+  color: #fff;
+  box-shadow: 0 18px 42px rgba(0,0,0,.24), inset 0 1px rgba(255,255,255,.06);
+}
+html[data-platform="android"][data-cosmic-theme="sun"] .reference-welcome,
+html[data-platform="web"][data-cosmic-theme="sun"] .reference-welcome {
+  background-image: linear-gradient(90deg,rgba(33,15,2,.92) 0%,rgba(33,15,2,.54) 55%,rgba(33,15,2,.20) 100%), url('/cosmic-web/sun.webp');
+}
+html[data-platform="android"][data-cosmic-theme="moon"] .reference-welcome,
+html[data-platform="web"][data-cosmic-theme="moon"] .reference-welcome {
+  background-image: linear-gradient(90deg,rgba(3,11,25,.93) 0%,rgba(3,11,25,.56) 55%,rgba(3,11,25,.20) 100%), url('/cosmic-web/moon.webp');
+}
+html[data-platform="android"][data-cosmic-theme="galaxy"] .reference-welcome,
+html[data-platform="web"][data-cosmic-theme="galaxy"] .reference-welcome {
+  background-image: linear-gradient(90deg,rgba(11,4,25,.93) 0%,rgba(11,4,25,.56) 55%,rgba(11,4,25,.20) 100%), url('/cosmic-web/galaxy.webp');
+}
+html[data-platform="android"][data-cosmic-theme="blackhole"] .reference-welcome,
+html[data-platform="web"][data-cosmic-theme="blackhole"] .reference-welcome {
+  background-image: linear-gradient(90deg,rgba(2,5,9,.94) 0%,rgba(2,5,9,.58) 55%,rgba(2,5,9,.22) 100%), url('/cosmic-web/blackhole.webp');
+}
+html[data-platform="android"][data-cosmic-theme="nebula"] .reference-welcome,
+html[data-platform="web"][data-cosmic-theme="nebula"] .reference-welcome {
+  background-image: linear-gradient(90deg,rgba(15,3,18,.94) 0%,rgba(15,3,18,.58) 55%,rgba(15,3,18,.22) 100%), url('/cosmic-web/nebula.webp');
+}
+html[data-platform="android"][data-cosmic-theme="aurora"] .reference-welcome,
+html[data-platform="web"][data-cosmic-theme="aurora"] .reference-welcome {
+  background-image: linear-gradient(90deg,rgba(2,17,17,.93) 0%,rgba(2,17,17,.54) 55%,rgba(2,17,17,.20) 100%), url('/aurora-background.webp');
+}
+
+html[data-platform="android"][data-cosmic-theme] .reference-stat,
+html[data-platform="android"][data-cosmic-theme] .reference-card,
+html[data-platform="web"][data-cosmic-theme] .reference-stat,
+html[data-platform="web"][data-cosmic-theme] .reference-card {
+  color: #eef5ff;
+  border-color: var(--android-admin-border, var(--web-border, rgba(127,165,215,.28)));
+  background: linear-gradient(145deg,rgba(8,23,41,.91),rgba(2,10,21,.95));
+  box-shadow: 0 14px 34px rgba(0,0,0,.20), inset 0 1px rgba(255,255,255,.04);
+}
+
+html[data-platform="android"][data-cosmic-theme] .reference-card-head h2,
+html[data-platform="android"][data-cosmic-theme] .reference-stat strong,
+html[data-platform="android"][data-cosmic-theme] .reference-stat span,
+html[data-platform="android"][data-cosmic-theme] .reference-stat small,
+html[data-platform="web"][data-cosmic-theme] .reference-card-head h2,
+html[data-platform="web"][data-cosmic-theme] .reference-stat strong,
+html[data-platform="web"][data-cosmic-theme] .reference-stat span,
+html[data-platform="web"][data-cosmic-theme] .reference-stat small {
+  opacity: 1;
+}
+
+html[data-platform="android"][data-cosmic-theme] .reference-stat span,
+html[data-platform="web"][data-cosmic-theme] .reference-stat span {
+  color: #b9c9dc;
+}
+html[data-platform="android"][data-cosmic-theme] .reference-stat strong,
+html[data-platform="web"][data-cosmic-theme] .reference-stat strong {
+  color: #fff;
+}
+html[data-platform="android"][data-cosmic-theme] .reference-stat small,
+html[data-platform="web"][data-cosmic-theme] .reference-stat small {
+  color: #83e7b9;
+}
+
+html[data-platform="android"][data-cosmic-theme] .reference-card-head h2,
+html[data-platform="web"][data-cosmic-theme] .reference-card-head h2 { color:#fff; }
+html[data-platform="android"][data-cosmic-theme] .eyebrow,
+html[data-platform="web"][data-cosmic-theme] .eyebrow { color:var(--android-admin-accent, var(--web-accent, #7cffb2)); }
+html[data-platform="android"][data-cosmic-theme] .reference-chip,
+html[data-platform="web"][data-cosmic-theme] .reference-chip {
+  max-width: 48%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color:#d7e4f2;
+  border-color:rgba(151,183,224,.20);
+  background:rgba(255,255,255,.045);
+}
+html[data-platform="android"][data-cosmic-theme] .reference-chart-legend,
+html[data-platform="web"][data-cosmic-theme] .reference-chart-legend { color:#8ca1ba; }
+html[data-platform="android"][data-cosmic-theme] .reference-chart-legend .link-btn,
+html[data-platform="android"][data-cosmic-theme] .link-btn,
+html[data-platform="web"][data-cosmic-theme] .reference-chart-legend .link-btn,
+html[data-platform="web"][data-cosmic-theme] .link-btn {
+  color:var(--android-admin-accent, var(--web-accent, #7cffb2));
+  min-width:0;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+/* Buttons/labels that were visibly colliding in the supplied Android shot. */
+html[data-platform="android"] .reference-card-head > div,
+html[data-platform="android"] .reference-welcome > div,
+html[data-platform="web"] .reference-card-head > div,
+html[data-platform="web"] .reference-welcome > div { min-width:0; max-width:100%; }
+html[data-platform="android"] .reference-welcome h1,
+html[data-platform="web"] .reference-welcome h1 {
+  max-width:100%;
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+html[data-platform="android"] .reference-welcome p,
+html[data-platform="web"] .reference-welcome p {
+  max-width:100%;
+  overflow-wrap:anywhere;
+}
+html[data-platform="android"] .reference-banner button,
+html[data-platform="web"] .reference-banner button {
+  min-width:0;
+  max-width:46%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+/* ------------------------- all admin pages ----------------------------- */
+html[data-platform="android"][data-cosmic-theme] .page-heading h1,
+html[data-platform="web"][data-cosmic-theme] .page-heading h1,
+html[data-platform="android"][data-cosmic-theme] .page-heading h2,
+html[data-platform="web"][data-cosmic-theme] .page-heading h2,
+html[data-platform="android"][data-cosmic-theme] .page-heading h3,
+html[data-platform="web"][data-cosmic-theme] .page-heading h3 {
+  color:#fff;
+  text-shadow:0 2px 12px rgba(0,0,0,.30);
+}
+html[data-platform="android"][data-cosmic-theme] .page-heading p,
+html[data-platform="web"][data-cosmic-theme] .page-heading p,
+html[data-platform="android"][data-cosmic-theme] .muted,
+html[data-platform="web"][data-cosmic-theme] .muted,
+html[data-platform="android"][data-cosmic-theme] .hint,
+html[data-platform="web"][data-cosmic-theme] .hint {
+  color:#a8bad0;
+}
+
+html[data-platform="android"][data-cosmic-theme] .panel,
+html[data-platform="android"][data-cosmic-theme] .card,
+html[data-platform="android"][data-cosmic-theme] .section-card,
+html[data-platform="android"][data-cosmic-theme] .content-card,
+html[data-platform="android"][data-cosmic-theme] .form-panel,
+html[data-platform="android"][data-cosmic-theme] .table-panel,
+html[data-platform="android"][data-cosmic-theme] .report-card,
+html[data-platform="android"][data-cosmic-theme] .setting-card,
+html[data-platform="android"][data-cosmic-theme] .detail-panel,
+html[data-platform="android"][data-cosmic-theme] .table-card,
+html[data-platform="web"][data-cosmic-theme] .panel,
+html[data-platform="web"][data-cosmic-theme] .card,
+html[data-platform="web"][data-cosmic-theme] .section-card,
+html[data-platform="web"][data-cosmic-theme] .content-card,
+html[data-platform="web"][data-cosmic-theme] .form-panel,
+html[data-platform="web"][data-cosmic-theme] .table-panel,
+html[data-platform="web"][data-cosmic-theme] .report-card,
+html[data-platform="web"][data-cosmic-theme] .setting-card,
+html[data-platform="web"][data-cosmic-theme] .detail-panel,
+html[data-platform="web"][data-cosmic-theme] .table-card {
+  color:#edf5ff;
+  background:linear-gradient(145deg,rgba(8,22,40,.92),rgba(2,10,21,.95));
+  border-color:var(--android-admin-border, var(--web-border, rgba(127,165,215,.28)));
+  box-shadow:0 12px 30px rgba(0,0,0,.16);
+}
+
+html[data-platform="android"][data-cosmic-theme] label,
+html[data-platform="android"][data-cosmic-theme] th,
+html[data-platform="android"][data-cosmic-theme] td,
+html[data-platform="android"][data-cosmic-theme] .table-title,
+html[data-platform="android"][data-cosmic-theme] .section-title,
+html[data-platform="web"][data-cosmic-theme] label,
+html[data-platform="web"][data-cosmic-theme] th,
+html[data-platform="web"][data-cosmic-theme] td,
+html[data-platform="web"][data-cosmic-theme] .table-title,
+html[data-platform="web"][data-cosmic-theme] .section-title {
+  color:#e8f0fa;
+}
+
+html[data-platform="android"][data-cosmic-theme] input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+html[data-platform="android"][data-cosmic-theme] select,
+html[data-platform="android"][data-cosmic-theme] textarea,
+html[data-platform="web"][data-cosmic-theme] input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+html[data-platform="web"][data-cosmic-theme] select,
+html[data-platform="web"][data-cosmic-theme] textarea {
+  color:#f6f9ff;
+  background:rgba(5,15,29,.90);
+  border-color:var(--android-admin-border, var(--web-border, rgba(127,165,215,.28)));
+  -webkit-text-fill-color:#f6f9ff;
+}
+html[data-platform="android"][data-cosmic-theme] input::placeholder,
+html[data-platform="android"][data-cosmic-theme] textarea::placeholder,
+html[data-platform="web"][data-cosmic-theme] input::placeholder,
+html[data-platform="web"][data-cosmic-theme] textarea::placeholder { color:#8397ae; opacity:1; }
+
+/* ------------------------------- topbar -------------------------------- */
+html[data-platform="android"][data-cosmic-theme] .talenta-main .topbar,
+html[data-platform="web"][data-cosmic-theme] .talenta-main .topbar {
+  background:rgba(4,12,24,.90);
+  border-bottom-color:var(--android-admin-border, var(--web-border, rgba(127,165,215,.28)));
+  color:#eef5ff;
+}
+html[data-platform="android"][data-cosmic-theme] .topbar .crumb,
+html[data-platform="web"][data-cosmic-theme] .topbar .crumb { color:#e5edf8; }
+html[data-platform="android"][data-cosmic-theme] .topbar .crumb b,
+html[data-platform="web"][data-cosmic-theme] .topbar .crumb b { color:#7d92ab; }
+
+/* ------------------------- login: readable mobile --------------------- */
+html[data-platform="android"] .pt-cosmic-auth {
+  width:100%;
+  max-width:100vw;
+  min-width:0;
+  min-height:100dvh;
+  overflow-x:hidden;
+  overflow-y:auto;
+  padding:18px 12px calc(22px + env(safe-area-inset-bottom));
+  box-sizing:border-box;
+}
+html[data-platform="android"] .pt-cosmic-auth .login-modal-card {
+  width:min(100%,380px);
+  max-width:380px;
+  min-width:0;
+  margin:20px auto;
+  box-sizing:border-box;
+}
+html[data-platform="android"] .pt-cosmic-auth .unified-brand,
+html[data-platform="android"] .pt-cosmic-auth .unified-login-heading,
+html[data-platform="android"] .pt-cosmic-auth form,
+html[data-platform="android"] .pt-cosmic-auth .login-options,
+html[data-platform="android"] .pt-cosmic-auth .forgot-panel,
+html[data-platform="android"] .pt-cosmic-auth .unified-login-register,
+html[data-platform="android"] .pt-cosmic-auth .unified-login-security { min-width:0; max-width:100%; }
+html[data-platform="android"] .pt-cosmic-auth .unified-login-heading h1,
+html[data-platform="android"] .pt-cosmic-auth .unified-login-heading p,
+html[data-platform="android"] .pt-cosmic-auth .unified-login-register,
+html[data-platform="android"] .pt-cosmic-auth .security-note { overflow-wrap:anywhere; }
+html[data-platform="android"] .pt-cosmic-auth .login-options {
+  flex-wrap:wrap;
+  align-items:center;
+  row-gap:8px;
+}
+html[data-platform="android"] .pt-cosmic-auth .login-options > button { margin-left:auto; }
+html[data-platform="android"] .pt-cosmic-auth .unified-login-form input { width:100%; max-width:100%; min-width:0; }
+
+/* ------------------------ employee portal theme ----------------------- */
+html[data-platform="android"][data-cosmic-theme] .employee-portal.pt-cosmic-shell,
+html[data-platform="android"][data-cosmic-theme] .pt-cosmic-shell,
+html[data-platform="android"][data-cosmic-theme] .pt-cosmic-shell .employee-page,
+html[data-platform="android"][data-cosmic-theme] .pt-cosmic-shell .pt-page-card,
+html[data-platform="android"][data-cosmic-theme] .pt-cosmic-shell .pt-page-heading,
+html[data-platform="android"][data-cosmic-theme] .pt-cosmic-shell .pt-section-heading {
+  background:transparent;
+  background-image:none;
+}
+html[data-platform="android"][data-cosmic-theme] .pt-cosmic-shell,
+html[data-platform="android"][data-cosmic-theme] .pt-cosmic-shell .employee-page {
+  color:#eef5ff;
+}
+html[data-platform="android"][data-cosmic-theme] .pt-cosmic-shell h1,
+html[data-platform="android"][data-cosmic-theme] .pt-cosmic-shell h2,
+html[data-platform="android"][data-cosmic-theme] .pt-cosmic-shell h3,
+html[data-platform="android"][data-cosmic-theme] .pt-cosmic-shell b,
+html[data-platform="android"][data-cosmic-theme] .pt-cosmic-shell strong {
+  color:#fff;
+  text-shadow:0 1px 9px rgba(0,0,0,.28);
+}
+html[data-platform="android"][data-cosmic-theme] .pt-cosmic-shell p,
+html[data-platform="android"][data-cosmic-theme] .pt-cosmic-shell small,
+html[data-platform="android"][data-cosmic-theme] .pt-cosmic-shell .muted,
+html[data-platform="android"][data-cosmic-theme] .pt-cosmic-shell label {
+  color:#b4c4d8;
+}
+html[data-platform="android"][data-cosmic-theme] .pt-cosmic-shell button,
+html[data-platform="android"][data-cosmic-theme] .pt-cosmic-shell a {
+  text-shadow:0 1px 8px rgba(0,0,0,.22);
+}
+
+@media (max-width:430px){
+  html[data-platform="android"] .pt-cosmic-auth .login-modal-card{margin:10px auto 18px;}
+  html[data-platform="android"] .pt-cosmic-auth .unified-brand{gap:9px;margin-bottom:20px;}
+  html[data-platform="android"] .pt-cosmic-auth .unified-login-heading{margin-bottom:17px;}
+  html[data-platform="android"] .pt-cosmic-auth .unified-login-heading h1{font-size:clamp(23px,7vw,29px);line-height:1.14;}
+  html[data-platform="android"] .pt-cosmic-auth .unified-login-heading p{font-size:11px;line-height:1.48;}
+}
+
+/* ------------------------- public pages / register --------------------- */
+html[data-platform="android"][data-cosmic-theme] .public-home,
+html[data-platform="android"][data-cosmic-theme] .registration-page,
+html[data-platform="android"][data-cosmic-theme] .verify-id-page,
+html[data-platform="web"][data-cosmic-theme] .public-home,
+html[data-platform="web"][data-cosmic-theme] .registration-page,
+html[data-platform="web"][data-cosmic-theme] .verify-id-page {
+  background: transparent;
+  background-color: transparent;
+  color:#eef5ff;
+}
+
+html[data-platform="android"][data-cosmic-theme] .public-home h1,
+html[data-platform="android"][data-cosmic-theme] .public-home h2,
+html[data-platform="android"][data-cosmic-theme] .public-home h3,
+html[data-platform="android"][data-cosmic-theme] .registration-page h1,
+html[data-platform="android"][data-cosmic-theme] .registration-page h2,
+html[data-platform="android"][data-cosmic-theme] .verify-id-page h1,
+html[data-platform="android"][data-cosmic-theme] .verify-id-page h2,
+html[data-platform="web"][data-cosmic-theme] .public-home h1,
+html[data-platform="web"][data-cosmic-theme] .public-home h2,
+html[data-platform="web"][data-cosmic-theme] .public-home h3,
+html[data-platform="web"][data-cosmic-theme] .registration-page h1,
+html[data-platform="web"][data-cosmic-theme] .registration-page h2,
+html[data-platform="web"][data-cosmic-theme] .verify-id-page h1,
+html[data-platform="web"][data-cosmic-theme] .verify-id-page h2 {
+  color:#fff;
+  text-shadow:0 2px 12px rgba(0,0,0,.30);
+}
+
+html[data-platform="android"][data-cosmic-theme] .public-home p,
+html[data-platform="android"][data-cosmic-theme] .registration-page p,
+html[data-platform="android"][data-cosmic-theme] .verify-id-page p,
+html[data-platform="web"][data-cosmic-theme] .public-home p,
+html[data-platform="web"][data-cosmic-theme] .registration-page p,
+html[data-platform="web"][data-cosmic-theme] .verify-id-page p {
+  color:#b4c4d8;
+}
+
+/* Web login has its own modal class; keep it synchronized with the same
+   cosmic background/theme selected by Super Admin. */
+html[data-platform="web"][data-cosmic-theme] .unified-login-page.pt-web-cosmic-auth {
+  background:transparent;
+  color:#eef5ff;
+}
+html[data-platform="web"][data-cosmic-theme] .unified-login-page.pt-web-cosmic-auth .login-modal-card {
+  background:linear-gradient(145deg,rgba(7,20,36,.91),rgba(2,9,18,.96));
+  color:#eef5ff;
+  border-color:var(--web-border,rgba(127,165,215,.28));
+  box-shadow:0 18px 46px rgba(0,0,0,.28);
+}
+html[data-platform="web"][data-cosmic-theme] .unified-login-page.pt-web-cosmic-auth .unified-brand strong,
+html[data-platform="web"][data-cosmic-theme] .unified-login-page.pt-web-cosmic-auth .unified-login-heading h1,
+html[data-platform="web"][data-cosmic-theme] .unified-login-page.pt-web-cosmic-auth .unified-login-heading p,
+html[data-platform="web"][data-cosmic-theme] .unified-login-page.pt-web-cosmic-auth label {
+  color:#fff;
+}
+html[data-platform="web"][data-cosmic-theme] .unified-login-page.pt-web-cosmic-auth .unified-login-form input {
+  background:rgba(5,15,29,.90);
+  color:#f6f9ff;
+  -webkit-text-fill-color:#f6f9ff;
+  border-color:var(--web-border,rgba(127,165,215,.28));
+}
