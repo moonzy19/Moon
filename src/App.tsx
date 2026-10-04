@@ -5,9 +5,7 @@ import { signIn } from './lib/auth';
 import { checkForAppUpdate } from './lib/app-update';
 import { useTranslation } from './locales/LanguageContext';
 import {
-  loadUserThemePreference,
   getPublicAppTheme,
-  getEmployeePortalTheme,
   applyProjectTheme,
   type PublicAppTheme
 } from './lib/userPreferences';
@@ -153,65 +151,46 @@ async function resolveAccount(): Promise<{
 export default function App() {
 const { t } = useTranslation();
 
-  useEffect(() => {
-    if (IS_ANDROID_APP) return;
-
-    const saved =
-      localStorage.getItem('project-tirta-web-theme-v1') ||
-      'matahari';
-
-    const allowed = [
-      'matahari',
-      'bulan',
-      'galaksi',
-      'blackhole',
-      'nebula',
-    ];
-
-    const theme = allowed.includes(saved)
-      ? saved
-      : 'matahari';
-
-    document.documentElement.dataset.webCosmicTheme = theme;
-  }, []);
-
   const [view, setView] = useState<View>('home');
 
-  // =======================================================
-  // ANDROID PUBLIC THEME
-  // Hanya aktif pada halaman publik/login/register.
-  // Tidak boleh berjalan di dashboard Admin/Karyawan.
-  // =======================================================
-
+  /* =======================================================
+     GLOBAL THEME AUTHORITY
+     The Super Admin selected theme is applied to every route
+     (web + Android + admin + employee + public pages).
+     Supabase remains the source of truth; localStorage is only
+     the short-term fallback handled by getPublicAppTheme().
+     ======================================================= */
   useEffect(() => {
-    if (
-      !IS_ANDROID_APP ||
-      !['home', 'login', 'register'].includes(view)
-    ) {
-      return;
-    }
-
     let active = true;
 
-    const refreshPublicTheme = async () => {
+    const refreshGlobalTheme = async () => {
       const next = await getPublicAppTheme();
-
       if (!active) return;
-
       applyPublicAppTheme(next);
     };
 
-    void refreshPublicTheme();
+    const onTheme = (event: Event) => {
+      const next = (event as CustomEvent<string>).detail;
+      if (next === 'professional' || next === 'sun' || next === 'moon' || next === 'galaxy' || next === 'blackhole' || next === 'nebula' || next === 'aurora') {
+        applyPublicAppTheme(next as PublicAppTheme);
+      }
+    };
+
+    void refreshGlobalTheme();
+    window.addEventListener('project-tirta-public-theme-change', onTheme);
 
     const timer = window.setInterval(() => {
-      void refreshPublicTheme();
-    }, 15000);
+      void refreshGlobalTheme();
+    }, 5000);
 
     return () => {
       active = false;
       window.clearInterval(timer);
+      window.removeEventListener('project-tirta-public-theme-change', onTheme);
     };
-  }, [view]);
+  }, []);
+
+
   const [loginOpen, setLoginOpen] = useState(false);
 
   const [email, setEmail] = useState('');
@@ -344,16 +323,6 @@ const { t } = useTranslation();
 
       setView(account.view);
 
-      if (data.session.user.id) {
-        if (IS_ANDROID_APP) {
-          if (account.view === 'employee') {
-            applyProjectTheme(await getEmployeePortalTheme(), false);
-          } else if (account.view === 'admin') {
-            applyProjectTheme(await loadUserThemePreference(data.session.user.id), false);
-          }
-        }
-      }
-
       window.location.hash = `/${account.view}`;
 
       window.clearTimeout(bootTimeout);
@@ -413,10 +382,6 @@ const { t } = useTranslation();
             setError('');
             setChecking(false);
 
-            if (IS_ANDROID_APP) {
-              void getPublicAppTheme().then(applyPublicAppTheme);
-            }
-
             window.location.hash = IS_ANDROID_APP ? '/login' : '/';
             return;
           }
@@ -431,14 +396,6 @@ const { t } = useTranslation();
             if (!active) return;
 
             setView(account.view);
-
-            if (session.user.id && IS_ANDROID_APP) {
-              if (account.view === 'employee') {
-                applyProjectTheme(await getEmployeePortalTheme(), false);
-              } else if (account.view === 'admin') {
-                applyProjectTheme(await loadUserThemePreference(session.user.id), false);
-              }
-            }
 
             setPassword('');
             setError('');
@@ -503,14 +460,6 @@ const { t } = useTranslation();
 
     setView(account.view);
 
-    if (data.user.id && IS_ANDROID_APP) {
-      if (account.view === 'employee') {
-        applyProjectTheme(await getEmployeePortalTheme(), false);
-      } else if (account.view === 'admin') {
-        applyProjectTheme(await loadUserThemePreference(data.user.id), false);
-      }
-    }
-
     setLoading(false);
     setPassword('');
     setError('');
@@ -552,9 +501,6 @@ const { t } = useTranslation();
           <Home
             onMasuk={() => {
               setError('');
-              if (IS_ANDROID_APP) {
-                void getPublicAppTheme().then(applyPublicAppTheme);
-              }
               setLoginOpen(true);
             }}
             onRegister={() => go('register')}

@@ -111,7 +111,6 @@ export default function AICenter({ dbPerms, userRole }: AICenterProps) {
       <header className="ai-center-heading">
         <div className="ai-center-heading-row">
           <div>
-            <div className="ai-heading-kicker">AI HR CENTER</div>
             <h1>🤖 {t('ai_hr_center')}</h1>
             <p>{t('ai_hr_center_desc')}</p>
           </div>

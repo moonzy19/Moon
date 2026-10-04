@@ -6,7 +6,7 @@ const dashboardFile = fs.readFileSync('src/components/admin/dashboard/DashboardA
 const errors = [];
 
 if (!/COSMIC_THEMES/.test(themeFile)) errors.push('Cosmic theme registry missing.');
-for (const id of ['sun','moon','galaxy','blackhole','nebula']) {
+for (const id of ['sun','moon','galaxy','blackhole','nebula','aurora']) {
   if (!new RegExp(`"${id}"\\s*:`).test(themeFile)) errors.push(`Cosmic theme missing: ${id}`);
 }
 if (!/id:'custom'/.test(fs.readFileSync('src/components/admin/dashboard/DashboardAdmin.tsx','utf8'))) errors.push('Custom theme flow missing.');
@@ -41,4 +41,4 @@ if (errors.length) {
   errors.forEach(e => console.error(`- ${e}`));
   process.exit(1);
 }
-console.log('Theme audit passed: 5 animated cosmic themes + custom theme + persistence + reduced-motion + CSS-free source tree.');
+console.log('Theme audit passed: 6 animated/ambient cosmic themes + custom theme + persistence + reduced-motion + CSS-free source tree.');

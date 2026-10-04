@@ -48,9 +48,7 @@ async function bootstrap() {
   installLoadingStyles();
 
   await import('./styles/admin-theme-final-v4.css');
-  // V6 is intentionally loaded last so legacy/admin V4 surfaces cannot
-  // reintroduce the white page canvas or oversized login checkbox.
-  await import('./styles/theme-authority-v6.css');
+  await import('./styles/theme-authority-v7.css');
 
   createRoot(document.getElementById('root')!).render(
     <StrictMode>

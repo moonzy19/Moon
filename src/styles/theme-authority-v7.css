@@ -1,0 +1,454 @@
+/* ================================================================
+   PROJECT BY TIRTA — GLOBAL COSMIC ADMIN UI AUTHORITY V7
+   Fixes visible Android/Web issues from the supplied screenshots:
+   - no white controls/surfaces in cosmic mode
+   - one sharp theme artwork layer
+   - readable text on every admin menu
+   - compact, non-colliding controls
+   - responsive reports / role builder / AI center
+   - small Remember Me checkbox
+   ================================================================ */
+
+html[data-cosmic-theme][data-platform="android"],
+html[data-cosmic-theme][data-platform="web"] {
+  background: var(--pt-bg-deep, #03060e);
+}
+
+html[data-cosmic-theme][data-platform="android"] body,
+html[data-cosmic-theme][data-platform="android"] #root,
+html[data-cosmic-theme][data-platform="android"] .app-root,
+html[data-cosmic-theme][data-platform="android"] .public-page,
+html[data-cosmic-theme][data-platform="android"] .talenta-shell,
+html[data-cosmic-theme][data-platform="android"] .talenta-main,
+html[data-cosmic-theme][data-platform="android"] .page,
+html[data-cosmic-theme][data-platform="android"] .admin-page-frame,
+html[data-cosmic-theme][data-platform="android"] .page-content,
+html[data-cosmic-theme][data-platform="android"] .content-area,
+html[data-cosmic-theme][data-platform="android"] .module-page,
+html[data-cosmic-theme][data-platform="android"] .reports-page-content,
+html[data-cosmic-theme][data-platform="android"] .role-builder-v7,
+html[data-cosmic-theme][data-platform="android"] .ai-center-page,
+html[data-cosmic-theme][data-platform="web"] body,
+html[data-cosmic-theme][data-platform="web"] #root,
+html[data-cosmic-theme][data-platform="web"] .app-root,
+html[data-cosmic-theme][data-platform="web"] .public-page,
+html[data-cosmic-theme][data-platform="web"] .talenta-shell,
+html[data-cosmic-theme][data-platform="web"] .talenta-main,
+html[data-cosmic-theme][data-platform="web"] .page,
+html[data-cosmic-theme][data-platform="web"] .admin-page-frame,
+html[data-cosmic-theme][data-platform="web"] .page-content,
+html[data-cosmic-theme][data-platform="web"] .content-area,
+html[data-cosmic-theme][data-platform="web"] .module-page,
+html[data-cosmic-theme][data-platform="web"] .reports-page-content,
+html[data-cosmic-theme][data-platform="web"] .role-builder-v7,
+html[data-cosmic-theme][data-platform="web"] .ai-center-page {
+  background-color: transparent;
+  background-image: none;
+  filter: none;
+  -webkit-filter: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* ---------- topbar: never white in cosmic mode ---------- */
+html[data-cosmic-theme] .talenta-main .topbar {
+  background: rgba(4, 10, 22, .90);
+  border-color: rgba(151, 184, 231, .24);
+  color: #f4f8ff;
+  box-shadow: 0 10px 28px rgba(0,0,0,.20);
+}
+html[data-cosmic-theme] .topbar .icon-btn,
+html[data-cosmic-theme] .topbar .theme-control-button,
+html[data-cosmic-theme] .topbar .admin-floating-action,
+html[data-cosmic-theme] .topbar .avatar-button,
+html[data-cosmic-theme] .topbar .role-menu-button {
+  background: rgba(8, 20, 37, .78);
+  color: #f3f7ff;
+  border-color: var(--pt-accent, #d7adff);
+  box-shadow: none;
+}
+html[data-cosmic-theme] .topbar .icon-btn:hover,
+html[data-cosmic-theme] .topbar .theme-control-button:hover,
+html[data-cosmic-theme] .topbar .admin-floating-action:hover,
+html[data-cosmic-theme] .topbar .avatar-button:hover {
+  background: rgba(18, 38, 64, .92);
+}
+html[data-cosmic-theme] .topbar .crumb,
+html[data-cosmic-theme] .topbar .crumb span { color: #edf5ff; }
+html[data-cosmic-theme] .topbar .crumb b { color: #8ea2bc; }
+
+/* ---------- every functional surface: dark theme, no white leakage ---------- */
+html[data-cosmic-theme] .talenta-shell .panel,
+html[data-cosmic-theme] .talenta-shell .card,
+html[data-cosmic-theme] .talenta-shell .section-card,
+html[data-cosmic-theme] .talenta-shell .content-card,
+html[data-cosmic-theme] .talenta-shell .form-panel,
+html[data-cosmic-theme] .talenta-shell .table-panel,
+html[data-cosmic-theme] .talenta-shell .report-card,
+html[data-cosmic-theme] .talenta-shell .setting-card,
+html[data-cosmic-theme] .talenta-shell .detail-panel,
+html[data-cosmic-theme] .talenta-shell .table-card,
+html[data-cosmic-theme] .talenta-shell .toolbar-panel,
+html[data-cosmic-theme] .talenta-shell .feature-card,
+html[data-cosmic-theme] .talenta-shell .calendar-card,
+html[data-cosmic-theme] .talenta-shell .org-card,
+html[data-cosmic-theme] .talenta-shell .export-card,
+html[data-cosmic-theme] .talenta-shell .quick,
+html[data-cosmic-theme] .talenta-shell .mini-kpi-row > *,
+html[data-cosmic-theme] .talenta-shell .role-list-item,
+html[data-cosmic-theme] .talenta-shell .permission-section {
+  background: linear-gradient(145deg, rgba(8, 22, 39, .94), rgba(3, 11, 23, .96));
+  color: #eef5ff;
+  border-color: rgba(151, 184, 231, .24);
+  box-shadow: 0 10px 26px rgba(0,0,0,.14);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+html[data-cosmic-theme] .talenta-shell .panel h1,
+html[data-cosmic-theme] .talenta-shell .panel h2,
+html[data-cosmic-theme] .talenta-shell .panel h3,
+html[data-cosmic-theme] .talenta-shell .panel h4,
+html[data-cosmic-theme] .talenta-shell .card h1,
+html[data-cosmic-theme] .talenta-shell .card h2,
+html[data-cosmic-theme] .talenta-shell .card h3,
+html[data-cosmic-theme] .talenta-shell .card h4,
+html[data-cosmic-theme] .talenta-shell .table-title,
+html[data-cosmic-theme] .talenta-shell .section-title { color: #f5f9ff; }
+html[data-cosmic-theme] .talenta-shell .panel p,
+html[data-cosmic-theme] .talenta-shell .panel small,
+html[data-cosmic-theme] .talenta-shell .muted,
+html[data-cosmic-theme] .talenta-shell .hint { color: #aebfd3; }
+
+/* ---------- page heading: outside wrapper cards ---------- */
+html[data-cosmic-theme] .page-heading,
+html[data-cosmic-theme] .employee-heading,
+html[data-cosmic-theme] .web-feature-heading,
+html[data-cosmic-theme] .ai-center-heading {
+  background: transparent;
+  color: #fff;
+  padding: 0;
+  margin-bottom: 14px;
+  box-shadow: none;
+  border: 0;
+}
+html[data-cosmic-theme] .page-heading h1,
+html[data-cosmic-theme] .page-heading h2,
+html[data-cosmic-theme] .page-heading h3,
+html[data-cosmic-theme] .employee-heading h1,
+html[data-cosmic-theme] .ai-center-heading h1,
+html[data-cosmic-theme] .web-feature-heading h1 { color:#fff; text-shadow:0 2px 12px rgba(0,0,0,.38); }
+html[data-cosmic-theme] .page-heading p,
+html[data-cosmic-theme] .employee-heading p,
+html[data-cosmic-theme] .ai-center-heading p,
+html[data-cosmic-theme] .web-feature-heading p { color:#c0cede; }
+
+/* ---------- dashboard welcome + clock ---------- */
+html[data-cosmic-theme] .reference-clock {
+  background: rgba(7, 18, 34, .86);
+  border: 1px solid rgba(169, 199, 238, .24);
+  color: #f5f9ff;
+  box-shadow: none;
+}
+html[data-cosmic-theme] .reference-clock span { color:#9eb0c5; }
+html[data-cosmic-theme] .reference-clock strong { color:#fff; }
+
+/* ---------- forms / filters ---------- */
+html[data-cosmic-theme] .talenta-shell input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+html[data-cosmic-theme] .talenta-shell select,
+html[data-cosmic-theme] .talenta-shell textarea {
+  background: rgba(5, 15, 29, .90);
+  color: #f6f9ff;
+  border-color: rgba(151, 184, 231, .28);
+  -webkit-text-fill-color: #f6f9ff;
+  box-shadow: none;
+}
+html[data-cosmic-theme] .talenta-shell input::placeholder,
+html[data-cosmic-theme] .talenta-shell textarea::placeholder { color:#8398b0; opacity:1; }
+html[data-cosmic-theme] .talenta-shell input:focus,
+html[data-cosmic-theme] .talenta-shell select:focus,
+html[data-cosmic-theme] .talenta-shell textarea:focus {
+  border-color: var(--pt-accent, #d7adff);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--pt-accent, #d7adff) 18%, transparent);
+}
+
+/* ---------- buttons ---------- */
+html[data-cosmic-theme] .talenta-shell button.secondary,
+html[data-cosmic-theme] .talenta-shell button:not(.primary):not(.danger):not(.link-btn):not(.nav-item):not(.logout) {
+  color: #eef5ff;
+  background: rgba(9, 21, 39, .84);
+  border-color: rgba(151,184,231,.28);
+}
+html[data-cosmic-theme] .talenta-shell button.primary,
+html[data-cosmic-theme] .talenta-shell .primary {
+  color: #08101c;
+  background: linear-gradient(135deg, var(--pt-accent, #d7adff), color-mix(in srgb, var(--pt-accent, #d7adff) 64%, #ffffff 36%));
+  border-color: var(--pt-accent, #d7adff);
+}
+html[data-cosmic-theme] .talenta-shell .link-btn { color: var(--pt-accent, #d7adff); }
+
+/* ---------- tables ---------- */
+html[data-cosmic-theme] .talenta-shell .table-wrap,
+html[data-cosmic-theme] .talenta-shell .table-scroll {
+  background: rgba(3,11,22,.82);
+  border-color: rgba(151,184,231,.20);
+  overflow-x: auto;
+}
+html[data-cosmic-theme] .talenta-shell table { background: transparent; color:#edf4ff; min-width:600px; }
+html[data-cosmic-theme] .talenta-shell table th { background:rgba(20,35,57,.72); color:#aec0d5; border-color:rgba(151,184,231,.14); }
+html[data-cosmic-theme] .talenta-shell table td { color:#e8f0fa; border-color:rgba(151,184,231,.10); }
+
+/* ---------- REPORTS ---------- */
+html[data-cosmic-theme] .reports-page-content { width:100%; min-width:0; }
+html[data-cosmic-theme] .reports-nav {
+  display:flex;
+  flex-wrap:nowrap;
+  gap:8px;
+  overflow-x:auto;
+  padding:0 0 3px;
+  scrollbar-width:thin;
+  background:transparent;
+}
+html[data-cosmic-theme] .reports-nav button {
+  flex:0 0 auto;
+  min-height:40px;
+  white-space:nowrap;
+  color:#edf4ff;
+  background:rgba(7,18,34,.78);
+  border:1px solid rgba(151,184,231,.26);
+  border-radius:11px;
+  padding:8px 12px;
+}
+html[data-cosmic-theme] .reports-nav button.active {
+  color:#07121d;
+  background:var(--pt-accent,#d7adff);
+  border-color:var(--pt-accent,#d7adff);
+}
+html[data-cosmic-theme] .reports-card-grid {
+  align-items:start;
+}
+html[data-cosmic-theme] .report-card,
+html[data-cosmic-theme] .reports-single-card .report-card {
+  min-height:0;
+  height:auto;
+  padding:18px;
+}
+html[data-cosmic-theme] .report-card-copy span { color:#9eb0c5; }
+html[data-cosmic-theme] .report-card-copy h3 { color:#fff; }
+html[data-cosmic-theme] .report-card-copy strong { color:#fff; }
+html[data-cosmic-theme] .report-card-copy p { color:#aebfd3; }
+html[data-cosmic-theme] .report-card-action {
+  min-width:106px;
+  min-height:38px;
+}
+
+/* ---------- ROLE & PERMISSION ---------- */
+html[data-cosmic-theme] .role-builder-v7 {
+  display:grid;
+  grid-template-columns:minmax(240px, .72fr) minmax(0, 1.7fr);
+  gap:12px;
+  align-items:start;
+}
+html[data-cosmic-theme] .role-builder-v7 > .panel { min-width:0; }
+html[data-cosmic-theme] .role-builder-v7 .panel-head,
+html[data-cosmic-theme] .role-builder-permission-head {
+  min-width:0;
+  gap:12px;
+  flex-wrap:wrap;
+}
+html[data-cosmic-theme] .role-builder-v7 .panel-head > div,
+html[data-cosmic-theme] .role-builder-permission-head > div {
+  min-width:0;
+  flex:1 1 220px;
+}
+html[data-cosmic-theme] .role-builder-v7 .compact-input {
+  width:min(100%,320px);
+  flex:1 1 220px;
+  min-width:0;
+}
+html[data-cosmic-theme] .role-builder-v7 .role-list-item {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  width:100%;
+  min-width:0;
+  gap:3px;
+  text-align:left;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+html[data-cosmic-theme] .role-builder-v7 .role-list-item small { color:#aebfd3; }
+html[data-cosmic-theme] .role-builder-v7 .permission-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:6px;
+  min-width:0;
+}
+html[data-cosmic-theme] .role-builder-v7 .permission-item {
+  min-width:0;
+  display:flex;
+  align-items:flex-start;
+  gap:7px;
+  color:#e9f1fb;
+  background:rgba(255,255,255,.025);
+  border:1px solid rgba(151,184,231,.14);
+  border-radius:9px;
+  padding:7px;
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+html[data-cosmic-theme] .role-builder-v7 .permission-item input[type="checkbox"] {
+  width:17px;
+  height:17px;
+  flex:0 0 17px;
+  margin:1px 0 0;
+}
+
+/* ---------- AI HR CENTER ---------- */
+html[data-cosmic-theme] .ai-center-page {
+  min-width:0;
+  color:#f2f7ff;
+}
+html[data-cosmic-theme] .ai-center-heading-row { min-width:0; align-items:flex-start; }
+html[data-cosmic-theme] .ai-center-heading-row > div:first-child { min-width:0; flex:1 1 auto; }
+html[data-cosmic-theme] .ai-model-badge {
+  flex:0 1 auto;
+  max-width:260px;
+  color:#d8e5f5;
+  background:rgba(7,18,34,.78);
+  border-color:rgba(151,184,231,.26);
+}
+html[data-cosmic-theme] .ai-module-tools,
+html[data-cosmic-theme] .ai-chat-surface,
+html[data-cosmic-theme] .ai-snapshot {
+  background:rgba(5,15,29,.72);
+  border:1px solid rgba(151,184,231,.22);
+  border-radius:14px;
+  color:#edf4ff;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+html[data-cosmic-theme] .ai-module-scroll,
+html[data-cosmic-theme] .ai-prompt-list { min-width:0; }
+html[data-cosmic-theme] .ai-module-chip,
+html[data-cosmic-theme] .ai-prompt-chip {
+  color:#eef5ff;
+  background:rgba(10,22,40,.86);
+  border-color:rgba(151,184,231,.26);
+}
+html[data-cosmic-theme] .ai-module-chip.active {
+  color:#08121d;
+  background:var(--pt-accent,#d7adff);
+  border-color:var(--pt-accent,#d7adff);
+}
+html[data-cosmic-theme] .ai-prompt-chip { white-space:normal; }
+html[data-cosmic-theme] .ai-empty-content strong,
+html[data-cosmic-theme] .ai-empty-content span,
+html[data-cosmic-theme] .ai-data-note,
+html[data-cosmic-theme] .ai-message-role { color:#b9cadd; }
+html[data-cosmic-theme] .ai-message-text { color:#f2f7ff; }
+html[data-cosmic-theme] .ai-compose { min-width:0; }
+html[data-cosmic-theme] .ai-compose-input { min-width:0; width:100%; color:#f7fbff; background:rgba(4,13,26,.94); }
+html[data-cosmic-theme] .ai-compose-submit { flex:0 0 auto; min-width:90px; min-height:40px; }
+
+/* ---------- login: compact Remember Me ---------- */
+html[data-cosmic-theme] .unified-login-form .login-options,
+html[data-cosmic-theme] .pt-cosmic-auth .login-options { min-width:0; }
+html[data-cosmic-theme] .unified-login-form .remember-option,
+html[data-cosmic-theme] .pt-cosmic-auth .remember-option {
+  display:inline-flex;
+  flex-direction:row;
+  align-items:center;
+  gap:7px;
+  width:auto;
+  min-width:0;
+  margin:0;
+  color:#d3deeb;
+}
+html[data-cosmic-theme] .unified-login-form .remember-option > input[type="checkbox"],
+html[data-cosmic-theme] .pt-cosmic-auth .remember-option > input[type="checkbox"] {
+  appearance:auto;
+  width:16px;
+  min-width:16px;
+  max-width:16px;
+  height:16px;
+  min-height:16px;
+  max-height:16px;
+  padding:0;
+  margin:0;
+  flex:0 0 16px;
+  accent-color:var(--pt-accent,#d7adff);
+  -webkit-text-fill-color:initial;
+}
+html[data-cosmic-theme] .unified-login-card.login-modal-card,
+html[data-cosmic-theme] .unified-login-card.pt-auth-card {
+  background:linear-gradient(145deg,rgba(7,18,34,.92),rgba(3,10,20,.96));
+  border-color:rgba(151,184,231,.28);
+}
+html[data-cosmic-theme] .login-modal-close { background:rgba(7,18,34,.82); color:#fff; }
+
+/* ---------- registration: no white upload circle / readable labels ---------- */
+html[data-cosmic-theme] .pt-cosmic-register .registration-card,
+html[data-cosmic-theme] .pt-cosmic-register .registration-success-box {
+  background:linear-gradient(145deg,rgba(7,18,34,.92),rgba(3,10,20,.96));
+  border-color:rgba(151,184,231,.24);
+  color:#eef5ff;
+}
+html[data-cosmic-theme] .pt-cosmic-register .registration-section,
+html[data-cosmic-theme] .pt-cosmic-register .registration-row,
+html[data-cosmic-theme] .pt-cosmic-register .registration-photo,
+html[data-cosmic-theme] .pt-cosmic-register .photo-preview {
+  background:transparent;
+}
+html[data-cosmic-theme] .pt-cosmic-register .registration-photo button,
+html[data-cosmic-theme] .pt-cosmic-register button.registration-button {
+  color:#07121d;
+  background:var(--pt-accent,#d7adff);
+  border-color:var(--pt-accent,#d7adff);
+}
+
+/* ---------- prevent narrow columns from turning text into one letter/line ---------- */
+html[data-cosmic-theme] .talenta-shell h1,
+html[data-cosmic-theme] .talenta-shell h2,
+html[data-cosmic-theme] .talenta-shell h3,
+html[data-cosmic-theme] .talenta-shell h4,
+html[data-cosmic-theme] .talenta-shell p,
+html[data-cosmic-theme] .talenta-shell span,
+html[data-cosmic-theme] .talenta-shell small,
+html[data-cosmic-theme] .talenta-shell label,
+html[data-cosmic-theme] .talenta-shell button {
+  overflow-wrap:normal;
+  word-break:normal;
+}
+
+@media (max-width: 900px) {
+  html[data-cosmic-theme] .role-builder-v7 { grid-template-columns:1fr; }
+  html[data-cosmic-theme] .role-builder-v7 .permission-grid { grid-template-columns:1fr; }
+  html[data-cosmic-theme] .role-builder-v7 .compact-input { width:100%; flex-basis:100%; }
+  html[data-cosmic-theme] .ai-center-heading-row { flex-direction:column; }
+  html[data-cosmic-theme] .ai-model-badge { max-width:100%; }
+  html[data-cosmic-theme] .reference-card-head { gap:9px; }
+  html[data-cosmic-theme] .reference-chip { max-width:42%; }
+}
+
+@media (max-width: 560px) {
+  html[data-cosmic-theme] .page { padding:18px 14px 40px; }
+  html[data-cosmic-theme] .reference-welcome { min-height:0; }
+  html[data-cosmic-theme] .reference-welcome h1 { font-size:22px; line-height:1.16; }
+  html[data-cosmic-theme] .reference-welcome p { font-size:11px; }
+  html[data-cosmic-theme] .reference-clock { width:max-content; max-width:100%; }
+  html[data-cosmic-theme] .reference-chip { max-width:46%; }
+  html[data-cosmic-theme] .report-card { padding:15px; }
+  html[data-cosmic-theme] .reports-nav button { min-height:38px; }
+  html[data-cosmic-theme] .ai-module-scroll,
+  html[data-cosmic-theme] .ai-prompt-list { flex-wrap:wrap; }
+  html[data-cosmic-theme] .ai-compose { flex-direction:column; align-items:stretch; }
+  html[data-cosmic-theme] .ai-compose-submit { width:100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-cosmic-theme] *,
+  html[data-cosmic-theme] *::before,
+  html[data-cosmic-theme] *::after {
+    scroll-behavior:auto;
+  }
+}

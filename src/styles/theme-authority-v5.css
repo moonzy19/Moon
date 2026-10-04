@@ -1,0 +1,264 @@
+/*
+ * PROJECT BY TIRTA — THEME AUTHORITY V5
+ * One Super Admin-selected theme for every page and route.
+ * Removes page-level blur/haze and keeps the cosmic artwork sharp.
+ */
+
+html[data-platform="android"][data-cosmic-theme],
+html[data-platform="web"][data-cosmic-theme] {
+  color-scheme: dark;
+  background: var(--pt-bg-deep, #03060e);
+}
+
+/* ---------------------------------------------------------------
+   One global sharp artwork layer
+   --------------------------------------------------------------- */
+html[data-platform="android"][data-cosmic-theme] body,
+html[data-platform="web"][data-cosmic-theme] body {
+  position: relative;
+  min-height: 100vh;
+  background: var(--pt-bg-deep, #03060e);
+  color: #f7fbff;
+}
+
+html[data-platform="android"][data-cosmic-theme] body::before,
+html[data-platform="web"][data-cosmic-theme] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-attachment: fixed;
+  opacity: 1;
+  filter: none;
+  -webkit-filter: none;
+  transform: none;
+  animation: none;
+}
+
+html[data-platform="android"][data-cosmic-theme] body::after,
+html[data-platform="web"][data-cosmic-theme] body::after {
+  z-index: -1;
+  opacity: .18;
+  filter: none;
+  -webkit-filter: none;
+  animation: none;
+}
+
+html[data-platform="android"][data-cosmic-theme="sun"] body::before,
+html[data-platform="web"][data-cosmic-theme="sun"] body::before {
+  background-image: linear-gradient(rgba(14,8,2,.32),rgba(2,5,10,.62)),url('/cosmic-web/sun.webp');
+}
+html[data-platform="android"][data-cosmic-theme="moon"] body::before,
+html[data-platform="web"][data-cosmic-theme="moon"] body::before {
+  background-image: linear-gradient(rgba(4,10,22,.28),rgba(1,4,10,.62)),url('/cosmic-web/moon.webp');
+}
+html[data-platform="android"][data-cosmic-theme="galaxy"] body::before,
+html[data-platform="web"][data-cosmic-theme="galaxy"] body::before {
+  background-image: linear-gradient(rgba(10,4,26,.30),rgba(4,2,12,.66)),url('/cosmic-web/galaxy.webp');
+}
+html[data-platform="android"][data-cosmic-theme="blackhole"] body::before,
+html[data-platform="web"][data-cosmic-theme="blackhole"] body::before {
+  background-image: linear-gradient(rgba(0,3,7,.30),rgba(0,2,6,.68)),url('/cosmic-web/blackhole.webp');
+}
+html[data-platform="android"][data-cosmic-theme="nebula"] body::before,
+html[data-platform="web"][data-cosmic-theme="nebula"] body::before {
+  background-image: linear-gradient(rgba(18,2,24,.28),rgba(4,2,12,.66)),url('/cosmic-web/nebula.webp');
+}
+html[data-platform="android"][data-cosmic-theme="aurora"] body::before,
+html[data-platform="web"][data-cosmic-theme="aurora"] body::before {
+  background-image: linear-gradient(rgba(0,14,13,.24),rgba(0,5,9,.64)),url('/cosmic-web/aurora.webp');
+}
+
+/* Professional remains a deliberate light theme. */
+html:not([data-cosmic-theme]) body,
+html:not([data-cosmic-theme]) #root,
+html:not([data-cosmic-theme]) .app-root {
+  background: #f6f7fb;
+  color: #172033;
+}
+
+/* ---------------------------------------------------------------
+   No page wrapper blur. Cards can remain elevated but the page itself
+   must never blur the selected artwork.
+   --------------------------------------------------------------- */
+html[data-cosmic-theme] .talenta-shell,
+html[data-cosmic-theme] .talenta-main,
+html[data-cosmic-theme] .admin-page-frame,
+html[data-cosmic-theme] .page,
+html[data-cosmic-theme] .page-content,
+html[data-cosmic-theme] .content-area,
+html[data-cosmic-theme] .module-page,
+html[data-cosmic-theme] .announcement-module,
+html[data-cosmic-theme] .feedback-module,
+html[data-cosmic-theme] .id-card-module,
+html[data-cosmic-theme] .public-page,
+html[data-cosmic-theme] .employee-portal,
+html[data-cosmic-theme] .pt-cosmic-shell {
+  background: transparent;
+  background-color: transparent;
+  background-image: none;
+  filter: none;
+  -webkit-filter: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+html[data-cosmic-theme] .talenta-shell::before,
+html[data-cosmic-theme] .talenta-shell::after,
+html[data-cosmic-theme] .admin-page-frame::before,
+html[data-cosmic-theme] .admin-page-frame::after,
+html[data-cosmic-theme] .module-page::before,
+html[data-cosmic-theme] .module-page::after,
+html[data-cosmic-theme] .employee-portal::before,
+html[data-cosmic-theme] .employee-portal::after,
+html[data-cosmic-theme] .pt-cosmic-shell::before,
+html[data-cosmic-theme] .pt-cosmic-shell::after {
+  display: none;
+  content: none;
+  filter: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* ---------------------------------------------------------------
+   Admin every-page surfaces
+   --------------------------------------------------------------- */
+html[data-platform="android"][data-cosmic-theme] .talenta-shell,
+html[data-platform="web"][data-cosmic-theme] .talenta-shell {
+  isolation: isolate;
+}
+
+html[data-platform="android"][data-cosmic-theme] .talenta-shell .panel,
+html[data-platform="android"][data-cosmic-theme] .talenta-shell .card,
+html[data-platform="android"][data-cosmic-theme] .talenta-shell .section-card,
+html[data-platform="android"][data-cosmic-theme] .talenta-shell .content-card,
+html[data-platform="android"][data-cosmic-theme] .talenta-shell .form-panel,
+html[data-platform="android"][data-cosmic-theme] .talenta-shell .table-panel,
+html[data-platform="android"][data-cosmic-theme] .talenta-shell .report-card,
+html[data-platform="android"][data-cosmic-theme] .talenta-shell .setting-card,
+html[data-platform="android"][data-cosmic-theme] .talenta-shell .detail-panel,
+html[data-platform="android"][data-cosmic-theme] .talenta-shell .table-card,
+html[data-platform="web"][data-cosmic-theme] .talenta-shell .panel,
+html[data-platform="web"][data-cosmic-theme] .talenta-shell .card,
+html[data-platform="web"][data-cosmic-theme] .talenta-shell .section-card,
+html[data-platform="web"][data-cosmic-theme] .talenta-shell .content-card,
+html[data-platform="web"][data-cosmic-theme] .talenta-shell .form-panel,
+html[data-platform="web"][data-cosmic-theme] .talenta-shell .table-panel,
+html[data-platform="web"][data-cosmic-theme] .talenta-shell .report-card,
+html[data-platform="web"][data-cosmic-theme] .talenta-shell .setting-card,
+html[data-platform="web"][data-cosmic-theme] .talenta-shell .detail-panel,
+html[data-platform="web"][data-cosmic-theme] .talenta-shell .table-card {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Sidebar/topbar are theme surfaces, not blurry glass. */
+html[data-platform="android"][data-cosmic-theme] .talenta-shell .sidebar,
+html[data-platform="web"][data-cosmic-theme] .talenta-shell .sidebar,
+html[data-platform="android"][data-cosmic-theme] .talenta-main .topbar,
+html[data-platform="web"][data-cosmic-theme] .talenta-main .topbar {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* ---------------------------------------------------------------
+   Login/register/public: theme follows the same global authority.
+   --------------------------------------------------------------- */
+html[data-cosmic-theme] .unified-login-page,
+html[data-cosmic-theme] .pt-cosmic-auth,
+html[data-cosmic-theme] .pt-cosmic-register,
+html[data-cosmic-theme] .registration-page,
+html[data-cosmic-theme] .public-home {
+  background: transparent;
+  background-color: transparent;
+  background-image: none;
+  filter: none;
+  -webkit-filter: none;
+}
+
+html[data-cosmic-theme] .unified-login-card,
+html[data-cosmic-theme] .pt-auth-card,
+html[data-cosmic-theme] .registration-card,
+html[data-cosmic-theme] .login-modal-card {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+html[data-cosmic-theme] .modal-overlay {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* ---------------------------------------------------------------
+   Register: crisp brand and form hierarchy over the theme.
+   --------------------------------------------------------------- */
+html[data-platform="android"][data-cosmic-theme] .pt-cosmic-register .registration-brand strong,
+html[data-platform="android"][data-cosmic-theme] .pt-cosmic-register .registration-brand span,
+html[data-platform="android"][data-cosmic-theme] .pt-cosmic-register .registration-brand small,
+html[data-platform="web"][data-cosmic-theme] .pt-cosmic-register .registration-brand strong,
+html[data-platform="web"][data-cosmic-theme] .pt-cosmic-register .registration-brand span,
+html[data-platform="web"][data-cosmic-theme] .pt-cosmic-register .registration-brand small {
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+  text-shadow: 0 2px 12px rgba(0,0,0,.50);
+}
+
+html[data-platform="android"][data-cosmic-theme] .pt-cosmic-register .registration-field > label,
+html[data-platform="web"][data-cosmic-theme] .pt-cosmic-register .registration-field > label {
+  color: #f8fbff;
+  -webkit-text-fill-color: #f8fbff;
+}
+
+html[data-platform="android"][data-cosmic-theme] .pt-cosmic-register .registration-field .field-optional,
+html[data-platform="web"][data-cosmic-theme] .pt-cosmic-register .registration-field .field-optional {
+  color: #b9c9da;
+  -webkit-text-fill-color: #b9c9da;
+}
+
+html[data-platform="android"][data-cosmic-theme] .pt-cosmic-register .registration-field .field-help,
+html[data-platform="android"][data-cosmic-theme] .pt-cosmic-register .registration-field small,
+html[data-platform="web"][data-cosmic-theme] .pt-cosmic-register .registration-field .field-help,
+html[data-platform="web"][data-cosmic-theme] .pt-cosmic-register .registration-field small {
+  color: #c0cfde;
+  -webkit-text-fill-color: #c0cfde;
+}
+
+html[data-cosmic-theme] .pt-cosmic-register .registration-field input,
+html[data-cosmic-theme] .pt-cosmic-register .registration-field select,
+html[data-cosmic-theme] .pt-cosmic-register .registration-field textarea {
+  background: rgba(4,12,24,.88);
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+  border-color: color-mix(in srgb, var(--pt-accent, #e4d1a0) 42%, rgba(255,255,255,.12));
+}
+
+/* ---------------------------------------------------------------
+   Theme-control: only the Super Admin changes the global theme.
+   --------------------------------------------------------------- */
+html[data-cosmic-theme] .theme-control button:disabled {
+  opacity: .82;
+  cursor: default;
+}
+
+/* Prevent long headings from rendering as visual duplicates through
+   overflow/compositing on small Android screens. */
+@media (max-width: 640px) {
+  html[data-cosmic-theme] .reference-welcome h1 {
+    max-width: 100%;
+    white-space: normal;
+    overflow: visible;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+
+/* The dashboard greeting is rendered once by React. Never synthesize/paint a
+   second copy through pseudo-elements or legacy browser text layers. */
+html[data-cosmic-theme] .reference-welcome h1::before,
+html[data-cosmic-theme] .reference-welcome h1::after {
+  content: none;
+  display: none;
+}

@@ -27,7 +27,9 @@
     "audit:hardening": "node scripts/audit-hardening.mjs",
     "audit:ui": "node scripts/audit-ui-strings.mjs",
     "audit:css": "node scripts/audit-css-cascade.mjs",
-    "audit:notifications": "node scripts/audit-notifications.mjs"
+    "audit:notifications": "node scripts/audit-notifications.mjs",
+    "test:core": "node scripts/test-core.mjs",
+    "audit:css-cascade": "node scripts/audit-css-cascade.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.2",

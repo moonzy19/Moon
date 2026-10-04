@@ -1,0 +1,566 @@
+/*
+ * PROJECT BY TIRTA — THEME VISUAL FINAL V4
+ *
+ * Goals:
+ * - One sharp theme background for every Admin/HRD/Super Admin page.
+ * - Remove legacy white/light card surfaces inside the admin shell.
+ * - Keep text, links, tables and controls readable on every cosmic theme.
+ * - Remove decorative blur layers from the admin background.
+ * - Fix Android employee registration contrast/layout.
+ *
+ * Loaded after runtime theme injection so these rules are the final visual
+ * authority. No functionality or data logic is changed here.
+ */
+
+/* ================================================================
+   ADMIN ROOT + SHARP THEME BACKGROUND
+   ================================================================ */
+
+body:has(.talenta-shell) {
+  --admin-theme-bg: #020611;
+  --admin-theme-panel: rgba(7,18,34,.92);
+  --admin-theme-panel-strong: rgba(8,22,40,.96);
+  --admin-theme-text: #f7fbff;
+  --admin-theme-muted: #afbed0;
+  --admin-theme-subtle: #8ea1b7;
+  --admin-theme-border: rgba(151,183,224,.18);
+  --admin-theme-accent: #e4d1a0;
+  position: relative;
+  min-height: 100vh;
+  background: var(--admin-theme-bg);
+  color: var(--admin-theme-text);
+  overflow-x: hidden;
+}
+
+body:has(.talenta-shell)::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: center / cover no-repeat fixed url('/cosmic-web/moon.webp');
+  opacity: .92;
+  filter: none;
+  transform: none;
+}
+
+body:has(.talenta-shell)::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(2,7,16,.12) 0%, rgba(2,7,16,.34) 52%, rgba(1,4,10,.78) 100%);
+}
+
+html[data-cosmic-theme="sun"] body:has(.talenta-shell) {
+  --admin-theme-bg: #100b05;
+  --admin-theme-panel: rgba(29,17,7,.92);
+  --admin-theme-panel-strong: rgba(35,20,8,.96);
+  --admin-theme-accent: #f6c767;
+  --admin-theme-border: rgba(246,199,103,.28);
+}
+html[data-cosmic-theme="sun"] body:has(.talenta-shell)::before { background-image:url('/cosmic-web/sun.webp'); }
+html[data-cosmic-theme="moon"] body:has(.talenta-shell) {
+  --admin-theme-accent: #e4d1a0;
+  --admin-theme-border: rgba(228,209,160,.28);
+}
+html[data-cosmic-theme="galaxy"] body:has(.talenta-shell) {
+  --admin-theme-bg: #090518;
+  --admin-theme-panel: rgba(16,9,34,.92);
+  --admin-theme-panel-strong: rgba(18,8,39,.97);
+  --admin-theme-accent: #cfa9ff;
+  --admin-theme-border: rgba(207,169,255,.30);
+}
+html[data-cosmic-theme="galaxy"] body:has(.talenta-shell)::before { background-image:url('/cosmic-web/galaxy.webp'); }
+html[data-cosmic-theme="blackhole"] body:has(.talenta-shell) {
+  --admin-theme-bg: #02060a;
+  --admin-theme-panel: rgba(6,14,20,.93);
+  --admin-theme-panel-strong: rgba(5,10,15,.97);
+  --admin-theme-accent: #e8c36f;
+  --admin-theme-border: rgba(99,215,255,.25);
+}
+html[data-cosmic-theme="blackhole"] body:has(.talenta-shell)::before { background-image:url('/cosmic-web/blackhole.webp'); }
+html[data-cosmic-theme="nebula"] body:has(.talenta-shell) {
+  --admin-theme-bg: #0c0410;
+  --admin-theme-panel: rgba(28,8,33,.92);
+  --admin-theme-panel-strong: rgba(31,7,36,.97);
+  --admin-theme-accent: #ffbfe8;
+  --admin-theme-border: rgba(255,191,232,.27);
+}
+html[data-cosmic-theme="nebula"] body:has(.talenta-shell)::before { background-image:url('/cosmic-web/nebula.webp'); }
+html[data-cosmic-theme="aurora"] body:has(.talenta-shell) {
+  --admin-theme-bg: #03120e;
+  --admin-theme-panel: rgba(4,22,23,.92);
+  --admin-theme-panel-strong: rgba(4,25,23,.97);
+  --admin-theme-accent: #7cffb2;
+  --admin-theme-border: rgba(124,255,178,.28);
+}
+html[data-cosmic-theme="aurora"] body:has(.talenta-shell)::before { background-image:url('/cosmic-web/aurora.webp'); }
+
+/* Shell must be transparent so the fixed artwork is visible everywhere. */
+body:has(.talenta-shell) #root,
+body:has(.talenta-shell) .app-root,
+body:has(.talenta-shell) .talenta-shell,
+body:has(.talenta-shell) .talenta-main,
+body:has(.talenta-shell) .admin-page-frame,
+body:has(.talenta-shell) .page,
+body:has(.talenta-shell) .page-content,
+body:has(.talenta-shell) .content-area,
+body:has(.talenta-shell) .module-page {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+  background-color: transparent;
+  background-image: none;
+}
+
+/* Disable legacy shell atmosphere/blur. The only background is the sharp art above. */
+body:has(.talenta-shell) .talenta-shell::before,
+body:has(.talenta-shell) .talenta-shell::after,
+body:has(.talenta-shell) .employee-portal::before,
+body:has(.talenta-shell) .employee-portal::after {
+  display: none;
+  content: none;
+  filter: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* ================================================================
+   TOPBAR / BRAND READABILITY
+   ================================================================ */
+
+body:has(.talenta-shell) .talenta-main .topbar {
+  background: linear-gradient(180deg, rgba(5,12,23,.96), rgba(4,10,20,.90));
+  border-bottom: 1px solid var(--admin-theme-border);
+  box-shadow: 0 10px 28px rgba(0,0,0,.24);
+  color: var(--admin-theme-text);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+body:has(.talenta-shell) .talenta-main .crumb,
+body:has(.talenta-shell) .talenta-main .crumb span,
+body:has(.talenta-shell) .talenta-main .crumb b {
+  color: var(--admin-theme-text);
+  -webkit-text-fill-color: var(--admin-theme-text);
+  text-shadow: 0 2px 10px rgba(0,0,0,.28);
+}
+body:has(.talenta-shell) .talenta-main .crumb b { color: var(--admin-theme-subtle); -webkit-text-fill-color:var(--admin-theme-subtle); }
+
+body:has(.talenta-shell) .topbar .icon-btn,
+body:has(.talenta-shell) .topbar .theme-control-button,
+body:has(.talenta-shell) .topbar .admin-floating-action,
+body:has(.talenta-shell) .topbar .avatar-button {
+  background: rgba(7,18,34,.86);
+  color: var(--admin-theme-text);
+  border-color: var(--admin-theme-border);
+  box-shadow: 0 5px 15px rgba(0,0,0,.18);
+}
+body:has(.talenta-shell) .topbar .icon-btn:hover,
+body:has(.talenta-shell) .topbar .theme-control-button:hover,
+body:has(.talenta-shell) .topbar .admin-floating-action:hover,
+body:has(.talenta-shell) .topbar .avatar-button:hover {
+  background: rgba(14,30,51,.96);
+  border-color: color-mix(in srgb, var(--admin-theme-accent) 44%, transparent);
+}
+
+body:has(.talenta-shell) .search-global input {
+  background: rgba(5,15,29,.88);
+  color: var(--admin-theme-text);
+  border-color: var(--admin-theme-border);
+}
+body:has(.talenta-shell) .search-global input::placeholder { color: #90a3ba; opacity:1; }
+
+/* ================================================================
+   NO WHITE ADMIN CARDS — REAL FUNCTIONAL SURFACES STAY INTACT
+   ================================================================ */
+
+body:has(.talenta-shell) .talenta-shell .panel,
+body:has(.talenta-shell) .talenta-shell .stat-card,
+body:has(.talenta-shell) .talenta-shell .quick,
+body:has(.talenta-shell) .talenta-shell .table-panel,
+body:has(.talenta-shell) .talenta-shell .toolbar-panel,
+body:has(.talenta-shell) .talenta-shell .form-panel,
+body:has(.talenta-shell) .talenta-shell .org-card,
+body:has(.talenta-shell) .talenta-shell .calendar-card,
+body:has(.talenta-shell) .talenta-shell .feature-card,
+body:has(.talenta-shell) .talenta-shell .report-card,
+body:has(.talenta-shell) .talenta-shell .setting-card,
+body:has(.talenta-shell) .talenta-shell .employee-detail-card,
+body:has(.talenta-shell) .talenta-shell .export-card,
+body:has(.talenta-shell) .talenta-shell .detail-panel,
+body:has(.talenta-shell) .talenta-shell .table-card,
+body:has(.talenta-shell) .talenta-shell .section-card,
+body:has(.talenta-shell) .talenta-shell .content-card,
+body:has(.talenta-shell) .talenta-shell .card,
+body:has(.talenta-shell) .talenta-shell .info-box,
+body:has(.talenta-shell) .talenta-shell .custom-theme-panel {
+  background: linear-gradient(145deg, var(--admin-theme-panel), var(--admin-theme-panel-strong));
+  color: var(--admin-theme-text);
+  border-color: var(--admin-theme-border);
+  box-shadow: 0 16px 38px rgba(0,0,0,.22), inset 0 1px rgba(255,255,255,.035);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Group-only wrappers remain flat. */
+body:has(.talenta-shell) .talenta-shell .web-card-group,
+body:has(.talenta-shell) .talenta-shell .compact-panel,
+body:has(.talenta-shell) .talenta-shell .settings-content,
+body:has(.talenta-shell) .talenta-shell .announcement-compose,
+body:has(.talenta-shell) .talenta-shell .announcement-list-card {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Dashboard reference cards retain their card hierarchy but become theme-safe. */
+body:has(.talenta-shell) .reference-card,
+body:has(.talenta-shell) .reference-stat {
+  background: linear-gradient(145deg, var(--admin-theme-panel), var(--admin-theme-panel-strong));
+  color: var(--admin-theme-text);
+  border-color: var(--admin-theme-border);
+}
+body:has(.talenta-shell) .reference-welcome {
+  background:
+    linear-gradient(90deg, rgba(3,10,18,.88), rgba(4,12,24,.45) 60%, rgba(4,12,24,.16)),
+    center / cover no-repeat url('/cosmic-web/moon.webp');
+  border-color: var(--admin-theme-border);
+}
+html[data-cosmic-theme="sun"] body:has(.talenta-shell) .reference-welcome { background-image:linear-gradient(90deg,rgba(28,14,3,.88),rgba(35,18,6,.44) 60%,rgba(35,18,6,.14)),url('/cosmic-web/sun.webp'); }
+html[data-cosmic-theme="galaxy"] body:has(.talenta-shell) .reference-welcome { background-image:linear-gradient(90deg,rgba(10,4,25,.91),rgba(14,7,35,.44) 60%,rgba(14,7,35,.12)),url('/cosmic-web/galaxy.webp'); }
+html[data-cosmic-theme="blackhole"] body:has(.talenta-shell) .reference-welcome { background-image:linear-gradient(90deg,rgba(1,5,9,.92),rgba(3,10,18,.46) 60%,rgba(3,10,18,.12)),url('/cosmic-web/blackhole.webp'); }
+html[data-cosmic-theme="nebula"] body:has(.talenta-shell) .reference-welcome { background-image:linear-gradient(90deg,rgba(19,3,22,.92),rgba(28,6,33,.44) 60%,rgba(28,6,33,.12)),url('/cosmic-web/nebula.webp'); }
+html[data-cosmic-theme="aurora"] body:has(.talenta-shell) .reference-welcome { background-image:linear-gradient(90deg,rgba(3,16,14,.92),rgba(8,31,29,.44) 60%,rgba(8,31,29,.12)),url('/cosmic-web/aurora.webp'); }
+
+/* ================================================================
+   TYPOGRAPHY / READABILITY
+   ================================================================ */
+
+body:has(.talenta-shell) .talenta-shell h1,
+body:has(.talenta-shell) .talenta-shell h2,
+body:has(.talenta-shell) .talenta-shell h3,
+body:has(.talenta-shell) .talenta-shell h4,
+body:has(.talenta-shell) .talenta-shell h5,
+body:has(.talenta-shell) .talenta-shell h6,
+body:has(.talenta-shell) .talenta-shell strong,
+body:has(.talenta-shell) .talenta-shell b {
+  color: var(--admin-theme-text);
+  -webkit-text-fill-color: var(--admin-theme-text);
+}
+
+body:has(.talenta-shell) .talenta-shell p,
+body:has(.talenta-shell) .talenta-shell label,
+body:has(.talenta-shell) .talenta-shell .description,
+body:has(.talenta-shell) .talenta-shell .subtitle,
+body:has(.talenta-shell) .talenta-shell .caption,
+body:has(.talenta-shell) .talenta-shell .help-text,
+body:has(.talenta-shell) .talenta-shell .field-help {
+  color: var(--admin-theme-muted);
+  -webkit-text-fill-color: var(--admin-theme-muted);
+}
+
+body:has(.talenta-shell) .talenta-shell small,
+body:has(.talenta-shell) .talenta-shell .muted,
+body:has(.talenta-shell) .talenta-shell .subtext,
+body:has(.talenta-shell) .talenta-shell .text-muted,
+body:has(.talenta-shell) .talenta-shell .text-secondary {
+  color: var(--admin-theme-subtle);
+  -webkit-text-fill-color: var(--admin-theme-subtle);
+}
+
+body:has(.talenta-shell) .talenta-shell a {
+  color: color-mix(in srgb, var(--admin-theme-accent) 75%, #76c4ff 25%);
+  -webkit-text-fill-color: color-mix(in srgb, var(--admin-theme-accent) 75%, #76c4ff 25%);
+}
+
+/* ================================================================
+   TABLES / FORMS / BUTTONS
+   ================================================================ */
+
+body:has(.talenta-shell) .talenta-shell .table-wrap,
+body:has(.talenta-shell) .talenta-shell .table-scroll,
+body:has(.talenta-shell) .talenta-shell table {
+  background: rgba(3,10,19,.56);
+  border-color: var(--admin-theme-border);
+}
+body:has(.talenta-shell) .talenta-shell table th {
+  background: rgba(255,255,255,.055);
+  color: #dce8f5;
+  -webkit-text-fill-color: #dce8f5;
+  border-bottom-color: var(--admin-theme-border);
+}
+body:has(.talenta-shell) .talenta-shell table td {
+  background: transparent;
+  color: #eff5fb;
+  -webkit-text-fill-color: #eff5fb;
+  border-bottom-color: rgba(151,183,224,.11);
+}
+
+body:has(.talenta-shell) .talenta-shell input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+body:has(.talenta-shell) .talenta-shell select,
+body:has(.talenta-shell) .talenta-shell textarea {
+  background: rgba(4,13,25,.88);
+  color: #f3f8ff;
+  -webkit-text-fill-color: #f3f8ff;
+  border-color: var(--admin-theme-border);
+  box-shadow: inset 0 1px rgba(255,255,255,.02);
+}
+body:has(.talenta-shell) .talenta-shell input::placeholder,
+body:has(.talenta-shell) .talenta-shell textarea::placeholder {
+  color: #8ea3ba;
+  opacity: 1;
+}
+body:has(.talenta-shell) .talenta-shell option {
+  background: #091526;
+  color: #f3f8ff;
+}
+
+body:has(.talenta-shell) .talenta-shell .primary,
+body:has(.talenta-shell) .talenta-shell .portal-primary {
+  background: linear-gradient(135deg, var(--admin-theme-accent), color-mix(in srgb, var(--admin-theme-accent) 65%, #ffffff 35%));
+  color: #07101c;
+  -webkit-text-fill-color: #07101c;
+  border-color: var(--admin-theme-accent);
+}
+body:has(.talenta-shell) .talenta-shell .secondary,
+body:has(.talenta-shell) .talenta-shell .portal-secondary {
+  background: rgba(9,22,38,.92);
+  color: #eef5fc;
+  -webkit-text-fill-color: #eef5fc;
+  border-color: var(--admin-theme-border);
+}
+
+/* ================================================================
+   ANDROID REGISTRATION — CRISP + READABLE
+   ================================================================ */
+
+html[data-platform="android"] .pt-cosmic-register {
+  --app-text: #f8fbff;
+  --app-muted: #b7c6d7;
+  --app-border: var(--admin-theme-border, rgba(214,174,88,.30));
+  --app-surface-alt: rgba(7,18,34,.78);
+  color: #f8fbff;
+  overflow-x: hidden;
+}
+
+html[data-platform="android"] .pt-cosmic-register .registration-shell {
+  width: min(760px, 100%);
+  margin: 0 auto;
+  padding: max(18px, env(safe-area-inset-top)) 18px calc(42px + env(safe-area-inset-bottom));
+}
+
+html[data-platform="android"] .pt-cosmic-register .registration-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 2px 0 18px;
+  color: #f8fbff;
+}
+html[data-platform="android"] .pt-cosmic-register .registration-brand strong {
+  display: block;
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+  font-size: 17px;
+  line-height: 1.15;
+  text-shadow: 0 2px 12px rgba(0,0,0,.30);
+}
+html[data-platform="android"] .pt-cosmic-register .registration-brand span,
+html[data-platform="android"] .pt-cosmic-register .registration-brand small {
+  display: block;
+  margin-top: 3px;
+  color: #c1cfe0;
+  -webkit-text-fill-color: #c1cfe0;
+  font-size: 10px;
+}
+html[data-platform="android"] .pt-cosmic-register .registration-logo {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  border: 1px solid rgba(246,199,103,.55);
+  background: rgba(4,13,24,.72);
+  box-shadow: 0 8px 22px rgba(0,0,0,.22);
+}
+html[data-platform="android"] .pt-cosmic-register .registration-logo img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+html[data-platform="android"] .pt-cosmic-register .registration-card,
+html[data-platform="android"] .pt-cosmic-register .registration-shell,
+html[data-platform="android"] .pt-cosmic-register .registration-success,
+html[data-platform="android"] .pt-cosmic-register .registration-success-box {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+html[data-platform="android"] .pt-cosmic-register .registration-heading {
+  margin: 0 0 16px;
+}
+html[data-platform="android"] .pt-cosmic-register .registration-eyebrow {
+  display: inline-block;
+  margin-bottom: 7px;
+  color: var(--admin-theme-accent, #f6c767);
+  -webkit-text-fill-color: var(--admin-theme-accent, #f6c767);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 10px rgba(0,0,0,.24);
+}
+html[data-platform="android"] .pt-cosmic-register .registration-heading h1 {
+  margin: 0;
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+  font-size: clamp(27px,7vw,36px);
+  line-height: 1.10;
+  letter-spacing: -.6px;
+  text-shadow: 0 2px 16px rgba(0,0,0,.34);
+}
+html[data-platform="android"] .pt-cosmic-register .registration-heading p {
+  max-width: 690px;
+  margin: 8px 0 0;
+  color: #d0dbe8;
+  -webkit-text-fill-color: #d0dbe8;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+html[data-platform="android"] .pt-cosmic-register form {
+  width: 100%;
+  min-width: 0;
+}
+html[data-platform="android"] .pt-cosmic-register .registration-section {
+  padding: 17px 0;
+  margin: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+html[data-platform="android"] .pt-cosmic-register .registration-section + .registration-section {
+  border-top: 1px solid rgba(255,255,255,.12);
+}
+html[data-platform="android"] .pt-cosmic-register .registration-section h3 {
+  margin: 0 0 12px;
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+  font-size: 15px;
+  line-height: 1.25;
+  text-shadow: 0 2px 12px rgba(0,0,0,.28);
+}
+html[data-platform="android"] .pt-cosmic-register .registration-field {
+  min-width: 0;
+  margin-bottom: 11px;
+}
+html[data-platform="android"] .pt-cosmic-register .registration-field > label {
+  display: block;
+  margin-bottom: 6px;
+  color: #f6f9ff;
+  -webkit-text-fill-color: #f6f9ff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  text-shadow: 0 2px 10px rgba(0,0,0,.30);
+}
+html[data-platform="android"] .pt-cosmic-register .registration-field .field-optional {
+  color: #b9c8d9;
+  -webkit-text-fill-color: #b9c8d9;
+  font-size: 9px;
+  font-weight: 650;
+}
+html[data-platform="android"] .pt-cosmic-register .registration-field input,
+html[data-platform="android"] .pt-cosmic-register .registration-field select,
+html[data-platform="android"] .pt-cosmic-register .registration-field textarea {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  border-radius: 11px;
+  border: 1px solid rgba(151,183,224,.24);
+  background: rgba(3,13,28,.78);
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+  box-shadow: inset 0 1px rgba(255,255,255,.025), 0 6px 18px rgba(0,0,0,.12);
+}
+html[data-platform="android"] .pt-cosmic-register .registration-field textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+html[data-platform="android"] .pt-cosmic-register .registration-field input::placeholder,
+html[data-platform="android"] .pt-cosmic-register .registration-field textarea::placeholder {
+  color: #91a6bd;
+  opacity: 1;
+  -webkit-text-fill-color: #91a6bd;
+}
+html[data-platform="android"] .pt-cosmic-register .field-help,
+html[data-platform="android"] .pt-cosmic-register .registration-field small {
+  display: block;
+  margin-top: 5px;
+  color: #aebed0;
+  -webkit-text-fill-color: #aebed0;
+  font-size: 8px;
+  line-height: 1.45;
+}
+html[data-platform="android"] .pt-cosmic-register .registration-row {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 12px;
+}
+html[data-platform="android"] .pt-cosmic-register .registration-button {
+  min-height: 42px;
+  padding: 9px 13px;
+  border-radius: 10px;
+  border: 1px solid var(--admin-theme-border,rgba(246,199,103,.34));
+  background: rgba(7,20,36,.92);
+  color: #f8fbff;
+  -webkit-text-fill-color: #f8fbff;
+  box-shadow: 0 7px 20px rgba(0,0,0,.15);
+}
+html[data-platform="android"] .pt-cosmic-register .registration-button:hover:not(:disabled) { background:rgba(13,31,52,.98); }
+html[data-platform="android"] .pt-cosmic-register .registration-back {
+  color: #d8e2ee;
+  -webkit-text-fill-color: #d8e2ee;
+}
+html[data-platform="android"] .pt-cosmic-register .registration-error {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(100,12,26,.55);
+  border: 1px solid rgba(255,104,132,.35);
+  color: #ffd9e0;
+  font-size: 10px;
+}
+
+/* The inline photo preview inherits these custom properties, so it no longer turns white. */
+html[data-platform="android"] .pt-cosmic-register .registration-section:first-of-type > div > div:first-child {
+  box-shadow: 0 10px 22px rgba(0,0,0,.20);
+}
+
+@media (max-width: 640px) {
+  html[data-platform="android"] .pt-cosmic-register .registration-shell { padding-left: 14px; padding-right: 14px; }
+  html[data-platform="android"] .pt-cosmic-register .registration-row { grid-template-columns: 1fr; gap: 0; }
+  html[data-platform="android"] .pt-cosmic-register .registration-heading h1 { font-size: clamp(25px,8vw,33px); }
+  html[data-platform="android"] .pt-cosmic-register .registration-heading p { font-size: 11px; }
+}
+
+@media (max-width: 390px) {
+  html[data-platform="android"] .pt-cosmic-register .registration-shell { padding-left: 11px; padding-right: 11px; }
+  html[data-platform="android"] .pt-cosmic-register .registration-brand strong { font-size: 15px; }
+  html[data-platform="android"] .pt-cosmic-register .registration-logo { width:48px;height:48px;flex-basis:48px; }
+  html[data-platform="android"] .pt-cosmic-register .registration-logo img { width:37px;height:37px; }
+  html[data-platform="android"] .pt-cosmic-register .registration-field > label { font-size: 10px; }
+}
