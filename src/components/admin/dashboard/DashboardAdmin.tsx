@@ -29,7 +29,6 @@ import AttendanceUnified from './AttendanceUnified';
 import { getCosmicTheme, COSMIC_THEMES, type CosmicThemeId } from '../../../theme/professionalTheme';
 import AICenter from './AICenter';
 import {
-  loadUserThemePreference,
   saveUserThemePreference,
   getPublicAppTheme,
   applyProjectTheme,
@@ -836,20 +835,24 @@ export default function DashboardAdmin() {
   const [dbPerms, setDbPerms] = useState<string[]>([]);
   const [sessionChecking, setSessionChecking] = useState(true);
 
-  // Management theme is scoped to the signed-in account.
-  // Super Admin changes are additionally mirrored to the Employee Portal theme.
+  // The Super Admin selected public theme is the visual authority for this dashboard.
   useEffect(() => {
     let active = true;
     const loadTheme = async () => {
-      const { data: session } = await supabase.auth.getSession();
-      const userId = session.session?.user?.id;
-      if (!userId) return;
-      const next = await loadUserThemePreference(userId);
+      const next = await getPublicAppTheme();
       if (active) applyProjectTheme(next, false);
     };
     void loadTheme();
+    const onTheme = (event: Event) => {
+      const next = (event as CustomEvent<string>).detail;
+      if (next === 'professional' || next in COSMIC_THEMES) {
+        applyProjectTheme(next as import('../../../lib/userPreferences').PublicAppTheme, false);
+      }
+    };
+    window.addEventListener('project-tirta-public-theme-change', onTheme);
     return () => {
       active = false;
+      window.removeEventListener('project-tirta-public-theme-change', onTheme);
     };
   }, []);
 
@@ -1736,7 +1739,7 @@ export default function DashboardAdmin() {
               </div>}
 
     <section className={`page admin-page-frame${menu === 'reports' ? ' reports-page' : REPORT_SUBPAGE_KEYS.includes(menu) ? ' reports-subpage' : ''}${menu === 'employee-360' ? ' employee360-page' : ''}${menu === 'feedback' ? ' feedback-page' : ''}${menu === 'announcements' ? ' announcements-page' : ''}${menu === 'id-card' ? ' id-card-page' : ''}`}>{loading&&<div className="loading">Memuat data…</div>}{error&&<div className="alert">{error}</div>}
-    {menu==='overview'&&<Overview employees={employees} attendance={attendance} payroll={payroll} onNavigate={navigate} profileName={profileName} announcements={announcements}/>}
+    {menu==='overview'&&<Overview employees={employees} attendance={attendance} payroll={payroll} onNavigate={navigate} profileName={profileName} email={email} announcements={announcements}/>}
     {menu==='ai-center'&&<AICenter dbPerms={dbPerms} userRole={userRole}/>}
     {menu==='professional-suite'&&<ProfessionalSuite employees={employees} attendance={attendance} onNavigate={navigate}/>}
     {menu==='id-card'&&<IDCardModule employees={employees} companyName="Project by Tirta" logoUrl={moonLogo}/> }
@@ -1916,6 +1919,7 @@ function Overview({
   payroll,
   onNavigate,
   profileName,
+  email,
   announcements,
 }: {
   employees: Karyawan[];
@@ -1923,6 +1927,7 @@ function Overview({
   payroll: number;
   onNavigate: (m: MenuKey) => void;
   profileName: string;
+  email: string;
   announcements: Announcement[];
 }) {
   const { t, lang } = useTranslation();
@@ -1980,6 +1985,22 @@ function Overview({
     .join(' ');
   const areaPoints = `24,138 ${chartPoints} ${chartWidth - 24},138`;
 
+  const welcomeLabel = t('welcome').trim();
+  const rawProfileName = profileName.replace(/\s+/g, ' ').trim();
+  const lowerProfileName = rawProfileName.toLocaleLowerCase(locale);
+  const lowerWelcomeLabel = welcomeLabel.toLocaleLowerCase(locale);
+  const repeatedWelcomeCount = lowerWelcomeLabel
+    ? Math.max(0, lowerProfileName.split(lowerWelcomeLabel).length - 1)
+    : 0;
+  const emailFallback = email
+    .split('@')[0]
+    .replace(/[._-]+/g, ' ')
+    .replace(/\d+$/g, '')
+    .trim();
+  const safeProfileName = rawProfileName && repeatedWelcomeCount === 0 && lowerProfileName !== lowerWelcomeLabel
+    ? rawProfileName
+    : (emailFallback || 'Admin');
+
   const statCards = [
     {
       title: t('total_employees'),
@@ -2017,7 +2038,7 @@ function Overview({
         <div>
           <span className="eyebrow">{t('hr_control_center')}</span>
           <h1>
-            {t('welcome')}, {profileName || 'Admin'} <span aria-hidden="true">👋</span>
+            {`${welcomeLabel}, ${safeProfileName || 'Admin'}`} <span aria-hidden="true">👋</span>
           </h1>
           <p>{t('dashboard_energy_desc')}</p>
         </div>
@@ -2153,17 +2174,6 @@ function Overview({
         </article>
       </section>
 
-      <section className="reference-themes">
-        {(['sun', 'moon', 'galaxy', 'blackhole', 'nebula'] as const).map((theme) => (
-          <button key={theme} type="button" onClick={() => {
-            document.documentElement.dataset.cosmicTheme = theme;
-            window.dispatchEvent(new CustomEvent('project-tirta-theme-change', { detail: theme }));
-          }}>
-            <img src={`/cosmic-web/${theme}.webp`} alt="" />
-            <span>{theme === 'sun' ? 'Matahari' : theme === 'moon' ? 'Bulan' : theme === 'galaxy' ? 'Galaksi' : theme === 'blackhole' ? 'Blackhole' : 'Nebula'}</span>
-          </button>
-        ))}
-      </section>
     </div>
   );
 }
@@ -3027,7 +3037,10 @@ function ThemeControl({ userRole }: { userRole: string }) {
     };
   }, []);
 
+  const isSuperAdmin = userRole.trim().toLowerCase() === 'super admin';
+
   const chooseTheme = async (next: import('../../../lib/userPreferences').PublicAppTheme) => {
+    if (!isSuperAdmin) return;
     setTheme(next);
     applyProjectTheme(next, true);
 
@@ -3061,7 +3074,7 @@ function ThemeControl({ userRole }: { userRole: string }) {
 
   return (
     <div className="theme-control">
-      <button type="button" className="icon-btn theme-control-button" aria-label="Pilih tema" aria-expanded={open} title="Tema" onClick={() => setOpen(value => !value)}>◫</button>
+      <button type="button" className="icon-btn theme-control-button" aria-label="Pilih tema" aria-expanded={open} title="Tema" onClick={() => setOpen(value => !value)} disabled={!isSuperAdmin}>◫</button>
       {open && (
         <div className="theme-control-menu" role="menu" aria-label="Pilih tema">
           {options.map(item => (
@@ -3071,7 +3084,7 @@ function ThemeControl({ userRole }: { userRole: string }) {
               className={`theme-control-option ${theme === item.id ? 'active' : ''}`}
               role="menuitemradio"
               aria-checked={theme === item.id}
-              onClick={() => void chooseTheme(item.id)}
+              onClick={() => void chooseTheme(item.id)} disabled={!isSuperAdmin}
             >
               <span className={`theme-control-dot ${item.id === 'professional' ? 'theme-professional' : `cosmic-theme-${item.id}`}`} aria-hidden="true" />
               <span>{item.name}</span>
