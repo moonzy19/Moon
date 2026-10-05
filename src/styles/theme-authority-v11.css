@@ -1,0 +1,91 @@
+/*
+ * PROJECT BY TIRTA — GLOBAL COSMIC ARTWORK AUTHORITY V11
+ * Selected Super Admin public theme controls the one global artwork layer.
+ */
+
+html[data-cosmic-theme] {
+  min-height: 100%;
+}
+
+html[data-cosmic-theme] body {
+  position: relative !important;
+  isolation: isolate !important;
+  min-height: 100dvh !important;
+  overflow-x: hidden !important;
+  background: #030710 !important;
+  color: #eef5ff !important;
+}
+
+html[data-cosmic-theme] body::before {
+  content: "" !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+  background-repeat: no-repeat !important;
+  background-position: center center !important;
+  background-size: cover !important;
+  background-attachment: fixed !important;
+  opacity: .96 !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
+html[data-cosmic-theme] body::after {
+  content: "" !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+  background: linear-gradient(180deg, rgba(1,6,15,.08) 0%, rgba(1,6,15,.22) 52%, rgba(1,4,10,.58) 100%) !important;
+}
+
+html[data-cosmic-theme="sun"] body::before { background-image: url("/cosmic-web/sun.webp") !important; }
+html[data-cosmic-theme="moon"] body::before { background-image: url("/cosmic-web/moon.webp") !important; }
+html[data-cosmic-theme="galaxy"] body::before { background-image: url("/cosmic-web/galaxy.webp") !important; }
+html[data-cosmic-theme="blackhole"] body::before { background-image: url("/cosmic-web/blackhole.webp") !important; }
+html[data-cosmic-theme="nebula"] body::before { background-image: url("/cosmic-web/nebula.webp") !important; }
+html[data-cosmic-theme="aurora"] body::before { background-image: url("/cosmic-web/aurora.webp") !important; }
+
+html[data-cosmic-theme] #root,
+html[data-cosmic-theme] .app-root,
+html[data-cosmic-theme] .talenta-shell,
+html[data-cosmic-theme] .talenta-main,
+html[data-cosmic-theme] .admin-page-frame,
+html[data-cosmic-theme] .page,
+html[data-cosmic-theme] .page-content,
+html[data-cosmic-theme] .content-area,
+html[data-cosmic-theme] .module-page,
+html[data-cosmic-theme] .public-page,
+html[data-cosmic-theme] .public-home,
+html[data-cosmic-theme] .unified-login-page,
+html[data-cosmic-theme] .employee-portal {
+  position: relative !important;
+  z-index: 1 !important;
+  min-width: 0 !important;
+  min-height: 100dvh !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html[data-cosmic-theme] .talenta-main:has(.reference-dashboard),
+html[data-cosmic-theme] .admin-page-frame:has(.reference-dashboard) {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+html[data-cosmic-theme] body::before {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+@media (max-width: 700px) {
+  html[data-cosmic-theme] body::before {
+    background-attachment: scroll !important;
+  }
+}

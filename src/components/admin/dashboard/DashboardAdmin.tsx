@@ -538,7 +538,6 @@ export default function DashboardAdmin() {
   const [email, setEmail] = useState('');
   const [pin, setPin] = useState('');
   const [menu, setMenu] = useState<MenuKey>('overview');
-  const [routeHash, setRouteHash] = useState(() => window.location.hash);
   const [sidebar, setSidebar] = useState(() => window.innerWidth >= 900);
   const [employees, setEmployees] = useState<Karyawan[]>([]);
   const [pendingRegistrationIds, setPendingRegistrationIds] = useState<Set<string>>(new Set());
@@ -1144,7 +1143,6 @@ export default function DashboardAdmin() {
 
   useEffect(() => {
     const read = () => {
-      setRouteHash(location.hash);
       const raw = location.hash.replace(/^#\//, '');
       const parts = raw.split('/').filter(Boolean);
       const candidate = parts[0] as MenuKey;
@@ -1361,16 +1359,13 @@ export default function DashboardAdmin() {
 
   const payroll = employees.reduce((s, k) => s + Number(k.gaji_pokok || 0), 0);
 
-  const routeKey = (routeHash.replace(/^#\//, '').split('/').filter(Boolean)[0] || '') as MenuKey;
-  const routeLabel = isWebReferenceSidebar
-    ? sidebarSections.flatMap((section) => section.items).find((item) => item[0] === routeKey)?.[1]
-    : menuGroups.flatMap((group) => group.items).find((item) => item[0] === routeKey)?.[1];
-
   const menuLabel = isWebReferenceSidebar
     ? sidebarSections.flatMap((section) => section.items).find((item) => item[0] === menu)?.[1]
     : menuGroups.flatMap((group) => group.items).find((item) => item[0] === menu)?.[1];
 
-  const activeLabel = routeLabel || menuLabel || t('dashboard');
+  // The rendered page is controlled by `menu`. A stale hash must never
+  // overwrite the visible header label after an in-app navigation action.
+  const activeLabel = menuLabel || t('dashboard');
   
   const exportCsv = (rows: Record<string, unknown>[], filename: string, columns?: string[]) => {
     if (!rows.length) { setToast(t("no_data_export")); return; }

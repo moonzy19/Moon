@@ -170,7 +170,7 @@ export default function AndroidCosmicBackground() {
         height:'100%',
         backgroundImage:
           theme === 'aurora'
-            ? 'url("/aurora-background.webp")'
+            ? 'url("/cosmic-web/aurora.webp")'
             : `url("${ART[theme]}")`,
         backgroundRepeat:'no-repeat',
         backgroundPosition:'center center',

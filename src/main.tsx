@@ -12,8 +12,18 @@ const platform = Capacitor.getPlatform();
 
 document.documentElement.dataset.platform = platform;
 
-if (platform === 'web' && !document.documentElement.dataset.cosmicTheme) {
-  document.documentElement.dataset.cosmicTheme = 'sun';
+const PUBLIC_THEME_CACHE_KEY = 'project-tirta-public-theme';
+const CACHED_COSMIC_THEMES = new Set(['sun', 'moon', 'galaxy', 'blackhole', 'nebula', 'aurora']);
+
+if (!document.documentElement.dataset.cosmicTheme) {
+  try {
+    const cached = localStorage.getItem(PUBLIC_THEME_CACHE_KEY);
+    if (cached && CACHED_COSMIC_THEMES.has(cached)) {
+      document.documentElement.dataset.cosmicTheme = cached;
+    }
+  } catch {
+    // Cache is optional. App loads the authoritative theme from Supabase.
+  }
 }
 
 async function bootstrap() {
@@ -50,6 +60,7 @@ async function bootstrap() {
   await import('./styles/admin-theme-final-v4.css');
   await import('./styles/theme-authority-v7.css');
   await import('./styles/theme-authority-v10.css');
+  await import('./styles/theme-authority-v11.css');
 
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
