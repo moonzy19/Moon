@@ -61,6 +61,8 @@ async function bootstrap() {
   await import('./styles/theme-authority-v7.css');
   await import('./styles/theme-authority-v10.css');
   await import('./styles/theme-authority-v11.css');
+  await import('./styles/ui-visual-consistency-v2.css');
+  await import('./styles/ui-visual-consistency-v1.css');
 
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
@@ -72,3 +74,5 @@ async function bootstrap() {
 }
 
 void bootstrap();
+
+import "./styles/ui-visual-consistency-v3.css";

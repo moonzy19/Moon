@@ -1,0 +1,642 @@
+/* =========================================================
+   PROJECT BY TIRTA — SIDEBAR CONSISTENCY V2
+   WEB ONLY — Android remains untouched.
+   ========================================================= */
+
+html[data-platform="web"] {
+  --pt-sidebar-width: 210px;
+  --pt-menu-height: 36px;
+  --pt-menu-radius: 9px;
+  --pt-menu-text: #cbd7e6;
+  --pt-menu-text-hover: #ffffff;
+  --pt-group-gold: #f6d365;
+  --pt-group-muted: #9aaec4;
+  --pt-sidebar-border: rgba(150, 185, 225, .16);
+}
+
+/* =========================
+   SIDEBAR FRAME
+   ========================= */
+
+html[data-platform="web"] .talenta-shell {
+  grid-template-columns: var(--pt-sidebar-width) minmax(0, 1fr) !important;
+}
+
+html[data-platform="web"] .talenta-shell .sidebar {
+  width: var(--pt-sidebar-width) !important;
+  min-width: var(--pt-sidebar-width) !important;
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+  padding: 12px 10px 10px !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(3, 10, 21, .97),
+      rgba(2, 7, 16, .96)
+    ) !important;
+
+  border-right: 1px solid var(--pt-sidebar-border) !important;
+  box-shadow: inset -1px 0 rgba(255,255,255,.025) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* collapsed sidebar */
+html[data-platform="web"] .talenta-shell .sidebar.collapsed {
+  width: 58px !important;
+  min-width: 58px !important;
+}
+
+/* =========================
+   SIDEBAR BRAND
+   ========================= */
+
+html[data-platform="web"] .talenta-shell .sidebar-head {
+  flex: 0 0 auto !important;
+  min-height: 44px !important;
+  height: 44px !important;
+  margin-bottom: 5px !important;
+  padding: 2px 3px 7px !important;
+  border-bottom: 1px solid rgba(150,185,225,.09) !important;
+}
+
+html[data-platform="web"] .talenta-shell .brand {
+  min-width: 0 !important;
+  gap: 8px !important;
+}
+
+html[data-platform="web"] .talenta-shell .brand-mark {
+  width: 34px !important;
+  height: 34px !important;
+  flex: 0 0 34px !important;
+  border-radius: 10px !important;
+}
+
+html[data-platform="web"] .talenta-shell .brand-mark img {
+  width: 25px !important;
+  height: 25px !important;
+}
+
+html[data-platform="web"] .talenta-shell .brand b {
+  font-size: 10px !important;
+  line-height: 1.15 !important;
+}
+
+html[data-platform="web"] .talenta-shell .brand small {
+  margin-top: 2px !important;
+  font-size: 7px !important;
+}
+
+/* =========================
+   SIDEBAR NAV
+   ========================= */
+
+html[data-platform="web"] .talenta-shell .sidebar-nav,
+html[data-platform="web"] .talenta-shell .sidebar-nav-reference {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding: 5px 1px 8px !important;
+}
+
+/* tiap kelompok */
+html[data-platform="web"] .talenta-shell .nav-group {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+}
+
+/* =========================
+   GROUP TITLE — GOLD
+   ========================= */
+
+html[data-platform="web"] .talenta-shell .nav-title,
+html[data-platform="web"] .talenta-shell .sidebar-section-title {
+  width: 100% !important;
+  min-height: 26px !important;
+  height: 26px !important;
+  padding: 5px 8px 4px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+
+  border: 0 !important;
+  border-radius: 7px !important;
+  background: transparent !important;
+
+  color: var(--pt-group-gold) !important;
+  -webkit-text-fill-color: var(--pt-group-gold) !important;
+
+  font-size: 9px !important;
+  font-weight: 900 !important;
+  line-height: 1.1 !important;
+  letter-spacing: .085em !important;
+  text-transform: uppercase !important;
+  text-align: left !important;
+
+  cursor: pointer !important;
+  text-shadow: 0 0 8px rgba(246,211,101,.12) !important;
+}
+
+html[data-platform="web"] .talenta-shell .nav-title span,
+html[data-platform="web"] .talenta-shell .sidebar-section-title span {
+  color: var(--pt-group-gold) !important;
+  -webkit-text-fill-color: var(--pt-group-gold) !important;
+}
+
+html[data-platform="web"] .talenta-shell .nav-title:hover,
+html[data-platform="web"] .talenta-shell .sidebar-section-title:hover {
+  background: rgba(246,211,101,.035) !important;
+}
+
+/* chevron group */
+html[data-platform="web"] .talenta-shell .nav-title .ui-icon,
+html[data-platform="web"] .talenta-shell .sidebar-section-title .ui-icon {
+  width: 13px !important;
+  height: 13px !important;
+  flex: 0 0 13px !important;
+  color: var(--pt-group-muted) !important;
+}
+
+/* =========================
+   SUBMENU CONTAINER
+   ========================= */
+
+html[data-platform="web"] .talenta-shell .nav-group-items,
+html[data-platform="web"] .talenta-shell .nav-section-items {
+  display: grid !important;
+  gap: 2px !important;
+  min-width: 0 !important;
+  padding: 0 2px 0 3px !important;
+}
+
+/* =========================
+   MENU ITEM
+   ========================= */
+
+html[data-platform="web"] .talenta-shell .nav-item {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: var(--pt-menu-height) !important;
+  height: var(--pt-menu-height) !important;
+
+  padding: 8px 10px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 9px !important;
+
+  border: 1px solid transparent !important;
+  border-radius: var(--pt-menu-radius) !important;
+  background: transparent !important;
+
+  color: var(--pt-menu-text) !important;
+  -webkit-text-fill-color: var(--pt-menu-text) !important;
+
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+
+  text-align: left !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+html[data-platform="web"] .talenta-shell .nav-item:hover {
+  background: rgba(112,165,225,.075) !important;
+  border-color: rgba(155,194,237,.12) !important;
+  color: var(--pt-menu-text-hover) !important;
+  -webkit-text-fill-color: var(--pt-menu-text-hover) !important;
+  transform: none !important;
+}
+
+html[data-platform="web"] .talenta-shell .nav-item .ui-icon {
+  width: 17px !important;
+  height: 17px !important;
+  min-width: 17px !important;
+  flex: 0 0 17px !important;
+}
+
+html[data-platform="web"] .talenta-shell .nav-item span {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* active item */
+html[data-platform="web"] .talenta-shell .nav-item.active {
+  min-height: var(--pt-menu-height) !important;
+  height: var(--pt-menu-height) !important;
+
+  color: #07121f !important;
+  -webkit-text-fill-color: #07121f !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--admin-theme-accent, #f6d365),
+      color-mix(
+        in srgb,
+        var(--admin-theme-accent, #f6d365) 65%,
+        #ffffff 35%
+      )
+    ) !important;
+
+  border-color: rgba(255,255,255,.20) !important;
+
+  box-shadow:
+    0 7px 18px rgba(0,0,0,.16),
+    inset 0 1px rgba(255,255,255,.42) !important;
+
+  font-weight: 800 !important;
+}
+
+/* =========================
+   LOGOUT — SAME SIZE AS MENU
+   ========================= */
+
+html[data-platform="web"] .talenta-shell .sidebar-bottom {
+  flex: 0 0 auto !important;
+  margin-top: auto !important;
+  padding: 8px 3px 2px !important;
+  border-top: 1px solid rgba(150,185,225,.10) !important;
+}
+
+html[data-platform="web"] .talenta-shell .sidebar-bottom .logout {
+  width: 100% !important;
+  min-width: 0 !important;
+
+  min-height: var(--pt-menu-height) !important;
+  height: var(--pt-menu-height) !important;
+
+  margin: 0 !important;
+  padding: 8px 10px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 9px !important;
+
+  border: 1px solid transparent !important;
+  border-radius: var(--pt-menu-radius) !important;
+  background: transparent !important;
+
+  color: var(--pt-menu-text) !important;
+  -webkit-text-fill-color: var(--pt-menu-text) !important;
+
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+html[data-platform="web"] .talenta-shell .sidebar-bottom .logout:hover {
+  background: rgba(112,165,225,.075) !important;
+  border-color: rgba(155,194,237,.12) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+html[data-platform="web"] .talenta-shell .sidebar-bottom .logout .ui-icon {
+  width: 17px !important;
+  height: 17px !important;
+  min-width: 17px !important;
+  flex: 0 0 17px !important;
+}
+
+/* =========================
+   COLLAPSED STATE
+   ========================= */
+
+html[data-platform="web"] .talenta-shell .sidebar.collapsed .sidebar-head {
+  justify-content: center !important;
+}
+
+html[data-platform="web"] .talenta-shell .sidebar.collapsed .sidebar-nav {
+  gap: 7px !important;
+}
+
+html[data-platform="web"] .talenta-shell .sidebar.collapsed .nav-title {
+  display: none !important;
+}
+
+html[data-platform="web"] .talenta-shell .sidebar.collapsed .nav-group {
+  gap: 2px !important;
+}
+
+html[data-platform="web"] .talenta-shell .sidebar.collapsed .nav-item,
+html[data-platform="web"] .talenta-shell .sidebar.collapsed .sidebar-bottom .logout {
+  justify-content: center !important;
+  padding-inline: 5px !important;
+}
+
+html[data-platform="web"] .talenta-shell .sidebar.collapsed .nav-item span,
+html[data-platform="web"] .talenta-shell .sidebar.collapsed .sidebar-bottom .logout:not(:has(.ui-icon:only-child)) {
+  text-indent: -9999px !important;
+}
+
+/* =========================
+   SCROLLBAR
+   ========================= */
+
+html[data-platform="web"] .talenta-shell .sidebar::-webkit-scrollbar,
+html[data-platform="web"] .talenta-shell .sidebar-nav::-webkit-scrollbar {
+  width: 4px !important;
+}
+
+html[data-platform="web"] .talenta-shell .sidebar::-webkit-scrollbar-thumb,
+html[data-platform="web"] .talenta-shell .sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(150,185,225,.18) !important;
+  border-radius: 999px !important;
+}
+
+html[data-platform="web"] .talenta-shell .sidebar::-webkit-scrollbar-track,
+html[data-platform="web"] .talenta-shell .sidebar-nav::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+/* =========================
+   SMALL DESKTOP / LAPTOP
+   ========================= */
+
+@media (max-width: 1100px) {
+  html[data-platform="web"] .talenta-shell {
+    grid-template-columns: 198px minmax(0,1fr) !important;
+  }
+
+  html[data-platform="web"] .talenta-shell .sidebar {
+    width: 198px !important;
+    min-width: 198px !important;
+  }
+}
+
+/* =========================================================
+   PAGE-SPECIFIC FLAT HIERARCHY
+   Only decorative/grouping wrappers are flattened.
+   Functional cards remain intact.
+   WEB ONLY.
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   ID CARD
+   --------------------------------------------------------- */
+
+/* Designer = content section, NOT a giant card */
+html[data-platform="web"] .talenta-shell .id-card-designer {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 0 18px !important;
+  margin: 0 0 18px !important;
+}
+
+/* Keep designer controls aligned */
+html[data-platform="web"] .talenta-shell .id-card-designer-head {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  margin-bottom: 14px !important;
+}
+
+html[data-platform="web"] .talenta-shell .id-card-designer-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  align-items: end !important;
+}
+
+html[data-platform="web"] .talenta-shell .id-card-designer-grid label {
+  display: grid !important;
+  gap: 6px !important;
+}
+
+html[data-platform="web"] .talenta-shell .id-card-designer-toggles {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 12px !important;
+  min-height: 38px !important;
+}
+
+html[data-platform="web"] .talenta-shell .id-card-theme-pills {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 7px !important;
+  margin-top: 12px !important;
+}
+
+html[data-platform="web"] .talenta-shell .id-card-design-meta {
+  margin-top: 10px !important;
+  padding: 9px 0 0 !important;
+  border-top: 1px solid rgba(151,183,224,.12) !important;
+}
+
+/* Toolbar is a layout row, NOT a card */
+html[data-platform="web"] .talenta-shell .id-card-toolbar {
+  display: grid !important;
+  grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr) auto auto !important;
+  gap: 9px !important;
+  align-items: center !important;
+  margin: 0 0 16px !important;
+  padding: 0 0 16px !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(151,183,224,.12) !important;
+  box-shadow: none !important;
+}
+
+/* Keep the actual preview as the primary card */
+html[data-platform="web"] .talenta-shell .id-card-pratinjau-panel {
+  background: linear-gradient(
+    145deg,
+    rgba(12,27,48,.94),
+    rgba(4,12,24,.96)
+  ) !important;
+  border: 1px solid var(--web-border) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 18px 48px rgba(0,0,0,.24) !important;
+}
+
+/* Batch list = flat supporting list */
+html[data-platform="web"] .talenta-shell .id-card-list {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+
+html[data-platform="web"] .talenta-shell .id-list-head {
+  padding: 0 0 9px !important;
+  margin-bottom: 3px !important;
+  border-bottom: 1px solid rgba(151,183,224,.12) !important;
+}
+
+/* ---------------------------------------------------------
+   MASTER DATA
+   --------------------------------------------------------- */
+
+html[data-platform="web"] .talenta-shell .master-data-module {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+
+html[data-platform="web"] .talenta-shell .master-data-header {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 0 12px !important;
+}
+
+html[data-platform="web"] .talenta-shell .master-data-tabs {
+  margin-bottom: 16px !important;
+}
+
+/* actual table/data surfaces stay visible */
+html[data-platform="web"] .talenta-shell .master-data-table-card,
+html[data-platform="web"] .talenta-shell .master-data-shift-card {
+  background: linear-gradient(
+    145deg,
+    var(--admin-theme-panel),
+    var(--admin-theme-panel-strong)
+  ) !important;
+  border: 1px solid var(--admin-theme-border) !important;
+  box-shadow: 0 14px 34px rgba(0,0,0,.20) !important;
+}
+
+/* ---------------------------------------------------------
+   ATTENDANCE
+   --------------------------------------------------------- */
+
+/* Page heading stays flat */
+html[data-platform="web"] .talenta-shell .attendance-module > .panel-head:first-child {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Filter area = flat utility section */
+html[data-platform="web"] .talenta-shell .attendance-filter-grid {
+  background: transparent !important;
+}
+
+/* Summary cards remain real information units */
+html[data-platform="web"] .talenta-shell .attendance-summary-grid .stat-card {
+  border-radius: 13px !important;
+}
+
+/* Table remains the main data surface */
+html[data-platform="web"] .talenta-shell .attendance-module .table-panel {
+  background: linear-gradient(
+    145deg,
+    var(--admin-theme-panel),
+    var(--admin-theme-panel-strong)
+  ) !important;
+  border: 1px solid var(--admin-theme-border) !important;
+  box-shadow: 0 16px 38px rgba(0,0,0,.21) !important;
+}
+
+/* ---------------------------------------------------------
+   PAYROLL
+   --------------------------------------------------------- */
+
+/* Toolbar is informational layout, not card */
+html[data-platform="web"] .talenta-shell .toolbar-panel {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+/* KPI cards stay */
+html[data-platform="web"] .talenta-shell .mini-kpi-row .stat-card,
+html[data-platform="web"] .talenta-shell .ess-kpis .ess-kpi {
+  border-radius: 13px !important;
+}
+
+/* Payroll detail remains an actual panel */
+html[data-platform="web"] .talenta-shell .table-panel {
+  border-radius: 14px !important;
+}
+
+/* ---------------------------------------------------------
+   SECURITY / SETTINGS
+   --------------------------------------------------------- */
+
+/* Heading wrappers are flat */
+html[data-platform="web"] .talenta-shell .module-head,
+html[data-platform="web"] .talenta-shell .page-heading {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Information panels remain */
+html[data-platform="web"] .talenta-shell .permission-chips {
+  background: transparent !important;
+}
+
+/* ---------------------------------------------------------
+   GENERIC RULE:
+   wrappers specifically marked as groups should never
+   look like cards.
+   --------------------------------------------------------- */
+
+html[data-platform="web"] .talenta-shell .web-card-group,
+html[data-platform="web"] .talenta-shell .content-group,
+html[data-platform="web"] .talenta-shell .layout-group,
+html[data-platform="web"] .talenta-shell .section-group {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+/* Responsive ID Card */
+@media (max-width: 1050px) {
+  html[data-platform="web"] .talenta-shell .id-card-designer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  html[data-platform="web"] .talenta-shell .id-card-toolbar {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+@media (max-width: 700px) {
+  html[data-platform="web"] .talenta-shell .id-card-designer-grid,
+  html[data-platform="web"] .talenta-shell .id-card-toolbar {
+    grid-template-columns: 1fr !important;
+  }
+
+  html[data-platform="web"] .talenta-shell .id-card-designer-head {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+}
+

@@ -238,11 +238,11 @@ const { t } = useTranslation();
     const bootTimeout = window.setTimeout(() => {
       if (!active) return;
       bootExpired = true;
-      setView('login');
-      setLoginOpen(false);
+      setView(IS_ANDROID_APP ? 'login' : 'home');
+      setLoginOpen(IS_ANDROID_APP);
       setChecking(false);
       setError('Sesi awal membutuhkan waktu terlalu lama. Silakan masuk kembali.');
-      window.location.hash = '/login';
+      window.location.hash = IS_ANDROID_APP ? '/login' : '/';
     }, BOOT_TIMEOUT_MS);
 
     const boot = async () => {
@@ -270,9 +270,10 @@ const { t } = useTranslation();
 
       if (!isSupabaseConfigured) {
         if (active) {
-          setView('login');
+          setView(IS_ANDROID_APP ? 'login' : 'home');
+          setLoginOpen(IS_ANDROID_APP);
           setChecking(false);
-          window.location.hash = '/login';
+          window.location.hash = IS_ANDROID_APP ? '/login' : '/';
         }
 
         window.clearTimeout(bootTimeout);
@@ -498,13 +499,21 @@ const { t } = useTranslation();
             ================================================= */}
 
         {view === 'home' && (
-          <Home
-            onMasuk={() => {
-              setError('');
-              setLoginOpen(true);
-            }}
-            onRegister={() => go('register')}
-          />
+          <div className="home-with-inline-login">
+            <Home
+              onMasuk={() => {
+                setError('');
+                setLoginOpen(true);
+                window.setTimeout(() => {
+                  document.getElementById('home-login')?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                  });
+                }, 0);
+              }}
+              onRegister={() => go('register')}
+            />
+          </div>
         )}
 
         {view === 'verify' && (
@@ -514,7 +523,14 @@ const { t } = useTranslation();
           />
         )}
 
-        {loginOpen && (view === 'home' || view === 'login') && (
+        {(
+          (view === 'home' && !IS_ANDROID_APP) ||
+          (loginOpen && (view === 'home' || view === 'login') && IS_ANDROID_APP)
+        ) && (
+          <section
+            id={!IS_ANDROID_APP && view === 'home' ? 'home-login' : undefined}
+            className={!IS_ANDROID_APP && view === 'home' ? 'home-inline-login-slot' : undefined}
+          >
           <LoginScreen
             email={email}
             password={password}
@@ -529,12 +545,12 @@ const { t } = useTranslation();
                 window.location.hash = '/login';
                 return;
               }
-              setLoginOpen(false);
               setError('');
             }}
             loading={loading}
             error={error}
           />
+          </section>
         )}
 
         {view === 'reset-password' && (
@@ -713,11 +729,11 @@ function LoginScreen({
 
   return (
     <main
-      className={`unified-login-page${IS_ANDROID_APP ? ' pt-cosmic-auth' : ' pt-web-cosmic-auth modal-overlay'}`}
+      className={`unified-login-page${IS_ANDROID_APP ? ' pt-cosmic-auth' : ' pt-web-cosmic-auth modal-overlay home-inline-login-page'}`}
       onMouseDown={e =>
 { if (e.target === e.currentTarget) onClose(); }}
     >
-      {<AndroidCosmicBackground />}
+      {IS_ANDROID_APP && <AndroidCosmicBackground />}
       <section className={`unified-login-card login-modal-card${IS_ANDROID_APP ? ' pt-auth-card' : ''}`}>
         <button type="button" className="login-modal-close" onClick={onClose} aria-label={t('close')}>×</button>
 
