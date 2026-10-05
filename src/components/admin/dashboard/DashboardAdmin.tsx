@@ -3347,23 +3347,71 @@ function Settings({
     void loadTheme();
   },[canManageThemes]);
   const save=async()=>{
-    const latitudeRaw = String(f.attendance_latitude ?? '').trim();
-    const longitudeRaw = String(f.attendance_longitude ?? '').trim();
+    const normalizeCoordinate = (value: unknown) =>
+      String(value ?? '')
+        .normalize('NFKC')
+        .replace(/[−–—]/g, '-')
+        .replace(/[，٫]/g, '.')
+        .replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u2069\uFEFF]/g, '')
+        .trim();
 
-    const latitude =
-      latitudeRaw === '' ? null : Number(latitudeRaw);
-    const longitude =
-      longitudeRaw === '' ? null : Number(longitudeRaw);
+    const parseCoordinate = (
+      value: unknown,
+      label: 'Latitude' | 'Longitude',
+      min: number,
+      max: number,
+    ) => {
+      const raw = normalizeCoordinate(value);
 
-    if (latitude !== null && (!Number.isFinite(latitude) || latitude < -90 || latitude > 90)) {
-      setMsg('Latitude harus berupa angka antara -90 dan 90.');
+      // Empty/incomplete values while typing are handled without resetting.
+      if (raw === '' || raw === '-' || raw === '.' || raw === '-.') {
+        return { value: null as number | null, incomplete: true };
+      }
+
+      // Only a normal decimal coordinate is accepted.
+      if (!/^[-+]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(raw)) {
+        return {
+          error: `${label} tidak valid: "${raw}". Gunakan angka desimal.`,
+        };
+      }
+
+      const numeric = Number(raw);
+
+      if (!Number.isFinite(numeric) || numeric < min || numeric > max) {
+        return {
+          error: `${label} tidak valid: "${raw}". Gunakan angka antara ${min} dan ${max}.`,
+        };
+      }
+
+      return { value: numeric, incomplete: false };
+    };
+
+    const latitudeResult = parseCoordinate(
+      f.attendance_latitude,
+      'Latitude',
+      -90,
+      90,
+    );
+
+    if (latitudeResult.error) {
+      setMsg(latitudeResult.error);
       return;
     }
 
-    if (longitude !== null && (!Number.isFinite(longitude) || longitude < -180 || longitude > 180)) {
-      setMsg('Longitude harus berupa angka antara -180 dan 180.');
+    const longitudeResult = parseCoordinate(
+      f.attendance_longitude,
+      'Longitude',
+      -180,
+      180,
+    );
+
+    if (longitudeResult.error) {
+      setMsg(longitudeResult.error);
       return;
     }
+
+    const latitude = latitudeResult.value;
+    const longitude = longitudeResult.value;
 
     const payload = {
       ...f,
@@ -3675,12 +3723,15 @@ function Settings({
                             : undefined
                       }
                       value={String(v??'')}
-                      onChange={e=>
+                      onChange={e=>{
                         setF({
                           ...f,
                           [k]: e.target.value
-                        })
-                      }
+                        });
+                        if (['attendance_latitude','attendance_longitude'].includes(k)) {
+                          setMsg('');
+                        }
+                      }}
                     />
 
                   )}
