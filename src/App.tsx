@@ -499,21 +499,21 @@ const { t } = useTranslation();
             ================================================= */}
 
         {view === 'home' && (
-          <div className="home-with-inline-login">
-            <Home
-              onMasuk={() => {
-                setError('');
-                setLoginOpen(true);
-                window.setTimeout(() => {
-                  document.getElementById('home-login')?.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center',
-                  });
-                }, 0);
-              }}
-              onRegister={() => go('register')}
-            />
-          </div>
+          <Home>
+            {!IS_ANDROID_APP && (
+              <LoginScreen
+                email={email}
+                password={password}
+                setEmail={setEmail}
+                setPassword={setPassword}
+                onSubmit={login}
+                onRegister={() => go('register')}
+                onClose={() => setError('')}
+                loading={loading}
+                error={error}
+              />
+            )}
+          </Home>
         )}
 
         {view === 'verify' && (
