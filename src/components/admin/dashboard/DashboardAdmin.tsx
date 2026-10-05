@@ -3347,8 +3347,36 @@ function Settings({
     void loadTheme();
   },[canManageThemes]);
   const save=async()=>{
-    const {error}=await supabase.from('hris_company_settings').upsert({...f,id:1});
-    setMsg(error?error.message:'Pengaturan berhasil disimpan.');
+    const latitudeRaw = String(f.attendance_latitude ?? '').trim();
+    const longitudeRaw = String(f.attendance_longitude ?? '').trim();
+
+    const latitude =
+      latitudeRaw === '' ? null : Number(latitudeRaw);
+    const longitude =
+      longitudeRaw === '' ? null : Number(longitudeRaw);
+
+    if (latitude !== null && (!Number.isFinite(latitude) || latitude < -90 || latitude > 90)) {
+      setMsg('Latitude harus berupa angka antara -90 dan 90.');
+      return;
+    }
+
+    if (longitude !== null && (!Number.isFinite(longitude) || longitude < -180 || longitude > 180)) {
+      setMsg('Longitude harus berupa angka antara -180 dan 180.');
+      return;
+    }
+
+    const payload = {
+      ...f,
+      id: 1,
+      attendance_latitude: latitude,
+      attendance_longitude: longitude,
+    };
+
+    const {error}=await supabase
+      .from('hris_company_settings')
+      .upsert(payload);
+
+    setMsg(error ? error.message : 'Pengaturan berhasil disimpan.');
   };
 
   const saveCustomTheme=()=>{
@@ -3621,34 +3649,36 @@ function Settings({
 
                     <input
                       type={
-                        [
-                          'break_minutes',
-                          'late_tolerance_minutes',
-                          'attendance_radius_meters',
-                          'attendance_max_accuracy_meters',
-                          'attendance_latitude',
-                          'attendance_longitude'
-                        ].includes(k)
-                          ? 'number'
-                          : k.includes('start')||k.includes('end')
-                            ? 'time'
-                            : 'text'
+                        ['attendance_latitude', 'attendance_longitude'].includes(k)
+                          ? 'text'
+                          : [
+                              'break_minutes',
+                              'late_tolerance_minutes',
+                              'attendance_radius_meters',
+                              'attendance_max_accuracy_meters'
+                            ].includes(k)
+                              ? 'number'
+                              : k.includes('start')||k.includes('end')
+                                ? 'time'
+                                : 'text'
+                      }
+                      inputMode={
+                        ['attendance_latitude', 'attendance_longitude'].includes(k)
+                          ? 'decimal'
+                          : undefined
+                      }
+                      placeholder={
+                        k === 'attendance_latitude'
+                          ? '-6.200000'
+                          : k === 'attendance_longitude'
+                            ? '106.816666'
+                            : undefined
                       }
                       value={String(v??'')}
                       onChange={e=>
                         setF({
                           ...f,
-                          [k]:
-                            [
-                              'break_minutes',
-                              'late_tolerance_minutes',
-                              'attendance_radius_meters',
-                              'attendance_max_accuracy_meters',
-                              'attendance_latitude',
-                              'attendance_longitude'
-                            ].includes(k)
-                              ? Number(e.target.value)
-                              : e.target.value
+                          [k]: e.target.value
                         })
                       }
                     />
