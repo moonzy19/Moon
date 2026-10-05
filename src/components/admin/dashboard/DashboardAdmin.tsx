@@ -538,6 +538,7 @@ export default function DashboardAdmin() {
   const [email, setEmail] = useState('');
   const [pin, setPin] = useState('');
   const [menu, setMenu] = useState<MenuKey>('overview');
+  const [routeHash, setRouteHash] = useState(() => window.location.hash);
   const [sidebar, setSidebar] = useState(() => window.innerWidth >= 900);
   const [employees, setEmployees] = useState<Karyawan[]>([]);
   const [pendingRegistrationIds, setPendingRegistrationIds] = useState<Set<string>>(new Set());
@@ -1143,6 +1144,7 @@ export default function DashboardAdmin() {
 
   useEffect(() => {
     const read = () => {
+      setRouteHash(location.hash);
       const raw = location.hash.replace(/^#\//, '');
       const parts = raw.split('/').filter(Boolean);
       const candidate = parts[0] as MenuKey;
@@ -1358,9 +1360,17 @@ export default function DashboardAdmin() {
   }
 
   const payroll = employees.reduce((s, k) => s + Number(k.gaji_pokok || 0), 0);
-  const activeLabel = isWebReferenceSidebar
-    ? sidebarSections.flatMap((section) => section.items).find((item) => item[0] === menu)?.[1] || t('dashboard')
-    : menuGroups.flatMap((group) => group.items).find((item) => item[0] === menu)?.[1] || t('overview');
+
+  const routeKey = (routeHash.replace(/^#\//, '').split('/').filter(Boolean)[0] || '') as MenuKey;
+  const routeLabel = isWebReferenceSidebar
+    ? sidebarSections.flatMap((section) => section.items).find((item) => item[0] === routeKey)?.[1]
+    : menuGroups.flatMap((group) => group.items).find((item) => item[0] === routeKey)?.[1];
+
+  const menuLabel = isWebReferenceSidebar
+    ? sidebarSections.flatMap((section) => section.items).find((item) => item[0] === menu)?.[1]
+    : menuGroups.flatMap((group) => group.items).find((item) => item[0] === menu)?.[1];
+
+  const activeLabel = routeLabel || menuLabel || t('dashboard');
   
   const exportCsv = (rows: Record<string, unknown>[], filename: string, columns?: string[]) => {
     if (!rows.length) { setToast(t("no_data_export")); return; }
@@ -2338,30 +2348,21 @@ function NewEmployees({data,onRefresh}:{data:Karyawan[];onRefresh:()=>void}) {
       }
     }
 
-    const { data: request, error: requestError } = await supabase
-      .from('hris_approval_requests')
-      .select('id')
-      .eq('modul','employee_registration')
-      .eq('record_id', String(selected.id_karyawan || '').trim())
-      .eq('status','Menunggu')
-      .order('created_at',{ascending:false})
-      .limit(1)
-      .maybeSingle();
+    const { data: decisionResult, error: decisionError } =
+      await supabase.functions.invoke('approve-employee-registration', {
+        body: {
+          employee_id: String(selected.id_karyawan || '').trim(),
+          decision,
+          catatan,
+        },
+      });
 
-    if(requestError || !request?.id){
-      await appAlert(requestError?.message || 'Approval registrasi karyawan tidak ditemukan. Jalankan patch Supabase V61 terlebih dahulu.');
-      setBusy(false);
-      return;
-    }
-
-    const { error: decisionError } = await supabase.rpc('hris_decide_approval', {
-      p_id: request.id,
-      p_status: decision === 'Terima' ? 'Disetujui' : 'Ditolak',
-      p_catatan: catatan,
-    });
-
-    if(decisionError){
-      await appAlert(decisionError.message || 'Gagal memproses persetujuan registrasi.');
+    if(decisionError || !decisionResult?.ok){
+      await appAlert(
+        decisionResult?.error ||
+        decisionError?.message ||
+        'Gagal memproses persetujuan registrasi.'
+      );
       setBusy(false);
       return;
     }
