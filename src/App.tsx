@@ -729,7 +729,7 @@ function LoginScreen({
 
   return (
     <main
-      className={`unified-login-page${IS_ANDROID_APP ? ' pt-cosmic-auth' : ' pt-web-cosmic-auth modal-overlay home-inline-login-page'}`}
+      className={`unified-login-page${IS_ANDROID_APP ? ' pt-cosmic-auth' : ' pt-web-home-login'}`}
       onMouseDown={e =>
 { if (e.target === e.currentTarget) onClose(); }}
     >

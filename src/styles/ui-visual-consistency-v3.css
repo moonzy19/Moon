@@ -1302,3 +1302,93 @@ html[data-platform="web"] .public-home *::after {
   }
 }
 
+
+
+/* =========================================================
+   FINAL WEB SCROLL + INLINE LOGIN FIX
+   Web must scroll naturally. The home login is an inline card,
+   not a fixed modal. Android rules remain untouched.
+   ========================================================= */
+
+html[data-platform="web"],
+html[data-platform="web"] body,
+html[data-platform="web"] #root {
+  height: auto !important;
+  min-height: 100% !important;
+  max-height: none !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: auto !important;
+}
+
+html[data-platform="web"] .app-root {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 100dvh !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+html[data-platform="web"] .public-home {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 100dvh !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+/* Inline login card on the landing page */
+html[data-platform="web"] .pt-web-home-login {
+  position: static !important;
+  inset: auto !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: block !important;
+  overflow: visible !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  pointer-events: auto !important;
+  z-index: auto !important;
+}
+
+html[data-platform="web"] body .pt-web-home-login .unified-login-card {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  width: min(415px, calc(100vw - 30px)) !important;
+  max-width: 100% !important;
+  max-height: none !important;
+  margin: 0 auto !important;
+  overflow: visible !important;
+}
+
+/* Feature cards belong to the document flow, not a fixed viewport layer. */
+html[data-platform="web"] .public-features {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: min(1180px, 100%) !important;
+  margin: 0 auto 28px !important;
+  z-index: 5 !important;
+}
+
+/* Mobile must also remain scrollable. */
+@media (max-width: 620px) {
+  html[data-platform="web"] .public-home {
+    height: auto !important;
+    min-height: 100dvh !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}
