@@ -1043,6 +1043,343 @@ html[data-cosmic-theme] #root:has(.pt-cosmic-register) {
   }
 }
 
+
+    /* ANDROID PORTAL NO-CLIP / SAFE-AREA FINAL */
+    @media (max-width: 899px) {
+      html, body, #root, .app-root, .employee-portal-cosmic {
+        box-sizing: border-box !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+      }
+      *, *::before, *::after {
+        box-sizing: border-box !important;
+        min-width: 0;
+      }
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow-x: hidden !important;
+      }
+      body { overscroll-behavior-x: none !important; }
+      .employee-portal-cosmic {
+        min-height: 100dvh !important;
+        overflow-x: hidden !important;
+        overflow-y: visible !important;
+      }
+      .employee-portal-cosmic .employee-page {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: max(14px, env(safe-area-inset-top)) 14px calc(112px + env(safe-area-inset-bottom)) 14px !important;
+        overflow: visible !important;
+      }
+      .employee-portal-cosmic h1,
+      .employee-portal-cosmic h2,
+      .employee-portal-cosmic h3,
+      .employee-portal-cosmic p,
+      .employee-portal-cosmic span,
+      .employee-portal-cosmic b,
+      .employee-portal-cosmic strong,
+      .employee-portal-cosmic small,
+      .employee-portal-cosmic label,
+      .employee-portal-cosmic button,
+      .employee-portal-cosmic a {
+        max-width: 100% !important;
+        overflow-wrap: anywhere !important;
+      }
+      .employee-portal-cosmic img,
+      .employee-portal-cosmic video,
+      .employee-portal-cosmic canvas,
+      .employee-portal-cosmic svg {
+        max-width: 100% !important;
+      }
+      .employee-portal-cosmic .card-title,
+      .employee-portal-cosmic .pt-attendance-top,
+      .employee-portal-cosmic .pt-job-card-top {
+        min-width: 0 !important;
+        flex-wrap: wrap !important;
+      }
+      .employee-portal-cosmic .card-title > div,
+      .employee-portal-cosmic .pt-attendance-top > div,
+      .employee-portal-cosmic .pt-job-card-top > div {
+        min-width: 0 !important;
+        flex: 1 1 0 !important;
+      }
+      .employee-portal-cosmic .status-badge {
+        max-width: 100% !important;
+        white-space: normal !important;
+        text-align: center !important;
+        line-height: 1.25 !important;
+      }
+      .employee-portal-cosmic .portal-grid,
+      .employee-portal-cosmic .payslip-grid,
+      .employee-portal-cosmic .attendance-grid,
+      .employee-portal-cosmic .pt-page-grid,
+      .employee-portal-cosmic .pt-bpjs-list {
+        grid-template-columns: minmax(0, 1fr) !important;
+        width: 100% !important;
+      }
+      .employee-portal-cosmic .form-two { grid-template-columns: minmax(0, 1fr) !important; }
+      .employee-portal-cosmic .employee-form,
+      .employee-portal-cosmic .employee-form > *,
+      .employee-portal-cosmic .pt-page-card,
+      .employee-portal-cosmic .portal-card,
+      .employee-portal-cosmic .info-card,
+      .employee-portal-cosmic .payslip-card,
+      .employee-portal-cosmic .table-card,
+      .employee-portal-cosmic .pt-bpjs-page,
+      .employee-portal-cosmic .pt-help-page {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+      }
+      .employee-portal-cosmic input,
+      .employee-portal-cosmic select,
+      .employee-portal-cosmic textarea {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+      }
+      .employee-portal-cosmic .attendance-actions {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+        width: 100% !important;
+      }
+      .employee-portal-cosmic .attendance-actions > button {
+        width: 100% !important;
+        max-width: none !important;
+        min-height: 44px !important;
+      }
+      .employee-portal-cosmic .pt-security-line {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+      }
+      .employee-portal-cosmic .pt-camera-frame,
+      .employee-portal-cosmic .camera-frame {
+        width: 100% !important;
+        height: min(72vw, 360px) !important;
+        max-height: 42vh !important;
+        overflow: hidden !important;
+        border-radius: 14px !important;
+      }
+      .employee-portal-cosmic .pt-camera-frame video,
+      .employee-portal-cosmic .camera-frame video {
+        width: 100% !important;
+        height: 100% !important;
+        max-width: none !important;
+        object-fit: cover !important;
+        display: block !important;
+      }
+      .employee-portal-cosmic .selfie-preview {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+        text-align: center !important;
+      }
+      .employee-portal-cosmic .selfie-preview img {
+        width: min(100%, 360px) !important;
+        height: auto !important;
+        max-height: 42vh !important;
+        object-fit: contain !important;
+        display: block !important;
+        margin: 0 auto !important;
+      }
+      .employee-portal-cosmic .pt-attendance-history-row,
+      .employee-portal-cosmic .pt-attendance-history-times,
+      .employee-portal-cosmic .pt-attendance-history-date {
+        min-width: 0 !important;
+      }
+      .employee-portal-cosmic .pt-attendance-history-times {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+      }
+      .employee-portal-cosmic .pt-job-card-top > span,
+      .employee-portal-cosmic .pt-job-code,
+      .employee-portal-cosmic .pt-job-card p,
+      .employee-portal-cosmic .pt-job-requirements,
+      .employee-portal-cosmic .pt-job-requirements div,
+      .employee-portal-cosmic .pt-help-answer p,
+      .employee-portal-cosmic .pt-human-help,
+      .employee-portal-cosmic .pt-bpjs-item {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        overflow-wrap: anywhere !important;
+      }
+      .employee-portal-cosmic .pt-job-meta {
+        grid-template-columns: minmax(0, 1fr) !important;
+      }
+      .employee-portal-cosmic .pt-bpjs-preview {
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
+        max-height: 46vh !important;
+        object-fit: contain !important;
+      }
+      .employee-portal-cosmic table {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+      }
+      .employee-portal-cosmic pre {
+        max-width: 100% !important;
+        overflow: auto !important;
+        white-space: pre-wrap !important;
+      }
+      .employee-portal-cosmic .pt-bottom-nav {
+        position: fixed !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-height: 68px !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 7px 8px calc(7px + env(safe-area-inset-bottom)) 8px !important;
+        display: grid !important;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        align-items: stretch !important;
+        gap: 6px !important;
+        box-sizing: border-box !important;
+        z-index: 1000 !important;
+        overflow: hidden !important;
+      }
+      .employee-portal-cosmic .pt-bottom-nav button {
+        width: 100% !important;
+        max-width: none !important;
+        min-width: 0 !important;
+        min-height: 54px !important;
+        height: auto !important;
+        padding: 4px 2px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex-direction: column !important;
+        gap: 3px !important;
+        white-space: normal !important;
+        overflow: hidden !important;
+        line-height: 1.15 !important;
+      }
+      .employee-portal-cosmic .pt-bottom-nav button > * {
+        min-width: 0 !important;
+        max-width: 100% !important;
+      }
+      .employee-portal-cosmic .pt-bottom-nav button small {
+        font-size: clamp(8px, 2.2vw, 10px) !important;
+        line-height: 1.15 !important;
+        text-align: center !important;
+      }
+    }
+    @media (max-width: 360px) {
+      .employee-portal-cosmic .employee-page {
+        padding-left: 11px !important;
+        padding-right: 11px !important;
+        padding-bottom: calc(112px + env(safe-area-inset-bottom)) !important;
+      }
+      .employee-portal-cosmic .attendance-actions,
+      .employee-portal-cosmic .pt-security-line,
+      .employee-portal-cosmic .pt-attendance-history-times {
+        grid-template-columns: minmax(0, 1fr) !important;
+      }
+      .employee-portal-cosmic .pt-bottom-nav {
+        gap: 3px !important;
+        padding-left: 5px !important;
+        padding-right: 5px !important;
+      }
+      .employee-portal-cosmic .pt-bottom-nav button { min-height: 52px !important; }
+    }
+    @media (max-width: 899px) and (orientation: landscape) {
+      .employee-portal-cosmic .employee-page {
+        padding-bottom: calc(86px + env(safe-area-inset-bottom)) !important;
+      }
+      .employee-portal-cosmic .pt-bottom-nav {
+        min-height: 58px !important;
+        padding-top: 4px !important;
+        padding-bottom: calc(4px + env(safe-area-inset-bottom)) !important;
+      }
+      .employee-portal-cosmic .pt-bottom-nav button { min-height: 46px !important; }
+      .employee-portal-cosmic .pt-bottom-nav button small { font-size: 8px !important; }
+    }
+
+/* ANDROID PORTAL BOTTOM NAV HORIZONTAL FINAL */
+@media (max-width:899px){
+  .employee-portal-cosmic.pt-android-cosmic-active .pt-bottom-nav{
+    left: 6px;
+    right: 6px;
+    width: calc(100% - 12px);
+    max-width: none;
+    min-width: 0;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 2px !important;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .employee-portal-cosmic.pt-android-cosmic-active .pt-bottom-nav > button{
+    width: 100%;
+    max-width: 100%;
+    min-width: 0 !important;
+    flex: 1 1 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    margin: 0;
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+
+  .employee-portal-cosmic.pt-android-cosmic-active .pt-bottom-nav > button svg{
+    width: 20px;
+    height: 20px;
+    max-width: 20px;
+    flex: 0 0 20px;
+  }
+
+  .employee-portal-cosmic.pt-android-cosmic-active .pt-bottom-nav > button span{
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    text-align: center;
+    line-height: 1.05;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  @media (max-width:360px){
+    .employee-portal-cosmic.pt-android-cosmic-active .pt-bottom-nav{
+      left: 4px;
+      right: 4px;
+      width: calc(100% - 8px);
+      gap: 1px !important;
+    }
+
+    .employee-portal-cosmic.pt-android-cosmic-active .pt-bottom-nav > button{
+      padding-left: 1px;
+      padding-right: 1px;
+    }
+
+    .employee-portal-cosmic.pt-android-cosmic-active .pt-bottom-nav > button svg{
+      width: 18px;
+      height: 18px;
+      max-width: 18px;
+      flex-basis: 18px;
+    }
+
+    .employee-portal-cosmic.pt-android-cosmic-active .pt-bottom-nav > button span{
+      font-size: 0.72rem;
+    }
+  }
+}
+
 `;
 
   document.head.appendChild(style);
