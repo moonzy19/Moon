@@ -49,3 +49,60 @@ html[data-cosmic-theme="nebula"] .pt-idcard-visual{background:linear-gradient(13
     content: none !important;
   }
 }
+
+
+/* PROJECT-TIRTA-ANDROID-IDCARD-TRANSPARENT-V3 */
+@media (max-width: 899px) {
+  /* Remove every outer strip/wrapper behind the ID Card page. */
+  .employee-page:has(.pt-idcard-page-v10),
+  .employee-page:has(.pt-idcard-page-v10) > section,
+  .employee-page:has(.pt-idcard-page-v10) .pt-idcard-page-v10,
+  .employee-page:has(.pt-idcard-page-v10) .pt-idcard-head-v10,
+  .employee-page:has(.pt-idcard-page-v10) .pt-idcard-shell-v10,
+  .employee-page:has(.pt-idcard-page-v10) .pt-idcard-meta-v10,
+  .employee-page:has(.pt-idcard-page-v10) .pt-idcard-switch-v10,
+  .employee-page:has(.pt-idcard-page-v10) .pt-idcard-preview-v10 {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .employee-page:has(.pt-idcard-page-v10) {
+    padding-top: max(8px, env(safe-area-inset-top)) !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .pt-idcard-page-v10 {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 0 105px !important;
+  }
+
+  .pt-idcard-head-v10 {
+    padding: 0 0 8px !important;
+  }
+
+  .pt-idcard-meta-v10 {
+    margin: 6px 0 6px !important;
+    padding: 0 !important;
+  }
+
+  .pt-idcard-switch-v10 {
+    margin: 6px 0 !important;
+    padding: 0 !important;
+  }
+
+  .pt-idcard-preview-v10 {
+    padding: 8px 0 !important;
+  }
+
+  .pt-idcard-preview-v10 svg {
+    filter: drop-shadow(0 10px 22px rgba(0,0,0,.30)) !important;
+  }
+}
