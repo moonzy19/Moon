@@ -1787,7 +1787,6 @@ export default function DashboardAdmin() {
             priority: draft.priority,
             audience: draft.audience,
             pinned: draft.pinned,
-            publish_at: draft.publishAt || null,
             expires_at: draft.expiresAt || null,
             attachment_count: 0,
             created_by: authData.user?.id || null,
