@@ -165,12 +165,34 @@ export default function PortalKaryawan({onLogout}:{onLogout?:()=>void}){
  const [offlinePending,setOfflinePending]=useState(0);
  const [bpjsUrls,setBpjsUrls]=useState({kesehatan:'',ketenagakerjaan:''});
  const [bpjsLoading,setBpjsLoading]=useState(false);
+/* BPJS_REFRESH_ON_OPEN */
+ useEffect(()=>{
+  if(tab!=='bpjs') return;
+  let active=true;
+  const refreshEmployeeForBpjs=async()=>{
+   try{
+    const {data:{user:u}}=await supabase.auth.getUser();
+    if(!u||!active)return;
+    const {data}=await supabase.from('karyawan')
+      .select('id,id_karyawan,nama,email,jabatan,departemen,status_karyawan,status_aktif,tanggal_masuk,tanggal_lahir,foto_url,bpjs_kesehatan,bpjs_ketenagakerjaan,bpjs_kesehatan_card_path,bpjs_ketenagakerjaan_card_path')
+      .eq('auth_user_id',u.id)
+      .maybeSingle();
+    if(active&&data)setEmployee(data as Employee);
+   }catch{}
+  };
+  void refreshEmployeeForBpjs();
+ },[tab]);
+
  const [helpQuestion,setHelpQuestion]=useState('');
  const [helpAnswer,setHelpAnswer]=useState('');
  const [helpLoading,setHelpLoading]=useState(false);
  const [callCenter,setCallCenter]=useState('');
 
  const getGeo=()=>{setGeoLoading(true);setError('');if(!navigator.geolocation){setGeoLoading(false);setError(t('portal_browser_no_gps'));return}navigator.geolocation.getCurrentPosition(p=>{if(!Number.isFinite(p.coords.accuracy)||p.coords.accuracy>100){setGeo(null);setGeoLoading(false);setError(t('portal_gps_low_accuracy').replace('{meters}',String(Math.round(p.coords.accuracy||999))));return}setGeo({lat:p.coords.latitude,lng:p.coords.longitude,accuracy:p.coords.accuracy});setGeoLoading(false)},e=>{setGeoLoading(false);setError(e.message||t('portal_location_unavailable'))},{enableHighAccuracy:true,timeout:12000,maximumAge:30000})};
+ useEffect(()=>{
+  if(tab!=='home'||!employee||geo||geoLoading)return;
+  getGeo();
+ },[tab,employee?.id_karyawan]);
  const stopCamera=(resetState=true)=>{
   const stream=streamRef.current;
   streamRef.current=null;
@@ -487,7 +509,7 @@ const canClockOut=!!todayAtt?.jam_masuk&&!todayAtt?.jam_pulang;
  if(employee.status_aktif===false)return <div className="employee-login"><div className="employee-login-card"><div className="employee-logo">M</div><div className="login-copy"><span className="portal-eyebrow">{t('portal_account_status')}</span><h2>{t('portal_waiting_verification')}</h2><p>{t('portal_waiting_verification_desc')}</p></div><button className="portal-secondary" onClick={logout}>{t('logout')}</button></div></div>;
  return <div className={`employee-portal employee-portal-cosmic pt-cosmic-shell pt-android-cosmic-active${tab==='home'?' pt-home-active':''}`}>
   <AndroidCosmicBackground />
-  <main className="employee-page">
+  <main className={`employee-page ${tab==='idcard'?'pt-idcard-active-page':''}`}>
    {notice&&<div className="portal-info pt-text-notice">{notice}<button className="portal-link" onClick={()=>setNotice('')}>{t('close')}</button></div>}
    {error&&<div className="portal-error pt-text-notice">{error}<button className="portal-link" onClick={()=>setError('')}>{t('close')}</button></div>}
 
@@ -500,11 +522,24 @@ const canClockOut=!!todayAtt?.jam_masuk&&!todayAtt?.jam_pulang;
     <section className="portal-card pt-attendance-main pt-safe-attendance-card">
      <div className="pt-attendance-top"><div><span className="card-kicker">{t('attendance_today')}</span><h2>{t('portal_work_duration')}</h2><p>{new Intl.DateTimeFormat(locale,{dateStyle:'full'}).format(new Date())}</p></div></div>
      <div className="pt-work-duration"><strong>{formatWorkDuration(liveWorkSeconds)}</strong><div className="pt-work-progress" aria-label={t('portal_work_duration')}><span style={{width:`${Math.round(workProgress*100)}%`}}/></div><div className="pt-work-duration-meta"><span>{todayAtt?.jam_masuk||'--:--'} → {todayAtt?.jam_pulang||'--:--'}</span><b>{Math.round(workProgress*100)}%</b></div></div>
+     <div className="pt-home-coordinates">
+      <span>{t('portal_coordinates')}</span>
+      <b>
+       {geo
+        ? `${geo.lat.toFixed(6)}, ${geo.lng.toFixed(6)}`
+        : (todayAtt?.latitude!=null && todayAtt?.longitude!=null
+          ? `${Number(todayAtt.latitude).toFixed(6)}, ${Number(todayAtt.longitude).toFixed(6)}`
+          : geoLoading
+            ? t('portal_getting_gps')
+            : t('portal_location_missing'))}
+      </b>
+      {geo&&<small>{t('portal_gps_accuracy').replace('{meters}',String(Math.round(geo.accuracy)))}</small>}
+     </div>
      <div className="pt-security-line"><span>{geo?t('portal_location_ready'):t('portal_location_missing')}</span><span>{selfie?t('portal_selfie_ready'):t('portal_selfie_missing')}</span></div>
      {cameraOn&&<div className="camera-frame pt-camera-frame"><video ref={videoRef} autoPlay playsInline muted/><div className="camera-overlay">{cameraReady?t('portal_center_face'):t('portal_camera_preview')}</div></div>}
      {cameraError&&<div className="portal-error compact">{cameraError}</div>}
      {selfie&&<div className="selfie-preview"><img src={selfie} alt={t('portal_take_selfie')}/><button className="portal-link" type="button" onClick={()=>setSelfie('')}>{t('portal_retake')}</button></div>}
-     <div className="attendance-actions pt-home-attendance-actions"><button className="portal-secondary" type="button" onClick={()=>cameraOn?takeSelfie():startCamera()} disabled={cameraOn&&!cameraReady}>{cameraOn?(cameraReady?t('portal_take_selfie'):t('portal_camera_prepare')):t('portal_open_camera')}</button><button className="portal-secondary" type="button" onClick={getGeo} disabled={geoLoading}>{geoLoading?t('portal_getting_gps'):geo?t('portal_gps_accuracy').replace('{meters}',String(Math.round(geo.accuracy))):t('portal_get_gps')}</button></div>
+     <div className="attendance-actions pt-home-attendance-actions"><button className="portal-secondary" type="button" onClick={()=>cameraOn?takeSelfie():startCamera()} disabled={cameraOn&&!cameraReady}>{cameraOn?(cameraReady?t('portal_take_selfie'):t('portal_camera_prepare')):t('portal_take_photo')}</button><button className="portal-secondary" type="button" onClick={getGeo} disabled={geoLoading}>{geoLoading?t('portal_getting_gps'):geo?t('portal_gps_accuracy').replace('{meters}',String(Math.round(geo.accuracy))):t('portal_get_gps')}</button></div>
      <div className="attendance-actions pt-home-attendance-actions"><button className="portal-primary" disabled={clockBusy||!canClockIn} onClick={clockIn}>{clockBusy?t('portal_processing'):t('check_in')}</button><button className="portal-primary" disabled={clockBusy||!canClockOut} onClick={clockOut}>{clockBusy?t('portal_processing'):t('check_out')}</button></div>
     </section>
     <section className="pt-feature-section pt-home-menu-section"><div className="pt-section-heading pt-heading-plain"><div><h2>{t('portal_my_services')}</h2>{offlinePending>0&&<small className="pt-offline-pending">{offlinePending} absensi menunggu sinkronisasi</small>}</div></div>{menuGrid(true)}</section>

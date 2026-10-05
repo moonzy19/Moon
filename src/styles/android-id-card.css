@@ -16,3 +16,36 @@ html[data-cosmic-theme="nebula"] .pt-idcard-visual{background:linear-gradient(13
 .pt-idcard-bottom{min-height:14%;padding:10px 22px;border-top:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:9px;opacity:.82}.pt-idcard-bottom b{font-size:10px;letter-spacing:.7px}
 .pt-idcard-actions{display:flex;gap:10px;margin-top:14px}.pt-idcard-actions button{flex:1;min-height:44px}
 @media(max-width:600px){.pt-idcard-main{grid-template-columns:98px 1fr;gap:13px;padding:13px}.pt-idcard-photo{min-height:150px}.pt-idcard-photo>div{width:62px;height:62px;font-size:27px}.pt-idcard-data strong{font-size:14px}.pt-idcard-data span{font-size:10px}.pt-idcard-band{padding:14px}.pt-idcard-band strong{font-size:16px}.pt-idcard-bottom{padding:8px 13px;font-size:8px}}
+
+
+/* PROJECT-TIRTA-ANDROID-IDCARD-FLAT-WRAPPER-V2 */
+@media (max-width: 899px) {
+  html[data-platform="android"] .pt-idcard-active-page,
+  body .pt-idcard-active-page {
+    background: transparent !important;
+    background-image: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  html[data-platform="android"] .pt-idcard-active-page > .pt-idcard-page-v10,
+  body .pt-idcard-active-page > .pt-idcard-page-v10,
+  .pt-idcard-page-v10,
+  .pt-idcard-page-v10 .pt-idcard-shell-v10 {
+    background: transparent !important;
+    background-image: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .pt-idcard-page-v10::before,
+  .pt-idcard-page-v10::after,
+  .pt-idcard-active-page::before,
+  .pt-idcard-active-page::after {
+    display: none !important;
+    content: none !important;
+  }
+}

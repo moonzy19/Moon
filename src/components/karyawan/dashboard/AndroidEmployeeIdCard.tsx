@@ -115,11 +115,19 @@ export default function AndroidEmployeeIdCard({employee}:{employee:Employee}){
     let active=true;
     const loadToken=async()=>{
       setToken('');
-      // Employee accounts cannot create admin tokens. Reuse an existing,
-      // non-revoked token when RLS permits it; otherwise the back stays in
-      // the secure QR placeholder state instead of exposing personal data.
       try{
-        const r=await supabase.from('hris_id_card_tokens').select('token').eq('id_karyawan',employee.id_karyawan).is('revoked_at',null).maybeSingle();
+        const own=await supabase.rpc('ensure_id_card_verification_token',{
+          p_id_karyawan:employee.id_karyawan
+        });
+        if(active&&own.data){
+          setToken(String(own.data));
+          return;
+        }
+        const r=await supabase.from('hris_id_card_tokens')
+          .select('token')
+          .eq('id_karyawan',employee.id_karyawan)
+          .is('revoked_at',null)
+          .maybeSingle();
         if(active&&r.data?.token)setToken(String(r.data.token));
       }catch{}
     };
