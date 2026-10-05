@@ -1,5 +1,6 @@
 import moonLogo from '../../assets/moon-logo.png';
 import { useTranslation } from '../../locales/LanguageContext';
+import '../../styles/web-reference.css';
 
 interface HomeProps {
   onMasuk: () => void;
