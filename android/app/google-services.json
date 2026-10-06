@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "764583095228",
+    "project_id": "project-by-tirta",
+    "storage_bucket": "project-by-tirta.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:764583095228:android:dbb155fd52e2fba23b99b9",
+        "android_client_info": {
+          "package_name": "com.projectbytira.bernadya"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD9HoYPauYA3suBYynpcuomPUnMmyPa4tE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

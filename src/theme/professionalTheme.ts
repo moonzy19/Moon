@@ -4650,6 +4650,404 @@ html[data-cosmic-theme="nebula"] .pt-cosmic-shell .pt-attendance-history-row { b
     centerFix.id = "tirta-loading-center-v57-11";
     centerFix.textContent = `\n/* LOADING CENTER FIX V57.11 */\n\n.app-loading-screen,\n.employee-loading-screen,\n.login-wrap:has(.loading) {\n  position: fixed ;\n  inset: 0 ;\n  width: 100vw ;\n  height: 100dvh ;\n  display: block ;\n  margin: 0 ;\n  padding: 0 ;\n  overflow: hidden ;\n  background: #030710 ;\n}\n\n.app-loading-card,\n.employee-loading-card,\n.login-wrap:has(.loading) .login-card {\n  position: static ;\n  width: 100% ;\n  height: 100% ;\n  min-width: 0 ;\n  min-height: 0 ;\n  margin: 0 ;\n  padding: 0 ;\n  display: block ;\n  background: transparent ;\n  border: 0 ;\n  box-shadow: none ;\n}\n\n.app-loading-brand,\n.employee-loading-logo {\n  position: fixed ;\n  left: 50% ;\n  top: 50% ;\n  width: 78px ;\n  height: 78px ;\n  min-width: 0 ;\n  min-height: 0 ;\n  margin: 0 ;\n  padding: 0 ;\n  display: block ;\n  transform: translate(-50%, -50%) ;\n  background: transparent ;\n  border: 0 ;\n  box-shadow: none ;\n}\n\n.app-loading-brand img,\n.employee-loading-logo img,\n.app-loading-logo {\n  position: static ;\n  left: auto ;\n  top: auto ;\n  width: 78px ;\n  height: 78px ;\n  min-width: 78px ;\n  min-height: 78px ;\n  margin: 0 ;\n  padding: 0 ;\n  display: block ;\n  object-fit: contain ;\n  transform: none ;\n  animation: tirta-logo-center-pulse 1.7s ease-in-out infinite ;\n  filter: drop-shadow(0 0 14px rgba(214,174,88,.38)) ;\n}\n\n.login-wrap:has(.loading) .login-card .loading {\n  position: fixed ;\n  left: 50% ;\n  top: 50% ;\n  width: 78px ;\n  height: 78px ;\n  min-width: 78px ;\n  min-height: 78px ;\n  margin: 0 ;\n  padding: 0 ;\n  display: block ;\n  transform: translate(-50%, -50%) ;\n  background: transparent ;\n  border: 0 ;\n  box-shadow: none ;\n  color: transparent ;\n  font-size: 0 ;\n}\n\n.login-wrap:has(.loading) .login-card .loading::before {\n  content: "" ;\n  width: 78px ;\n  height: 78px ;\n  display: block ;\n  margin: 0 ;\n  background: var(--pt-company-logo) center / contain no-repeat ;\n  filter: drop-shadow(0 0 14px rgba(214,174,88,.38)) ;\n  animation: tirta-logo-center-pulse 1.7s ease-in-out infinite ;\n}\n\n@keyframes tirta-logo-center-pulse {\n  0%, 100% {\n    scale: .92;\n    opacity: .72;\n  }\n  50% {\n    scale: 1.08;\n    opacity: 1;\n  }\n}\n\n.app-loading-copy,\n.employee-loading-copy,\n.app-loading-indicator,\n.employee-loading-bar,\n.employee-loading-skeletons {\n  display: none ;\n}\n`;
     document.head.appendChild(centerFix);
+
+    const publicVerifyV2 = document.createElement('style');
+    publicVerifyV2.id = 'project-by-tirta-public-verify-v2';
+    publicVerifyV2.textContent = `
+      /* PROJECT BY TIRTA — PUBLIC VERIFY V2 CLEAN UI
+         Scoped ONLY to the public ID-card verification page. */
+
+      html:has(.verify-id-page),
+      body:has(.verify-id-page),
+      #root:has(.verify-id-page) {
+        background: #050a14 !important;
+      }
+
+      .verify-id-page {
+        position: relative !important;
+        isolation: isolate !important;
+        width: 100% !important;
+        min-height: 100dvh !important;
+        box-sizing: border-box !important;
+        display: flex !important;
+        align-items: flex-start !important;
+        justify-content: center !important;
+        padding: 34px 16px 28px !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        background-color: #050a14 !important;
+        background-image:
+          radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--pt-accent-2,#5b8cff) 16%, transparent), transparent 30%),
+          radial-gradient(circle at 88% 86%, color-mix(in srgb, var(--pt-accent,#d6ae58) 13%, transparent), transparent 34%),
+          linear-gradient(160deg, #0b1425 0%, #050a14 58%, #02050c 100%) !important;
+        color: #edf3fb !important;
+      }
+
+      .verify-id-page *,
+      .verify-id-page *::before,
+      .verify-id-page *::after {
+        box-sizing: border-box !important;
+      }
+
+      .verify-id-shell {
+        position: relative !important;
+        z-index: 2 !important;
+        width: min(720px, 100%) !important;
+        margin: 0 auto !important;
+      }
+
+      .verify-id-brand {
+        width: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        margin: 0 0 14px !important;
+        padding: 0 4px !important;
+      }
+
+      .verify-id-brand img {
+        flex: 0 0 44px !important;
+        width: 44px !important;
+        height: 44px !important;
+        min-width: 44px !important;
+        min-height: 44px !important;
+        max-width: 44px !important;
+        max-height: 44px !important;
+        display: block !important;
+        object-fit: contain !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        filter: drop-shadow(0 0 10px color-mix(in srgb, var(--pt-accent,#d6ae58) 35%, transparent)) !important;
+      }
+
+      .verify-id-brand > div {
+        min-width: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        justify-content: center !important;
+        gap: 3px !important;
+      }
+
+      .verify-id-brand strong {
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        color: #ffffff !important;
+        font-size: clamp(16px, 4vw, 20px) !important;
+        line-height: 1.15 !important;
+        font-weight: 850 !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere !important;
+      }
+
+      .verify-id-brand span {
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        color: #9eacc0 !important;
+        font-size: 12px !important;
+        line-height: 1.35 !important;
+        white-space: normal !important;
+      }
+
+      .verify-id-card {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 22px !important;
+        border: 1px solid rgba(214,174,88,.38) !important;
+        border-radius: 22px !important;
+        background: #0a1323 !important;
+        background-image: linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,0)) !important;
+        box-shadow: 0 24px 70px rgba(0,0,0,.42) !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+      }
+
+      .verify-id-status {
+        width: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        min-height: 64px !important;
+        margin: 0 !important;
+        padding: 12px 14px !important;
+        border: 1px solid rgba(255,255,255,.08) !important;
+        border-radius: 15px !important;
+        background: #101b2e !important;
+      }
+
+      .verify-id-status-icon {
+        flex: 0 0 40px !important;
+        width: 40px !important;
+        height: 40px !important;
+        border-radius: 12px !important;
+        display: grid !important;
+        place-items: center !important;
+        margin: 0 !important;
+      }
+
+      .verify-id-status > div {
+        min-width: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 3px !important;
+      }
+
+      .verify-id-status small {
+        display: block !important;
+        margin: 0 !important;
+        color: #91a0b4 !important;
+        font-size: 10px !important;
+        line-height: 1.25 !important;
+        letter-spacing: .10em !important;
+        text-transform: uppercase !important;
+      }
+
+      .verify-id-status h1 {
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        color: #ffffff !important;
+        font-size: clamp(18px, 5vw, 28px) !important;
+        line-height: 1.1 !important;
+        font-weight: 900 !important;
+        letter-spacing: .01em !important;
+        overflow-wrap: anywhere !important;
+      }
+
+      .verify-id-safe-badge {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        margin: 14px 0 !important;
+        padding: 10px 12px !important;
+        border: 1px solid rgba(91,232,184,.18) !important;
+        border-radius: 11px !important;
+        background: rgba(63,211,157,.07) !important;
+        color: #a1e9ce !important;
+        font-size: 11px !important;
+        line-height: 1.4 !important;
+      }
+
+      .verify-id-safe-badge span {
+        flex: 0 0 18px !important;
+        width: 18px !important;
+        height: 18px !important;
+        margin: 0 !important;
+        display: grid !important;
+        place-items: center !important;
+        border-radius: 50% !important;
+      }
+
+      .verify-id-details {
+        width: 100% !important;
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+        margin: 0 !important;
+      }
+
+      .verify-id-details > div {
+        width: 100% !important;
+        min-width: 0 !important;
+        display: block !important;
+        margin: 0 !important;
+        padding: 13px 14px !important;
+        border: 1px solid rgba(255,255,255,.07) !important;
+        border-radius: 13px !important;
+        background: #0d192b !important;
+      }
+
+      .verify-id-details small {
+        display: block !important;
+        margin: 0 0 6px !important;
+        padding: 0 !important;
+        color: #8290a4 !important;
+        font-size: 10px !important;
+        line-height: 1.2 !important;
+        font-weight: 700 !important;
+      }
+
+      .verify-id-details strong {
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        color: #f7f9fc !important;
+        font-size: 14px !important;
+        line-height: 1.35 !important;
+        font-weight: 800 !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere !important;
+        word-break: break-word !important;
+      }
+
+      .verify-id-details .status-active { color: #79e4bf !important; }
+      .verify-id-details .status-inactive { color: #ffb4a7 !important; }
+
+      .verify-id-checked {
+        width: 100% !important;
+        display: flex !important;
+        align-items: flex-start !important;
+        justify-content: space-between !important;
+        gap: 10px 16px !important;
+        flex-wrap: wrap !important;
+        margin: 12px 0 0 !important;
+        padding: 11px 12px !important;
+        border: 1px solid rgba(255,255,255,.06) !important;
+        border-radius: 11px !important;
+        background: rgba(255,255,255,.025) !important;
+        font-size: 11px !important;
+        line-height: 1.35 !important;
+      }
+
+      .verify-id-checked span { color: #8794a7 !important; }
+
+      .verify-id-checked strong {
+        color: #dfe7f2 !important;
+        font-weight: 750 !important;
+        overflow-wrap: anywhere !important;
+      }
+
+      .verify-id-security {
+        width: 100% !important;
+        margin: 12px 0 0 !important;
+        padding: 12px 13px !important;
+        border: 1px solid rgba(214,174,88,.18) !important;
+        border-radius: 11px !important;
+        background: rgba(214,174,88,.055) !important;
+        color: #b5c0cf !important;
+        font-size: 11px !important;
+        line-height: 1.55 !important;
+      }
+
+      .verify-id-error,
+      .verify-id-notfound-copy {
+        width: 100% !important;
+        margin: 14px 0 0 !important;
+        padding: 14px !important;
+        border-radius: 12px !important;
+      }
+
+      .verify-id-notfound-copy p {
+        display: block !important;
+        margin: 0 0 6px !important;
+        font-weight: 850 !important;
+        color: #ffd2d8 !important;
+      }
+
+      .verify-id-notfound-copy small {
+        display: block !important;
+        margin: 0 !important;
+        color: #aeb8c6 !important;
+        line-height: 1.55 !important;
+      }
+
+      .verify-id-home-button {
+        width: 100% !important;
+        min-height: 46px !important;
+        height: auto !important;
+        margin: 16px 0 0 !important;
+        padding: 11px 14px !important;
+        border: 1px solid var(--pt-accent,#d6ae58) !important;
+        border-radius: 12px !important;
+        background: #18253a !important;
+        color: #ffffff !important;
+        font-size: 13px !important;
+        line-height: 1.2 !important;
+        font-weight: 850 !important;
+        opacity: 1 !important;
+        box-shadow: none !important;
+      }
+
+      .verify-id-home-button:hover,
+      .verify-id-home-button:focus-visible {
+        background: #223453 !important;
+        color: #ffffff !important;
+        border-color: #f0d68c !important;
+        outline: none !important;
+      }
+
+      .verify-id-footer {
+        display: block !important;
+        margin: 11px 0 0 !important;
+        padding: 0 4px !important;
+        color: #718096 !important;
+        font-size: 10px !important;
+        line-height: 1.35 !important;
+        text-align: center !important;
+      }
+
+      .verify-id-page .verify-id-ambient-one,
+      .verify-id-page .verify-id-ambient-two {
+        display: block !important;
+        opacity: .24 !important;
+        filter: blur(1px) !important;
+      }
+
+      @media (max-width: 760px) {
+        .verify-id-page {
+          min-height: 100dvh !important;
+          align-items: flex-start !important;
+          padding: 18px 10px 22px !important;
+        }
+
+        .verify-id-shell { width: 100% !important; }
+
+        .verify-id-card {
+          padding: 15px !important;
+          border-radius: 18px !important;
+        }
+
+        .verify-id-status { padding: 11px 12px !important; }
+
+        .verify-id-status-icon {
+          flex-basis: 38px !important;
+          width: 38px !important;
+          height: 38px !important;
+        }
+
+        .verify-id-details {
+          grid-template-columns: 1fr !important;
+          gap: 8px !important;
+        }
+
+        .verify-id-details > div { padding: 11px 12px !important; }
+        .verify-id-details strong { font-size: 13px !important; }
+
+        .verify-id-brand {
+          margin-bottom: 11px !important;
+          padding: 0 3px !important;
+        }
+
+        .verify-id-brand img {
+          flex-basis: 40px !important;
+          width: 40px !important;
+          height: 40px !important;
+          min-width: 40px !important;
+          min-height: 40px !important;
+          max-width: 40px !important;
+          max-height: 40px !important;
+        }
+
+        .verify-id-brand strong { font-size: 16px !important; }
+        .verify-id-brand span { font-size: 10.5px !important; }
+        .verify-id-status h1 { font-size: 19px !important; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .verify-id-page .verify-id-ambient-one,
+        .verify-id-page .verify-id-ambient-two,
+        .verify-id-loading span {
+          animation: none !important;
+        }
+      }
+`;
+    document.head.appendChild(publicVerifyV2);
 }
 
 export function getCosmicTheme(): CosmicThemeId {

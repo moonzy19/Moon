@@ -1832,6 +1832,10 @@ export default function DashboardAdmin() {
         }
 
         if (data) {
+          const { error: pushError } = await supabase.functions.invoke('send-announcement-push', {
+            body: { announcementId: id },
+          });
+          if (pushError) console.warn('Notifikasi pengumuman Android belum terkirim:', pushError.message);
           const row = Array.isArray(data) ? data[0] : data;
           if (row) {
             setAnnouncements((prev) => prev.map((a) =>

@@ -31,13 +31,13 @@ export default function Home({ children }: { children?: ReactNode }) {
           <img src={moonLogo} alt="" />
           <div className="moon-caption"><b>PROJECT BY TIRTA</b><span>{t('home_employee_platform')}</span></div>
         </div>
-      </section>
 
-      {children && (
-        <section className="public-home-login" aria-label="Login">
-          {children}
-        </section>
-      )}
+        {children && (
+          <section className="public-home-login" aria-label="Login">
+            {children}
+          </section>
+        )}
+      </section>
 
       <section id="features" className="public-features">
         {[

@@ -2,6 +2,7 @@ import '../../../styles/android-id-card.css';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from '../../../locales/LanguageContext';
 import { supabase } from '../../../lib/supabase/client';
+import { notifyAndroidAttendance } from '../../../lib/androidNotifications';
 import { getEmployeePortalTheme, applyProjectTheme } from '../../../lib/userPreferences';
 import { cacheAttendance, cacheEmployee, countOfflineAttendance, enqueueOfflineAttendance, getCachedAttendance, getCachedEmployee, syncOfflineAttendance } from '../../../lib/androidOfflineAttendance';
 
@@ -49,6 +50,10 @@ const formatWorkDuration=(seconds:number)=>{
   const total=Math.max(0,Math.floor(seconds));
   const h=Math.floor(total/3600),m=Math.floor((total%3600)/60),s=total%60;
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+};
+const formatAttendanceCoordinate=(value:unknown)=>{
+  const n=Number(value);
+  return Number.isFinite(n)?n.toFixed(7):'--';
 };
 
 
@@ -344,6 +349,24 @@ export default function PortalKaryawan({onLogout}:{onLogout?:()=>void}){
    console.warn('Sinkronisasi absensi offline gagal:',e?.message||e);
   }
  };
+ const manualSyncOffline=async()=>{
+  if(!employee||!user)return;
+  if(typeof navigator!=='undefined'&&!navigator.onLine){
+   setError('Koneksi internet belum tersedia.');
+   return;
+  }
+  setError('');
+  setNotice('Menyinkronkan absensi...');
+  try{
+   await syncOfflineAttendance(user.id,employee.id_karyawan);
+   const pending=await countOfflineAttendance(user.id,employee.id_karyawan);
+   setOfflinePending(pending);
+   setNotice(pending?`${pending} absensi masih menunggu sinkronisasi.`:'Semua absensi offline sudah tersinkron.');
+   await load();
+  }catch(e:any){
+   setError(e?.message||'Sinkronisasi absensi gagal.');
+  }
+ };
 
  const load=async()=>{
   setLoading(true);setError('');
@@ -384,7 +407,7 @@ export default function PortalKaryawan({onLogout}:{onLogout?:()=>void}){
   if(!e){setLoading(false);return;}
 
   setEmployee(e as Employee);
-  await cacheEmployee(u.id,e as any);
+    await cacheEmployee(u.id,e as any);
   await syncPendingOffline(e.id_karyawan, u.id);
 
   const [a,l,b,p,j,o,ann]=await Promise.all([
@@ -431,10 +454,10 @@ export default function PortalKaryawan({onLogout}:{onLogout?:()=>void}){
   setClockBusy(true);setError('');
   const {error:e1}=await supabase.rpc('hris_ess_clock_in',{p_id_karyawan:employee.id_karyawan,p_tanggal:today(),p_jam:null,p_lat:geo?.lat,p_long:geo?.lng,p_accuracy:geo?.accuracy,p_selfie:selfie,p_lokasi:'GPS ESS'});
   if(e1&&typeof navigator!=='undefined'&&!navigator.onLine){
-   try{await queueAttendance('clock_in');setNotice('Check In tersimpan di antrean offline dan akan disinkronkan saat internet kembali.');setOfflinePending(await countOfflineAttendance(user?.id||'',employee.id_karyawan));setSelfie('');setGeo(null);}
+   try{await queueAttendance('clock_in');setNotice('Check In tersimpan di antrean offline dan akan disinkronkan saat internet kembali.');void notifyAndroidAttendance('Check In tersimpan',`Absensi ${employee.nama} tersimpan dan akan disinkronkan saat internet kembali.`);setOfflinePending(await countOfflineAttendance(user?.id||'',employee.id_karyawan));setSelfie('');setGeo(null);}
    catch(queueError:any){setError(queueError?.message||e1.message)}
   }else if(e1){setError(e1.message)}
-  else{setNotice(t('portal_clockin_success'));setSelfie('');setGeo(null);await load()}
+  else{setNotice(t('portal_clockin_success'));void notifyAndroidAttendance('Check In berhasil',`${employee.nama} berhasil Check In.`);setSelfie('');setGeo(null);await load()}
   setClockBusy(false);
  };
  const clockOut=async()=>{
@@ -442,10 +465,10 @@ export default function PortalKaryawan({onLogout}:{onLogout?:()=>void}){
   setClockBusy(true);setError('');
   const {error:e1}=await supabase.rpc('hris_ess_clock_out',{p_id_karyawan:employee.id_karyawan,p_tanggal:today(),p_jam:null,p_lat:geo?.lat,p_long:geo?.lng,p_accuracy:geo?.accuracy,p_selfie:selfie,p_lokasi:'GPS ESS'});
   if(e1&&typeof navigator!=='undefined'&&!navigator.onLine){
-   try{await queueAttendance('clock_out');setNotice('Check Out tersimpan di antrean offline dan akan disinkronkan saat internet kembali.');setOfflinePending(await countOfflineAttendance(user?.id||'',employee.id_karyawan));setSelfie('');setGeo(null);}
+   try{await queueAttendance('clock_out');setNotice('Check Out tersimpan di antrean offline dan akan disinkronkan saat internet kembali.');void notifyAndroidAttendance('Check Out tersimpan',`Absensi ${employee.nama} tersimpan dan akan disinkronkan saat internet kembali.`);setOfflinePending(await countOfflineAttendance(user?.id||'',employee.id_karyawan));setSelfie('');setGeo(null);}
    catch(queueError:any){setError(queueError?.message||e1.message)}
   }else if(e1){setError(e1.message)}
-  else{setNotice(t('portal_clockout_success'));setSelfie('');setGeo(null);await load()}
+  else{setNotice(t('portal_clockout_success'));void notifyAndroidAttendance('Check Out berhasil',`${employee.nama} berhasil Check Out.`);setSelfie('');setGeo(null);await load()}
   setClockBusy(false);
  };
  const todayDate=today();
@@ -560,7 +583,7 @@ const canClockOut = !!activeAttendance;
 
    {tab==='announcements'&&<EmployeeAnnouncementCenter announcements={announcements} onRead={async(id)=>{const {data:{user:u}}=await supabase.auth.getUser();if(!u)return;const {error:e1}=await supabase.from('hris_announcement_reads').upsert({announcement_id:id,user_id:u.id,read_at:new Date().toISOString()},{onConflict:'announcement_id,user_id'});if(e1){setError(e1.message);return}setAnnouncements(x=>x.map(a=>a.id===id?{...a,isRead:true}:a));setAnnouncementReadIds(x=>x.includes(id)?x:[...x,id])}}/>}
 
-   {tab==='attendance'&&<section className="pt-attendance-history-page"><div className="pt-page-heading pt-heading-plain"><span className="portal-eyebrow">{t('attendance')}</span><h1>{t('portal_attendance_history')}</h1><p>{t('source')}</p></div><div className="pt-attendance-history-list">{attendance.map((a,i)=><article className="pt-attendance-history-row" key={a.id||i}><div className="pt-attendance-history-date"><b>{dateLabel(a.tanggal,locale)}</b><span>{a.status||t('portal_recorded')}</span></div><div className="pt-attendance-history-times"><div><small>{t('check_in')}</small><b>{a.jam_masuk||'--:--'}</b></div><div><small>{t('check_out')}</small><b>{a.jam_pulang||'--:--'}</b></div><div><small>GPS</small><b>{a.latitude&&a.longitude?t('portal_saved'):'-'}</b></div></div><small className="pt-attendance-history-source">{a.sumber||'Manual'}</small></article>)}{!attendance.length&&<div className="pt-attendance-history-empty">{t('portal_no_attendance')}</div>}</div></section>}
+   {tab==='attendance'&&<section className="pt-attendance-history-page"><div className="pt-page-heading pt-heading-plain"><span className="portal-eyebrow">{t('attendance')}</span><h1>{t('portal_attendance_history')}</h1><p>{t('source')}</p><button type="button" className="portal-secondary" onClick={()=>void manualSyncOffline()} disabled={loading}>{t('refresh')}</button></div><div className="pt-attendance-history-list">{attendance.map((a,i)=>{const hasGps=a.latitude!=null&&a.longitude!=null;const hasSelfie=Boolean(a.selfie_masuk||a.selfie_pulang);const accuracy=a.akurasi_pulang??a.akurasi_masuk;return <article className="pt-attendance-history-row" key={a.id||i}><div className="pt-attendance-history-date"><b>{dateLabel(a.tanggal,locale)}</b><span>{a.status||t('portal_recorded')}</span></div><div className="pt-attendance-history-times"><div><small>{t('check_in')}</small><b>{a.jam_masuk||'--:--'}</b></div><div><small>{t('check_out')}</small><b>{a.jam_pulang||'--:--'}</b></div><div><small>GPS</small><b>{hasGps?t('portal_saved'):'-'}</b></div></div>{hasGps&&<small className="pt-attendance-history-source">{formatAttendanceCoordinate(a.latitude)}, {formatAttendanceCoordinate(a.longitude)}{accuracy!=null?` · ${t('portal_gps_accuracy').replace('{meters}',String(Math.round(Number(accuracy))))}`:''} · {hasSelfie?t('portal_selfie_ready'):t('portal_selfie_missing')}</small>}{!hasGps&&<small className="pt-attendance-history-source">{a.sumber||'Manual'} · {hasSelfie?t('portal_selfie_ready'):t('portal_selfie_missing')}</small>}</article>})}{!attendance.length&&<div className="pt-attendance-history-empty">{t('portal_no_attendance')}</div>}</div></section>}
 
    {tab==='leave'&&<section className="portal-grid pt-page-grid"><div className="portal-card info-card pt-page-card"><div className="card-title"><div><span className="card-kicker">{t('leave')}</span><h2>{t('leave_request')}</h2></div></div><form className="employee-form" onSubmit={submitLeave}><label>{t('type')}<select value={leaveForm.jenis} onChange={e=>setLeaveForm({...leaveForm,jenis:e.target.value})}><option>Tahunan</option><option>Sakit</option><option>Khusus</option><option>Izin</option></select></label><div className="form-two"><label>{t('date')} — {t('start_date')}<input type="date" value={leaveForm.tanggal_mulai} onChange={e=>setLeaveForm({...leaveForm,tanggal_mulai:e.target.value})}/></label><label>{t('date')} — {t('end_date')}<input type="date" value={leaveForm.tanggal_selesai} onChange={e=>setLeaveForm({...leaveForm,tanggal_selesai:e.target.value})}/></label></div><label>{t('reason')}<textarea value={leaveForm.alasan} onChange={e=>setLeaveForm({...leaveForm,alasan:e.target.value})} required/></label><button className="portal-primary">{t('portal_send_request')}</button></form></div><div className="portal-card info-card pt-page-card"><div className="card-title"><div><span className="card-kicker">{t('portal_balance_title')}</span><h2>{t('portal_leave_balance')}</h2></div></div><div className="balance-list">{balances.slice(0,6).map(b=><div key={b.id}><span>{b.jenis}</span><b>{Math.max(0,Number(b.saldo||0)-Number(b.terpakai||0))} hari</b></div>)}{!balances.length&&<p className="muted">{t('portal_balance_unavailable')}</p>}</div><div className="request-list">{leaves.map(x=><div key={x.id}><div><b>{x.jenis}</b><small>{dateLabel(x.tanggal_mulai,locale)} — {dateLabel(x.tanggal_selesai,locale)}</small></div><span className="status-badge">{x.status}</span></div>)}</div></div></section>}
 
