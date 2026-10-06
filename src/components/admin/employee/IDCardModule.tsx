@@ -126,10 +126,19 @@ function fittedFontSize(value: unknown, base: number, min: number, maxWidth = 49
 function getVerifyBaseUrl() {
   const configured = String(import.meta.env.VITE_PUBLIC_VERIFY_BASE_URL || '').trim();
   if (configured) return `${configured.replace(/\/+$/, '')}/`;
-  const pathname = window.location.pathname.endsWith('/')
-    ? window.location.pathname
-    : `${window.location.pathname}/`;
-  return `${window.location.origin}${pathname}`;
+
+  const hostname = String(window.location.hostname || '').toLowerCase();
+  const isLocal = hostname === 'localhost'
+    || hostname === '127.0.0.1'
+    || hostname === '::1'
+    || hostname.startsWith('10.')
+    || hostname.startsWith('192.168.');
+
+  // Capacitor Android uses a local WebView origin. Never print that origin
+  // into an ID-card QR code. Use the public production site instead.
+  if (isLocal) return 'https://moonjustfinebymoon.netlify.app/';
+
+  return `${window.location.origin.replace(/\/+$/, '')}/`;
 }
 
 function buildVerifyUrl(token: string) {
