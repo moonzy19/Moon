@@ -58,6 +58,8 @@ type Karyawan = {
   tanggal_masuk?: string;
   status_aktif?: boolean;
   status_karyawan?: string;
+  tanggal_keluar?: string | null;
+  alasan_keluar?: string | null;
   role?: string;
   auth_user_id?: string | null;
   email_terverifikasi?: boolean;
@@ -2394,7 +2396,7 @@ function InactiveEmployees({data,onEdit,onActivate}:{data:Karyawan[];onEdit:(k:K
     <div className="toolbar"><b>{data.length} {t('inactive_employees').toLowerCase()}</b></div>
     <div className="panel table-panel inactive-employee-panel">
       <div className="table-wrap"><table><thead><tr>
-        <th>{t('name')}</th><th>{t('employee_id')}</th><th>{t('position')}</th><th>{t('department')}</th><th>{t('employee_status')}</th><th>{t('actions')}</th>
+        <th>{t('name')}</th><th>{t('employee_id')}</th><th>{t('position')}</th><th>{t('department')}</th><th>{t('employee_status')}</th><th>Tanggal Dinonaktifkan</th><th>Alasan Dinonaktifkan</th><th>{t('actions')}</th>
       </tr></thead><tbody>
         {data.length ? data.map(k => <tr key={k.id}>
           <td><div className="person"><div className="mini-avatar inactive-avatar">{k.nama?.[0]||'K'}</div><div><b>{k.nama||'—'}</b><small>{k.email||'—'}</small></div></div></td>
@@ -2402,6 +2404,8 @@ function InactiveEmployees({data,onEdit,onActivate}:{data:Karyawan[];onEdit:(k:K
           <td>{k.jabatan||'—'}</td>
           <td>{k.departemen||'—'}</td>
           <td><span className="status status-red-inactive">{t('inactive')}</span></td>
+          <td>{k.tanggal_keluar || '—'}</td>
+          <td style={{maxWidth:260,whiteSpace:'pre-wrap'}}>{k.alasan_keluar || '—'}</td>
           <td><div className="row-actions inactive-actions">
             <button className="link-btn" type="button" onClick={()=>onEdit(k)}>{t('edit_data')}</button>
             <button className="secondary activate-btn" type="button" onClick={()=>onActivate(k)}>{t('activate_employee')}</button>
@@ -2546,6 +2550,8 @@ function EmployeeEditor({
     bpjs_kesehatan: employee.bpjs_kesehatan || '',
     bpjs_ketenagakerjaan: employee.bpjs_ketenagakerjaan || '',
     status_aktif: employee.status_aktif !== false,
+    tanggal_keluar: employee.tanggal_keluar || '',
+    alasan_keluar: employee.alasan_keluar || '',
   });
 
   const [roles, setRoles] = useState<string[]>([
@@ -2854,6 +2860,43 @@ function EmployeeEditor({
             </select>
             {!isSuperAdmin && <small style={{display:'block',marginTop:4,color:'#667085'}}>Hanya Super Admin yang dapat mengubah Role.</small>}
           </label>
+
+          {!f.status_aktif && (
+            <div style={{
+              marginTop:6,
+              marginBottom:16,
+              padding:14,
+              border:'1px solid #fecaca',
+              borderRadius:14,
+              background:'#fff7f7'
+            }}>
+              <strong style={{display:'block',marginBottom:12,color:'#991b1b'}}>
+                Informasi Nonaktif
+              </strong>
+
+              <label>
+                Tanggal dinonaktifkan
+                <input
+                  type="date"
+                  value={f.tanggal_keluar || ''}
+                  readOnly
+                  disabled={saving}
+                />
+              </label>
+
+              <label style={{marginTop:12}}>
+                Alasan dinonaktifkan
+                <textarea
+                  value={f.alasan_keluar || ''}
+                  onChange={e=>setField('alasan_keluar',e.target.value)}
+                  disabled={saving}
+                  required
+                  placeholder="Masukkan alasan karyawan dinonaktifkan"
+                  style={{minHeight:90,resize:'vertical'}}
+                />
+              </label>
+            </div>
+          )}
 
           <div style={{marginTop:6,padding:14,border:'1px solid #d0d5dd',borderRadius:14}}>
             <strong style={{display:'block',marginBottom:12}}>BPJS Karyawan</strong>

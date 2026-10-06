@@ -150,7 +150,8 @@ export default function VerifyIdCard({ token, onHome }: Props) {
         .verify-id-state.not-found .verify-id-state-icon{color:#a01f26;background:#fff0f1;border-color:#f1cbd0}
         .verify-id-state.loading .verify-id-state-icon{color:#444950;background:#f0f2f4;border-color:#e1e4e7}
         .verify-id-eyebrow{margin:0 0 6px;color:#747982;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
-        .verify-id-title{margin:0;font-size:clamp(24px,4vw,34px);line-height:1.05;letter-spacing:-.025em;color:#101114}
+        .verify-id-state.active .verify-id-title{color:#111827 !important}
+        .verify-id-title{margin:0;font-size:clamp(24px,4vw,34px);line-height:1.05;letter-spacing:-.025em;color:#111827 !important}
         .verify-id-subtitle{margin:10px 0 0;color:#5e636b;font-size:14px;line-height:1.55}
         .verify-id-pill{display:inline-flex;align-items:center;gap:7px;margin-top:16px;padding:8px 11px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.03em}
         .verify-id-pill.active{color:#087a45;background:#eaf8f0}.verify-id-pill.inactive{color:#8a5300;background:#fff5df}.verify-id-pill.not-found{color:#a01f26;background:#fff0f1}.verify-id-pill.loading{color:#4e535b;background:#f0f2f4}
