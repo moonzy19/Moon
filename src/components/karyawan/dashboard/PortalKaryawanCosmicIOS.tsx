@@ -473,15 +473,18 @@ export default function PortalKaryawan({onLogout}:{onLogout?:()=>void}){
   setClockBusy(false);
  };
  const todayDate=today();
-const todayRows=attendance.filter(a=>a.tanggal===todayDate);
 
-const todayAtt=
-  todayRows.find(a=>a.jam_masuk&&!a.jam_pulang) ??
-  todayRows.find(a=>!!a.jam_masuk) ??
-  todayRows[0];
+/*
+ * Satu siklus absensi = Check In -> Check Out.
+ * Siklus yang masih aktif tetap dipakai walau melewati tengah malam,
+ * sedangkan setelah Check Out state aktif langsung kembali kosong.
+ */
+const activeAttendance =
+  attendance.find(a=>a.jam_masuk&&!a.jam_pulang) ?? null;
 
-const canClockIn=!todayAtt?.jam_masuk;
-const canClockOut=!!todayAtt?.jam_masuk&&!todayAtt?.jam_pulang;
+const todayAtt = activeAttendance;
+const canClockIn = !activeAttendance;
+const canClockOut = !!activeAttendance;
  const submitLeave=async(e:React.FormEvent)=>{e.preventDefault();if(!employee)return;const start=new Date(`${leaveForm.tanggal_mulai}T00:00:00`),end=new Date(`${leaveForm.tanggal_selesai}T00:00:00`);if(end<start){setError(t('portal_leave_date_invalid'));return}const days=Math.floor((end.getTime()-start.getTime())/86400000)+1;const {error:e1}=await supabase.from('hris_employee_leave_requests').insert({...leaveForm,id_karyawan:employee.id_karyawan,jumlah_hari:days});if(e1)setError(e1.message);else{setNotice(t('portal_leave_success'));setLeaveForm({...leaveForm,tanggal_mulai:today(),tanggal_selesai:today(),alasan:''});await load()}};
  const submitOt=async(e:React.FormEvent)=>{e.preventDefault();if(!employee)return;const {error:e1}=await supabase.from('hris_employee_overtime_requests').insert({id_karyawan:employee.id_karyawan,tanggal:otForm.tanggal,menit:Number(otForm.menit),alasan:otForm.alasan});if(e1)setError(e1.message);else{setNotice(t('portal_overtime_success'));setOtForm({...otForm,menit:'60',alasan:''});await load()}};
  const submitProfile=async(e:React.FormEvent)=>{e.preventDefault();if(!employee)return;const {error:e1}=await supabase.from('hris_employee_profile_requests').insert({...profileForm,id_karyawan:employee.id_karyawan,old_value:profileForm.field_name==='email'?employee.email||'':''});if(e1)setError(e1.message);else{setNotice(t('portal_profile_success'));setProfileForm({...profileForm,new_value:'',reason:''})}}; const submitFeedback=async(draft:SuggestionDraft)=>{
@@ -504,9 +507,18 @@ const canClockOut=!!todayAtt?.jam_masuk&&!todayAtt?.jam_pulang;
  const shiftStart=parseClockSeconds(todayShift?.jam_masuk)||8*3600;
  const shiftEnd=parseClockSeconds(todayShift?.jam_pulang)||17*3600;
  const plannedDuration=Math.max(3600,shiftEnd-shiftStart);
- const actualIn=parseClockSeconds(todayAtt?.jam_masuk);
- const actualOut=parseClockSeconds(todayAtt?.jam_pulang);
- const liveWorkSeconds=actualIn===null?0:Math.max(0,(actualOut??workNow)-actualIn);
+
+ const attendanceDayNumber=(value:string)=>{
+  const [y,m,d]=String(value||todayDate).split('-').map(Number);
+  if(!Number.isFinite(y)||!Number.isFinite(m)||!Number.isFinite(d))return 0;
+  return Math.floor(Date.UTC(y,m-1,d)/86400000);
+ };
+ const inSeconds=parseClockSeconds(activeAttendance?.jam_masuk);
+ const outSeconds=parseClockSeconds(activeAttendance?.jam_pulang);
+ const inStamp=inSeconds===null?null:attendanceDayNumber(activeAttendance?.tanggal||todayDate)*86400+inSeconds;
+ const outStamp=outSeconds===null?null:attendanceDayNumber(activeAttendance?.tanggal||todayDate)*86400+outSeconds;
+ const nowStamp=attendanceDayNumber(todayDate)*86400+workNow;
+ const liveWorkSeconds=inStamp===null?0:Math.max(0,(outStamp??nowStamp)-inStamp);
  const workProgress=Math.max(0,Math.min(1,liveWorkSeconds/plannedDuration));
  type MenuTarget=Exclude<Tab,'home'>;
  const menuItems:{key:MenuTarget;icon:string;title:string;sub:string;badge?:number}[]=[
